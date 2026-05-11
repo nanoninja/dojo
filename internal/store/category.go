@@ -22,8 +22,8 @@ type CategoryStore interface {
 	Delete(ctx context.Context, id string) error
 }
 
-// CategoryAssignmentStore defines persistence operations for course-category assignments.
-type CategoryAssignmentStore interface {
+// CoursesCategoriesStore defines persistence operations for course-category assignments.
+type CoursesCategoriesStore interface {
 	List(ctx context.Context, courseID string) ([]model.CategoryAssignment, error)
 	Assign(ctx context.Context, courseID, categoryID string, isPrimary bool) error
 	Unassign(ctx context.Context, courseID, categoryID string) error
@@ -42,7 +42,7 @@ func NewCategoryStore(db database.Querier) CategoryStore {
 func (s *categoryStore) List(ctx context.Context) ([]model.Category, error) {
 	var categories []model.Category
 	err := s.db.SelectContext(ctx, &categories, `
-		SELECT * FROM course_categories
+		SELECT * FROM categories
 		WHERE deleted_at IS NULL
 		ORDER BY sort_order ASC`,
 	)
@@ -52,7 +52,7 @@ func (s *categoryStore) List(ctx context.Context) ([]model.Category, error) {
 func (s *categoryStore) FindByID(ctx context.Context, id string) (*model.Category, error) {
 	var c model.Category
 	err := s.db.GetContext(ctx, &c, `
-		SELECT * FROM course_categories
+		SELECT * FROM categories
 		WHERE id = $1 AND deleted_at IS NULL`,
 		id,
 	)
@@ -68,7 +68,7 @@ func (s *categoryStore) FindByID(ctx context.Context, id string) (*model.Categor
 func (s *categoryStore) FindBySlug(ctx context.Context, slug string) (*model.Category, error) {
 	var c model.Category
 	err := s.db.GetContext(ctx, &c, `
-		SELECT * FROM course_categories
+		SELECT * FROM categories
 		WHERE slug = $1 AND deleted_at IS NULL`,
 		slug,
 	)
@@ -83,7 +83,7 @@ func (s *categoryStore) FindBySlug(ctx context.Context, slug string) (*model.Cat
 
 func (s *categoryStore) Create(ctx context.Context, c *model.Category) error {
 	return s.db.GetContext(ctx, &c.ID, `
-		INSERT INTO course_categories (
+		INSERT INTO categories (
 			parent_id, slug, name, description,
 			color_hex, icon_url, sort_order, is_visible
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -101,7 +101,7 @@ func (s *categoryStore) Create(ctx context.Context, c *model.Category) error {
 
 func (s *categoryStore) Update(ctx context.Context, c *model.Category) error {
 	_, err := s.db.ExecContext(ctx, `
-		UPDATE course_categories
+		UPDATE categories
 		SET
 			parent_id   = $1,
 			slug        = $2,
@@ -127,23 +127,23 @@ func (s *categoryStore) Update(ctx context.Context, c *model.Category) error {
 
 func (s *categoryStore) Delete(ctx context.Context, id string) error {
 	_, err := s.db.ExecContext(ctx, `
-		UPDATE course_categories SET deleted_at = NOW() WHERE id = $1`, id)
+		UPDATE categories SET deleted_at = NOW() WHERE id = $1`, id)
 	return err
 }
 
-type categoryAssignmentStore struct {
+type coursesCategoriesStore struct {
 	db database.Querier
 }
 
-// NewCategoryAssignmentStore returns a CourseCategoryAssignmentStore backed by the given querier.
-func NewCategoryAssignmentStore(db database.Querier) CategoryAssignmentStore {
-	return &categoryAssignmentStore{db: db}
+// NewCoursesCategoriesStore returns a CourseCoursesCategoriesStore backed by the given querier.
+func NewCoursesCategoriesStore(db database.Querier) CoursesCategoriesStore {
+	return &coursesCategoriesStore{db: db}
 }
 
-func (s *categoryAssignmentStore) List(ctx context.Context, courseID string) ([]model.CategoryAssignment, error) {
+func (s *coursesCategoriesStore) List(ctx context.Context, courseID string) ([]model.CategoryAssignment, error) {
 	var assignments []model.CategoryAssignment
 	err := s.db.SelectContext(ctx, &assignments, `
-		SELECT * FROM course_category_assignments
+		SELECT * FROM courses_categories
 		WHERE course_id = $1
 		ORDER BY is_primary DESC, assigned_at ASC`,
 		courseID,
@@ -151,9 +151,9 @@ func (s *categoryAssignmentStore) List(ctx context.Context, courseID string) ([]
 	return assignments, err
 }
 
-func (s *categoryAssignmentStore) Assign(ctx context.Context, courseID, categoryID string, isPrimary bool) error {
+func (s *coursesCategoriesStore) Assign(ctx context.Context, courseID, categoryID string, isPrimary bool) error {
 	_, err := s.db.ExecContext(ctx, `
-		INSERT INTO course_category_assignments (course_id, category_id, is_primary)
+		INSERT INTO courses_categories (course_id, category_id, is_primary)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (course_id, category_id) DO UPDATE SET is_primary = EXCLUDED.is_primary`,
 		courseID,
@@ -163,9 +163,9 @@ func (s *categoryAssignmentStore) Assign(ctx context.Context, courseID, category
 	return err
 }
 
-func (s *categoryAssignmentStore) Unassign(ctx context.Context, courseID, categoryID string) error {
+func (s *coursesCategoriesStore) Unassign(ctx context.Context, courseID, categoryID string) error {
 	_, err := s.db.ExecContext(ctx, `
-		DELETE FROM course_category_assignments
+		DELETE FROM courses_categories
 		WHERE course_id = $1 AND category_id = $2`,
 		courseID,
 		categoryID,
@@ -173,9 +173,9 @@ func (s *categoryAssignmentStore) Unassign(ctx context.Context, courseID, catego
 	return err
 }
 
-func (s *categoryAssignmentStore) SetPrimary(ctx context.Context, courseID, categoryID string) error {
+func (s *coursesCategoriesStore) SetPrimary(ctx context.Context, courseID, categoryID string) error {
 	_, err := s.db.ExecContext(ctx, `
-		UPDATE course_category_assignments
+		UPDATE courses_categories
 		SET is_primary = (category_id = $2)
 		WHERE course_id = $1`,
 		courseID,

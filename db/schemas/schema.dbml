@@ -173,7 +173,7 @@ Table courses {
   deleted_at   timestamptz [null]
 }
 
-Table course_chapters {
+Table chapters {
   id               uuid         [pk, default: `uuidv7()`]
   course_id        uuid         [ref: > courses.id, note: "not null — cascade delete"]
   title            varchar(255) [note: "not null"]
@@ -187,13 +187,13 @@ Table course_chapters {
   updated_at       timestamptz  [null]
 
   indexes {
-    (course_id, slug) [unique, name: "uq_course_chapters_course_slug"]
+    (course_id, slug) [unique, name: "uq_chapters_course_slug"]
   }
 }
 
 Table lessons {
   id               uuid         [pk, default: `uuidv7()`]
-  chapter_id       uuid         [ref: > course_chapters.id, note: "not null — cascade delete"]
+  chapter_id       uuid         [ref: > chapters.id, note: "not null — cascade delete"]
   title            varchar(255) [note: "not null"]
   slug             varchar(255) [note: "not null — unique per chapter"]
   description      text         [null]
@@ -226,10 +226,10 @@ Table lesson_resources {
   created_at      timestamptz  [default: `now()`, note: "not null"]
 }
 
-Table course_categories {
+Table categories {
   // Identity
   id        uuid         [pk, default: `uuidv7()`]
-  parent_id uuid         [null, ref: > course_categories.id, note: "self-referencing — set null on delete"]
+  parent_id uuid         [null, ref: > categories.id, note: "self-referencing — set null on delete"]
   slug      varchar(120) [unique, note: "not null"]
 
   // Content
@@ -251,9 +251,9 @@ Table course_categories {
   deleted_at timestamptz [null]
 }
 
-Table course_category_assignments {
+Table courses_categories {
   course_id   uuid        [ref: > courses.id, note: "cascade delete"]
-  category_id uuid        [ref: > course_categories.id, note: "cascade delete"]
+  category_id uuid        [ref: > categories.id, note: "cascade delete"]
   is_primary  boolean     [default: false, note: "not null — one primary per course"]
   assigned_at timestamptz [default: `now()`, note: "not null"]
 
@@ -269,7 +269,7 @@ Table tags {
   created_at timestamptz [default: `now()`, note: "not null"]
 }
 
-Table course_tag_assignments {
+Table courses_tags {
   course_id   uuid        [ref: > courses.id, note: "cascade delete"]
   tag_id      uuid        [ref: > tags.id, note: "cascade delete"]
   assigned_at timestamptz [default: `now()`, note: "not null"]
@@ -293,10 +293,11 @@ Enum user_status {
 
 Enum user_role {
   user       [note: "10 — standard authenticated user"]
-  moderator  [note: "20 — content moderation"]
-  manager    [note: "30 — user and resource management"]
-  admin      [note: "40 — full user administration"]
-  superadmin [note: "50 — critical and irreversible operations"]
+  instructor [note: "20 — course creation and content management"]
+  moderator  [note: "30 — content moderation"]
+  manager    [note: "40 — user and resource management"]
+  admin      [note: "50 — full user administration"]
+  superadmin [note: "60 — critical and irreversible operations"]
   system     [note: "100 — internal service accounts, non-human"]
 }
 

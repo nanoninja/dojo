@@ -13,6 +13,7 @@ CREATE TYPE user_status AS ENUM (
 
 CREATE TYPE user_role AS ENUM (
     'user',
+    'instructor',
     'moderator',
     'manager',
     'admin',
@@ -64,12 +65,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Recomputes duration_minutes on course_chapters after any lesson duration change.
+-- Recomputes duration_minutes on chapters after any lesson duration change.
 -- Triggered by sync_chapter_duration_on_lesson (AFTER INSERT, UPDATE OF duration_minutes, DELETE on lessons).
 CREATE OR REPLACE FUNCTION sync_chapter_duration()
 RETURNS TRIGGER AS $$
 BEGIN
-    UPDATE course_chapters
+    UPDATE chapters
     SET duration_minutes = (
         SELECT COALESCE(SUM(duration_minutes), 0)
         FROM lessons
@@ -81,14 +82,14 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Recomputes duration_minutes on courses after a chapter duration changes.
--- Triggered by sync_course_duration_on_chapter (AFTER UPDATE OF duration_minutes on course_chapters).
+-- Triggered by sync_course_duration_on_chapter (AFTER UPDATE OF duration_minutes on chapters).
 CREATE OR REPLACE FUNCTION sync_course_duration()
 RETURNS TRIGGER AS $$
 BEGIN
     UPDATE courses
     SET duration_minutes = (
         SELECT COALESCE(SUM(duration_minutes), 0)
-        FROM course_chapters
+        FROM chapters
         WHERE course_id = NEW.course_id
     )
     WHERE id = NEW.course_id;
@@ -96,18 +97,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Recomputes course_count on course_categories after an assignment is added or removed.
--- Triggered by sync_category_course_count_on_assignment (AFTER INSERT, DELETE on course_category_assignments).
+-- Recomputes course_count on categories after an assignment is added or removed.
+-- Triggered by sync_category_course_count_on_assignment (AFTER INSERT, DELETE on courses_categories).
 CREATE OR REPLACE FUNCTION sync_category_course_count()
 RETURNS TRIGGER AS $$
 DECLARE
     target_id UUID;
 BEGIN
     target_id := COALESCE(NEW.category_id, OLD.category_id);
-    UPDATE course_categories
+    UPDATE categories
     SET course_count = (
         SELECT COUNT(*)
-        FROM course_category_assignments
+        FROM courses_categories
         WHERE category_id = target_id
     )
     WHERE id = target_id;
@@ -304,7 +305,7 @@ CREATE TRIGGER update_courses_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TABLE course_chapters (
+CREATE TABLE chapters (
     id               UUID         PRIMARY KEY NOT NULL DEFAULT uuidv7(),
     course_id        UUID         NOT NULL,
     title            VARCHAR(255) NOT NULL,
@@ -317,19 +318,19 @@ CREATE TABLE course_chapters (
     created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at       TIMESTAMPTZ  DEFAULT NULL,
 
-    CONSTRAINT uq_course_chapters_course_slug
+    CONSTRAINT uq_chapters_course_slug
         UNIQUE (course_id, slug),
-    CONSTRAINT fk_course_chapters_course_id
+    CONSTRAINT fk_chapters_course_id
         FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 );
 
-CREATE TRIGGER update_course_chapters_updated_at
-    BEFORE UPDATE ON course_chapters
+CREATE TRIGGER update_chapters_updated_at
+    BEFORE UPDATE ON chapters
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER sync_course_duration_on_chapter
-    AFTER UPDATE OF duration_minutes ON course_chapters
+    AFTER UPDATE OF duration_minutes ON chapters
     FOR EACH ROW
     EXECUTE FUNCTION sync_course_duration();
 
@@ -351,7 +352,7 @@ CREATE TABLE lessons (
     CONSTRAINT uq_lessons_chapter_id
         UNIQUE (chapter_id, slug),
     CONSTRAINT fk_lessons_chapter_id
-        FOREIGN KEY (chapter_id) REFERENCES course_chapters(id) ON DELETE CASCADE
+        FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_lessons_chapter_id ON lessons (chapter_id);
@@ -384,7 +385,7 @@ CREATE TABLE lesson_resources (
         FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE
 );
 
-CREATE TABLE course_categories (
+CREATE TABLE categories (
     -- Identity
     id           UUID      PRIMARY KEY NOT NULL DEFAULT uuidv7(),
     parent_id    UUID      DEFAULT NULL,
@@ -408,30 +409,30 @@ CREATE TABLE course_categories (
     updated_at   TIMESTAMPTZ  DEFAULT NULL,
     deleted_at   TIMESTAMPTZ  DEFAULT NULL,
 
-    CONSTRAINT fk_course_categories_parent_id
-        FOREIGN KEY (parent_id) REFERENCES course_categories(id) ON DELETE SET NULL
+    CONSTRAINT fk_categories_parent_id
+        FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE SET NULL
 );
 
-CREATE TRIGGER update_course_categories_updated_at
-    BEFORE UPDATE ON course_categories
+CREATE TRIGGER update_categories_updated_at
+    BEFORE UPDATE ON categories
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TABLE course_category_assignments (
+CREATE TABLE courses_categories (
     course_id   UUID        NOT NULL,
     category_id UUID        NOT NULL,
     is_primary  BOOLEAN NOT NULL DEFAULT FALSE,
     assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     PRIMARY KEY (course_id, category_id),
-    CONSTRAINT fk_course_category_assignments_course_id
+    CONSTRAINT fk_courses_categories_course_id
         FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
-    CONSTRAINT fk_course_category_assignments_category_id
-        FOREIGN KEY (category_id) REFERENCES course_categories(id) ON DELETE CASCADE
+    CONSTRAINT fk_courses_categories_category_id
+        FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 );
 
 CREATE TRIGGER sync_category_course_count_on_assignment
-    AFTER INSERT OR DELETE ON course_category_assignments
+    AFTER INSERT OR DELETE ON courses_categories
     FOR EACH ROW
     EXECUTE FUNCTION sync_category_course_count();
 
@@ -442,16 +443,16 @@ CREATE TABLE tags (
     created_at TIMESTAMPTZ        NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE course_tag_assignments (
+CREATE TABLE courses_tags (
     course_id UUID NOT NULL,
     tag_id    UUID NOT NULL,
     assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     PRIMARY KEY (course_id, tag_id),
 
-    CONSTRAINT fk_course_tag_assignments_course_id
+    CONSTRAINT fk_courses_tags_course_id
         FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
-    CONSTRAINT fk_course_tag_assignments_tag_id
+    CONSTRAINT fk_courses_tags_tag_id
         FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 );
 
@@ -470,25 +471,25 @@ DROP INDEX IF EXISTS idx_courses_is_published;
 DROP INDEX IF EXISTS idx_courses_level;
 DROP INDEX IF EXISTS idx_lessons_chapter_id;
 
-DROP TRIGGER IF EXISTS sync_category_course_count_on_assignment ON course_category_assignments;
+DROP TRIGGER IF EXISTS sync_category_course_count_on_assignment ON courses_categories;
 DROP TRIGGER IF EXISTS sync_chapter_duration_on_lesson ON lessons;
-DROP TRIGGER IF EXISTS sync_course_duration_on_chapter ON course_chapters;
-DROP TRIGGER IF EXISTS update_course_categories_updated_at ON course_categories;
+DROP TRIGGER IF EXISTS sync_course_duration_on_chapter ON chapters;
+DROP TRIGGER IF EXISTS update_categories_updated_at ON categories;
 DROP TRIGGER IF EXISTS update_lessons_updated_at ON lessons;
-DROP TRIGGER IF EXISTS update_course_chapters_updated_at ON course_chapters;
+DROP TRIGGER IF EXISTS update_chapters_updated_at ON chapters;
 DROP TRIGGER IF EXISTS update_courses_updated_at ON courses;
 DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 
-DROP TABLE IF EXISTS course_tag_assignments;
-DROP TABLE IF EXISTS course_category_assignments;
+DROP TABLE IF EXISTS courses_tags;
+DROP TABLE IF EXISTS courses_categories;
 DROP TABLE IF EXISTS login_audit_logs;
 DROP TABLE IF EXISTS refresh_tokens;
 DROP TABLE IF EXISTS verification_tokens;
 DROP TABLE IF EXISTS lesson_resources;
 DROP TABLE IF EXISTS lessons;
-DROP TABLE IF EXISTS course_chapters;
+DROP TABLE IF EXISTS chapters;
 DROP TABLE IF EXISTS courses;
-DROP TABLE IF EXISTS course_categories;
+DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS tags;
 DROP TABLE IF EXISTS users;
 

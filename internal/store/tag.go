@@ -22,8 +22,8 @@ type TagStore interface {
 	Delete(ctx context.Context, id string) error
 }
 
-// TagAssignmentStore defines persistence operations for course-tag assignments.
-type TagAssignmentStore interface {
+// CoursesTagsStore defines persistence operations for course-tag assignments.
+type CoursesTagsStore interface {
 	List(ctx context.Context, courseID string) ([]model.CourseTagAssignment, error)
 	Assign(ctx context.Context, courseID, tagID string) error
 	Unassign(ctx context.Context, courseID, tagID string) error
@@ -94,19 +94,19 @@ func (s *tagStore) Delete(ctx context.Context, id string) error {
 	return err
 }
 
-type tagAssignmentStore struct {
+type coursesTagsStore struct {
 	db database.Querier
 }
 
-// NewTagAssignmentStore returns a CourseTagAssignmentStore backed by the given querier.
-func NewTagAssignmentStore(db database.Querier) TagAssignmentStore {
-	return &tagAssignmentStore{db: db}
+// NewCoursesTagsStore returns a CourseCoursesTagsStore backed by the given querier.
+func NewCoursesTagsStore(db database.Querier) CoursesTagsStore {
+	return &coursesTagsStore{db: db}
 }
 
-func (s *tagAssignmentStore) List(ctx context.Context, courseID string) ([]model.CourseTagAssignment, error) {
+func (s *coursesTagsStore) List(ctx context.Context, courseID string) ([]model.CourseTagAssignment, error) {
 	var assignments []model.CourseTagAssignment
 	err := s.db.SelectContext(ctx, &assignments, `
-		SELECT * FROM course_tag_assignments
+		SELECT * FROM courses_tags
 		WHERE course_id = $1
 		ORDER BY assigned_at ASC`,
 		courseID,
@@ -114,9 +114,9 @@ func (s *tagAssignmentStore) List(ctx context.Context, courseID string) ([]model
 	return assignments, err
 }
 
-func (s *tagAssignmentStore) Assign(ctx context.Context, courseID, tagID string) error {
+func (s *coursesTagsStore) Assign(ctx context.Context, courseID, tagID string) error {
 	_, err := s.db.ExecContext(ctx, `
-		INSERT INTO course_tag_assignments (course_id, tag_id)
+		INSERT INTO courses_tags (course_id, tag_id)
 		VALUES ($1, $2)
 		ON CONFLICT (course_id, tag_id) DO NOTHING`,
 		courseID,
@@ -125,9 +125,9 @@ func (s *tagAssignmentStore) Assign(ctx context.Context, courseID, tagID string)
 	return err
 }
 
-func (s *tagAssignmentStore) Unassign(ctx context.Context, courseID, tagID string) error {
+func (s *coursesTagsStore) Unassign(ctx context.Context, courseID, tagID string) error {
 	_, err := s.db.ExecContext(ctx, `
-		DELETE FROM course_tag_assignments
+		DELETE FROM courses_tags
 		WHERE course_id = $1 AND tag_id = $2`,
 		courseID,
 		tagID,

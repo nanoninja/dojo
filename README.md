@@ -1,6 +1,6 @@
 # dojo
 
-[![Version](https://img.shields.io/badge/version-v0.8.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.1.0-blue)](CHANGELOG.md)
 [![Go Version](https://img.shields.io/badge/go-1.26+-00ADD8?logo=go)](https://golang.org/dl/)
 [![CI](https://github.com/nanoninja/dojo/actions/workflows/ci.yaml/badge.svg)](https://github.com/nanoninja/dojo/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/nanoninja/dojo/branch/main/graph/badge.svg)](https://codecov.io/gh/nanoninja/dojo)

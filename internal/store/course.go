@@ -55,7 +55,7 @@ func (s *courseStore) List(ctx context.Context, f CourseFilter) ([]model.Course,
 	}
 	if f.CategoryID != "" {
 		query += ` AND id IN (
-			SELECT course_id FROM course_category_assignments WHERE category_id = ?
+			SELECT course_id FROM courses_categories WHERE category_id = ?
 		)`
 		args = append(args, f.CategoryID)
 	}

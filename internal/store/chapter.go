@@ -34,7 +34,7 @@ func NewChapterStore(db database.Querier) ChapterStore {
 func (s *chapterStore) List(ctx context.Context, courseID string) ([]model.Chapter, error) {
 	var chapters []model.Chapter
 	err := s.db.SelectContext(ctx, &chapters, `
-		SELECT * FROM course_chapters
+		SELECT * FROM chapters
 		WHERE course_id = $1 ORDER BY sort_order ASC`,
 		courseID,
 	)
@@ -43,7 +43,7 @@ func (s *chapterStore) List(ctx context.Context, courseID string) ([]model.Chapt
 
 func (s *chapterStore) FindByID(ctx context.Context, id string) (*model.Chapter, error) {
 	var c model.Chapter
-	err := s.db.GetContext(ctx, &c, `SELECT * FROM course_chapters WHERE id = $1`, id)
+	err := s.db.GetContext(ctx, &c, `SELECT * FROM chapters WHERE id = $1`, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -56,7 +56,7 @@ func (s *chapterStore) FindByID(ctx context.Context, id string) (*model.Chapter,
 func (s *chapterStore) FindBySlug(ctx context.Context, courseID, slug string) (*model.Chapter, error) {
 	var c model.Chapter
 	err := s.db.GetContext(ctx, &c, `
-		SELECT * FROM course_chapters
+		SELECT * FROM chapters
 		WHERE course_id = $1 AND slug = $2`,
 		courseID,
 		slug,
@@ -72,7 +72,7 @@ func (s *chapterStore) FindBySlug(ctx context.Context, courseID, slug string) (*
 
 func (s *chapterStore) Create(ctx context.Context, c *model.Chapter) error {
 	return s.db.GetContext(ctx, &c.ID, `
-		INSERT INTO course_chapters (
+		INSERT INTO chapters (
 			course_id,
 			title,
 			slug,
@@ -96,7 +96,7 @@ func (s *chapterStore) Create(ctx context.Context, c *model.Chapter) error {
 
 func (s *chapterStore) Update(ctx context.Context, c *model.Chapter) error {
 	_, err := s.db.ExecContext(ctx, `
-		UPDATE course_chapters
+		UPDATE chapters
 		SET
 			title            = $1,
 			slug             = $2,
@@ -119,6 +119,6 @@ func (s *chapterStore) Update(ctx context.Context, c *model.Chapter) error {
 }
 
 func (s *chapterStore) Delete(ctx context.Context, id string) error {
-	_, err := s.db.ExecContext(ctx, `DELETE FROM course_chapters WHERE id = $1`, id)
+	_, err := s.db.ExecContext(ctx, `DELETE FROM chapters WHERE id = $1`, id)
 	return err
 }

@@ -42,16 +42,16 @@ type CourseService interface {
 type courseService struct {
 	db         *database.DB
 	courses    store.CourseStore
-	categories store.CategoryAssignmentStore
-	tags       store.TagAssignmentStore
+	categories store.CoursesCategoriesStore
+	tags       store.CoursesTagsStore
 }
 
 // NewCourseService creates a CourseService backed by the given stores.
 func NewCourseService(
 	db *database.DB,
 	courses store.CourseStore,
-	categories store.CategoryAssignmentStore,
-	tags store.TagAssignmentStore,
+	categories store.CoursesCategoriesStore,
+	tags store.CoursesTagsStore,
 ) CourseService {
 	return &courseService{
 		db:         db,
@@ -94,13 +94,13 @@ func (s *courseService) Create(ctx context.Context, c *model.Course, categoryIDs
 		if err := cs.Create(ctx, c); err != nil {
 			return err
 		}
-		cats := store.NewCategoryAssignmentStore(q)
+		cats := store.NewCoursesCategoriesStore(q)
 		for _, catID := range categoryIDs {
 			if err := cats.Assign(ctx, c.ID, catID, catID == primaryCategoryID); err != nil {
 				return err
 			}
 		}
-		tags := store.NewTagAssignmentStore(q)
+		tags := store.NewCoursesTagsStore(q)
 		for _, tagID := range tagIDs {
 			if err := tags.Assign(ctx, c.ID, tagID); err != nil {
 				return err
@@ -117,7 +117,7 @@ func (s *courseService) Update(ctx context.Context, c *model.Course) error {
 // SetCategories uses WithTx: unassigning all then reassigning must be atomic to avoid partial state.
 func (s *courseService) SetCategories(ctx context.Context, courseID string, categoryIDs []string, primaryCategoryID string) error {
 	return s.db.WithTx(ctx, func(q database.Querier) error {
-		cats := store.NewCategoryAssignmentStore(q)
+		cats := store.NewCoursesCategoriesStore(q)
 		existing, err := cats.List(ctx, courseID)
 		if err != nil {
 			return err
@@ -139,7 +139,7 @@ func (s *courseService) SetCategories(ctx context.Context, courseID string, cate
 // SetTags uses WithTx: unassigning all then reassigning must be atomic to avoid partial state.
 func (s *courseService) SetTags(ctx context.Context, courseID string, tagIDs []string) error {
 	return s.db.WithTx(ctx, func(q database.Querier) error {
-		tags := store.NewTagAssignmentStore(q)
+		tags := store.NewCoursesTagsStore(q)
 		existing, err := tags.List(ctx, courseID)
 		if err != nil {
 			return err

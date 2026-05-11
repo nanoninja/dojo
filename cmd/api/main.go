@@ -84,8 +84,8 @@ func run(logger *slog.Logger) error {
 	refreshTokenStore := store.NewRefreshTokenStore(db)
 	loginAuditStore := store.NewLoginAuditStore(db, cipher)
 	courseStore := store.NewCourseStore(db)
-	courseCategoryAssignmentStore := store.NewCategoryAssignmentStore(db)
-	courseTagAssignmentStore := store.NewTagAssignmentStore(db)
+	coursesCategoriesStore := store.NewCoursesCategoriesStore(db)
+	coursesTagsStore := store.NewCoursesTagsStore(db)
 	categoryStore := store.NewCategoryStore(db)
 	tagStore := store.NewTagStore(db)
 	chapterStore := store.NewChapterStore(db)
@@ -93,7 +93,7 @@ func run(logger *slog.Logger) error {
 	lessonResourceStore := store.NewLessonResourceStore(db)
 
 	// Course domain - services
-	courseService := service.NewCourseService(db, courseStore, courseCategoryAssignmentStore, courseTagAssignmentStore)
+	courseService := service.NewCourseService(db, courseStore, coursesCategoriesStore, coursesTagsStore)
 	categoryService := service.NewCategoryService(categoryStore)
 	tagService := service.NewTagService(tagStore)
 	chapterService := service.NewChapterService(chapterStore)
