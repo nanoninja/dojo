@@ -17,6 +17,11 @@ const docTemplate = `{
     "paths": {
         "/api/v1/categories": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -30,7 +35,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.CourseCategory"
+                                "$ref": "#/definitions/model.Category"
                             }
                         }
                     },
@@ -73,7 +78,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/model.CourseCategory"
+                            "$ref": "#/definitions/model.Category"
                         }
                     },
                     "400": {
@@ -93,6 +98,11 @@ const docTemplate = `{
         },
         "/api/v1/categories/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -113,7 +123,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.CourseCategory"
+                            "$ref": "#/definitions/model.Category"
                         }
                     },
                     "400": {
@@ -168,7 +178,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.CourseCategory"
+                            "$ref": "#/definitions/model.Category"
                         }
                     },
                     "400": {
@@ -218,7 +228,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/model.CourseChapter"
+                            "$ref": "#/definitions/model.Chapter"
                         }
                     },
                     "400": {
@@ -238,6 +248,11 @@ const docTemplate = `{
         },
         "/api/v1/chapters/{chapter_id}/lessons": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -281,6 +296,11 @@ const docTemplate = `{
         },
         "/api/v1/chapters/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -301,7 +321,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.CourseChapter"
+                            "$ref": "#/definitions/model.Chapter"
                         }
                     },
                     "400": {
@@ -356,7 +376,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.CourseChapter"
+                            "$ref": "#/definitions/model.Chapter"
                         }
                     },
                     "400": {
@@ -413,6 +433,11 @@ const docTemplate = `{
         },
         "/api/v1/courses": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -569,6 +594,11 @@ const docTemplate = `{
         },
         "/api/v1/courses/{course_id}/chapters": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -591,7 +621,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.CourseChapter"
+                                "$ref": "#/definitions/model.Chapter"
                             }
                         }
                     },
@@ -612,6 +642,11 @@ const docTemplate = `{
         },
         "/api/v1/courses/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -993,6 +1028,11 @@ const docTemplate = `{
         },
         "/api/v1/lessons/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1125,6 +1165,11 @@ const docTemplate = `{
         },
         "/api/v1/lessons/{id}/resources": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1223,6 +1268,11 @@ const docTemplate = `{
         },
         "/api/v1/tags": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1299,6 +1349,11 @@ const docTemplate = `{
         },
         "/api/v1/tags/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -3453,6 +3508,88 @@ const docTemplate = `{
                 }
             }
         },
+        "model.Category": {
+            "type": "object",
+            "properties": {
+                "colorHex": {
+                    "type": "string"
+                },
+                "courseCount": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "iconURL": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isVisible": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parentID": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Chapter": {
+            "type": "object",
+            "properties": {
+                "courseID": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "durationMinutes": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isFree": {
+                    "type": "boolean"
+                },
+                "isPublished": {
+                    "type": "boolean"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
         "model.ContentType": {
             "type": "string",
             "enum": [
@@ -3566,88 +3703,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "trailerURL": {
-                    "type": "string"
-                },
-                "updatedAt": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.CourseCategory": {
-            "type": "object",
-            "properties": {
-                "colorHex": {
-                    "type": "string"
-                },
-                "courseCount": {
-                    "type": "integer"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "deletedAt": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "iconURL": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isVisible": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "parentID": {
-                    "type": "string"
-                },
-                "slug": {
-                    "type": "string"
-                },
-                "sortOrder": {
-                    "type": "integer"
-                },
-                "updatedAt": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.CourseChapter": {
-            "type": "object",
-            "properties": {
-                "courseID": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "durationMinutes": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isFree": {
-                    "type": "boolean"
-                },
-                "isPublished": {
-                    "type": "boolean"
-                },
-                "slug": {
-                    "type": "string"
-                },
-                "sortOrder": {
-                    "type": "integer"
-                },
-                "title": {
                     "type": "string"
                 },
                 "updatedAt": {

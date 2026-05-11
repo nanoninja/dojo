@@ -31,7 +31,8 @@ func NewCategoryHandler(category service.CategoryService) *CategoryHandler {
 // @Summary   List all course categories
 // @Tags      categories
 // @Produce   json
-// @Success   200  {array}   model.CourseCategory
+// @Security  BearerAuth
+// @Success   200  {array}   model.Category
 // @Failure   500  {object}  fault.ErrorResponse
 // @Router    /api/v1/categories [get]
 func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) error {
@@ -51,8 +52,9 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) error {
 // @Summary   Get a category by ID
 // @Tags      categories
 // @Produce   json
+// @Security  BearerAuth
 // @Param     id   path      string  true  "Category ID"
-// @Success   200  {object}  model.CourseCategory
+// @Success   200  {object}  model.Category
 // @Failure   400  {object}  fault.ErrorResponse  "invalid id"
 // @Failure   404  {object}  fault.ErrorResponse  "category not found"
 // @Router    /api/v1/categories/{id} [get]
@@ -92,7 +94,7 @@ type CreateCategoryRequest struct {
 // @Produce   json
 // @Security  BearerAuth
 // @Param     body  body      CreateCategoryRequest  true  "Category payload"
-// @Success   201   {object}  model.CourseCategory
+// @Success   201   {object}  model.Category
 // @Failure   400   {object}  fault.ErrorResponse  "invalid request body"
 // @Failure   401   {object}  fault.ErrorResponse  "missing or invalid token"
 // @Router    /api/v1/categories [post]
@@ -142,7 +144,7 @@ type UpdateCategoryRequest struct {
 // @Security  BearerAuth
 // @Param     id    path      string                 true  "Category ID"
 // @Param     body  body      UpdateCategoryRequest  true  "Category payload"
-// @Success   200   {object}  model.CourseCategory
+// @Success   200   {object}  model.Category
 // @Failure   400   {object}  fault.ErrorResponse  "invalid request body"
 // @Failure   404   {object}  fault.ErrorResponse  "category not found"
 // @Router    /api/v1/categories/{id} [put]

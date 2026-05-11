@@ -369,17 +369,21 @@ func (s *userStore) create(ctx context.Context, q database.Querier, u *model.Use
 			first_name,
 			last_name,
 			status,
+			is_verified,
+			is_2fa_enabled,
 			role,
 			language,
 			timezone
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 		) RETURNING id`,
 		u.Email,
 		u.PasswordHash,
 		u.FirstName,
 		u.LastName,
 		u.Status,
+		u.IsVerified,
+		u.Is2FAEnabled,
 		u.Role.String(),
 		u.Language,
 		u.Timezone,

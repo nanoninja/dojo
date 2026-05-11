@@ -31,6 +31,7 @@ func NewTagHandler(tag service.TagService) *TagHandler {
 // @Summary   List all course tags
 // @Tags      tags
 // @Produce   json
+// @Security  BearerAuth
 // @Success   200   {array}    model.Tag
 // @Failure   500   {object}   fault.ErrorResponse
 // @Router    /api/v1/tags [get]
@@ -51,6 +52,7 @@ func (h *TagHandler) List(w http.ResponseWriter, r *http.Request) error {
 // @Summary   Get a tag by ID
 // @Tags      tags
 // @Produce   json
+// @Security  BearerAuth
 // @Param     id   path      string  true  "Tag ID"
 // @Success   200  {object}  model.Tag
 // @Failure   400  {object}  fault.ErrorResponse  "invalid id"

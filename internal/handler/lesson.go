@@ -31,6 +31,7 @@ func NewLessonHandler(lesson service.LessonService) *LessonHandler {
 // @Summary   List lessons for a chapter
 // @Tags      lessons
 // @Produce   json
+// @Security  BearerAuth
 // @Param     chapter_id  path      string  true  "Chapter ID"
 // @Success   200         {array}   model.Lesson
 // @Failure   400         {object}  fault.ErrorResponse  "invalid chapter id"
@@ -57,6 +58,7 @@ func (h *LessonHandler) List(w http.ResponseWriter, r *http.Request) error {
 // @Summary   Get a lesson by ID
 // @Tags      lessons
 // @Produce   json
+// @Security  BearerAuth
 // @Param     id   path      string  true  "Lesson ID"
 // @Success   200  {object}  model.Lesson
 // @Failure   400  {object}  fault.ErrorResponse  "invalid id"
@@ -221,6 +223,7 @@ func (h *LessonHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 // @Summary   List resources for a lesson
 // @Tags      lessons
 // @Produce   json
+// @Security  BearerAuth
 // @Param     id   path      string  true  "Lesson ID"
 // @Success   200  {array}   model.LessonResource
 // @Failure   400  {object}  fault.ErrorResponse  "invalid id"

@@ -33,6 +33,7 @@ func NewCourseHandler(course service.CourseService) *CourseHandler {
 // @Summary   List courses with optional filters
 // @Tags      courses
 // @Produce   json
+// @Security  BearerAuth
 // @Param     instructor_id  query    string  false  "Filter by instructor"
 // @Param     category_id    query    string  false  "Filter by category"
 // @Param     search         query    string  false  "Search by title or subtitle"
@@ -122,6 +123,7 @@ func (h *CourseHandler) List(w http.ResponseWriter, r *http.Request) error {
 // @Summary   Get a course by ID
 // @Tags      courses
 // @Produce   json
+// @Security  BearerAuth
 // @Param     id   path      string  true  "Course ID"
 // @Success   200  {object}  model.Course
 // @Failure   404  {object}  fault.ErrorResponse "course not found"

@@ -33,6 +33,21 @@ Ces routes ne nécessitent pas d'authentification.
 
 ---
 
+## Modes de transport (`AUTH_TRANSPORT_MODE`)
+
+| Mode | Token envoyé via | CSRF requis | Usage recommandé |
+|------|-----------------|-------------|-----------------|
+| `bearer` | Header `Authorization: Bearer <token>` | Non | Dev local, Swagger, Postman, clients mobiles |
+| `cookie` | Cookie HttpOnly `access_token` | Oui (`X-CSRF-Token`) | Frontend browser uniquement |
+| `dual` | Header **et** cookie | Oui (`X-CSRF-Token`) | Production avec frontend browser |
+
+> En mode `bearer`, aucun cookie n'est émis et aucun header CSRF n'est attendu.
+> En mode `cookie` ou `dual`, toutes les requêtes mutantes (POST/PUT/DELETE) sur les routes protégées doivent inclure le header `X-CSRF-Token` avec la valeur du cookie `csrf_token`.
+
+**Pour tester avec Swagger ou Postman** : utiliser `AUTH_TRANSPORT_MODE=bearer` dans `.env`, cliquer sur **Authorize** dans Swagger UI et coller le token JWT.
+
+---
+
 ## Routes protégées
 
 Ces routes nécessitent un header `Authorization: Bearer <access_token>` (mode `bearer` ou `dual`) ou un cookie d'accès (mode `cookie` ou `dual`).

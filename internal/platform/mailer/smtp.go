@@ -35,7 +35,11 @@ func NewSMTP(cfg SMTPConfig) service.Mailer {
 
 func (m *smtpMailer) Send(_ context.Context, msg service.MailMessage) error {
 	addr := fmt.Sprintf("%s:%d", m.cfg.Host, m.cfg.Port)
-	auth := smtp.PlainAuth("", m.cfg.Username, m.cfg.Password, m.cfg.Host)
+
+	var auth smtp.Auth
+	if m.cfg.Username != "" {
+		auth = smtp.PlainAuth("", m.cfg.Username, m.cfg.Password, m.cfg.Host)
+	}
 
 	body, contentType, err := buildBody(msg)
 	if err != nil {

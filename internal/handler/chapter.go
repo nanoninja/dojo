@@ -31,8 +31,9 @@ func NewChapterHandler(chapter service.ChapterService) *ChapterHandler {
 // @Summary   List chapters for a course
 // @Tags      chapters
 // @Produce   json
+// @Security  BearerAuth
 // @Param     course_id  path      string  true  "Course ID"
-// @Success   200        {array}   model.CourseChapter
+// @Success   200        {array}   model.Chapter
 // @Failure   400        {object}  fault.ErrorResponse  "invalid course id"
 // @Failure   500        {object}  fault.ErrorResponse
 // @Router    /api/v1/courses/{course_id}/chapters [get]
@@ -57,8 +58,9 @@ func (h *ChapterHandler) List(w http.ResponseWriter, r *http.Request) error {
 // @Summary   Get a chapter by ID
 // @Tags      chapters
 // @Produce   json
+// @Security  BearerAuth
 // @Param     id   path      string  true  "Chapter ID"
-// @Success   200  {object}  model.CourseChapter
+// @Success   200  {object}  model.Chapter
 // @Failure   400  {object}  fault.ErrorResponse  "invalid id"
 // @Failure   404  {object}  fault.ErrorResponse  "chapter not found"
 // @Router    /api/v1/chapters/{id} [get]
@@ -98,7 +100,7 @@ type CreateChapterRequest struct {
 // @Produce   json
 // @Security  BearerAuth
 // @Param     body  body      CreateChapterRequest  true  "Chapter payload"
-// @Success   201   {object}  model.CourseChapter
+// @Success   201   {object}  model.Chapter
 // @Failure   400   {object}  fault.ErrorResponse  "invalid request body"
 // @Failure   401   {object}  fault.ErrorResponse  "missing or invalid token"
 // @Router    /api/v1/chapters [post]
@@ -147,7 +149,7 @@ type UpdateChapterRequest struct {
 // @Security  BearerAuth
 // @Param     id    path      string                true  "Chapter ID"
 // @Param     body  body      UpdateChapterRequest  true  "Chapter payload"
-// @Success   200   {object}  model.CourseChapter
+// @Success   200   {object}  model.Chapter
 // @Failure   400   {object}  fault.ErrorResponse  "invalid request body"
 // @Failure   404   {object}  fault.ErrorResponse  "chapter not found"
 // @Router    /api/v1/chapters/{id} [put]
