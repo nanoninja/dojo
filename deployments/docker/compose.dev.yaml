@@ -1,0 +1,47 @@
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  cache:
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.dev
+    networks:
+      - backend
+      - frontend
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    volumes:
+      - ../..:/app
+    env_file:
+      - ../../.env
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+      mailpit:
+        condition: service_started
+
+  mailpit:
+    image: axllent/mailpit:latest
+    networks:
+      - backend
+      - frontend
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+  adminer:
+    image: adminer
+    networks:
+      - backend
+      - frontend
+    ports:
+      - "8081:8080"
+

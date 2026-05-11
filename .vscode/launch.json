@@ -1,0 +1,39 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug API",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/api/main.go",
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "DB_HOST": "localhost",
+                "REDIS_ADDR": "localhost:6379"
+            },
+            "preLaunchTask": "debug-up",
+            "postDebugTask": "debug-down",
+            "args": []
+        },
+        {
+            "name": "Debug Current Test",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${fileDirname}",
+            "envFile": "${workspaceFolder}/.env.test"
+        },
+        {
+            "name": "Run Migrations",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/migrate/main.go",
+            "envFile": "${workspaceFolder}/.env",
+            "args": [
+                "up"
+            ]
+        }
+    ]
+}

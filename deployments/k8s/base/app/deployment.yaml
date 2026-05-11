@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: dojo
+spec:
+  replicas: 2                      # 2 copies pour la haute disponibilité
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      # Init container — s'exécute avant l'API et doit réussir pour que le pod démarre.
+      # Garantit que le schéma est à jour avant que le trafic arrive.
+      initContainers:
+        - name: migrate
+          image: your-repo/api:latest
+          command: ["/migrate", "up"]
+          envFrom:
+            - configMapRef:
+                name: api-config
+            - secretRef:
+                name: api-secret
+
+      containers:
+        - name: api
+          image: your-repo/api:latest
+          ports:
+            - containerPort: 8000
+
+          # Variables non-sensibles depuis le ConfigMap
+          envFrom:
+            - configMapRef:
+                name: api-config
+            - secretRef:
+                name: api-secret
+
+          # Limites de ressources — évite qu'un pod consomme toute la machine
+          resources:
+            requests:
+              cpu: "100m"          # 0.1 CPU garanti au démarrage
+              memory: "64Mi"
+            limits:
+              cpu: "500m"          # 0.5 CPU maximum
+              memory: "128Mi"
+
+          # Liveness probe — k8s redémarre le pod si /livez ne répond plus
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            failureThreshold: 3
+
+          # Readiness probe — k8s n'envoie du trafic que si /readyz est OK
+          # (attend que la DB et Redis soient connectés)
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3

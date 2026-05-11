@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Hérite de toute la config de base
+resources:
+  - ../base
+  - configmap.yaml
+
+# Labels ajoutés à toutes les ressources de cet environnement
+labels:
+  - pairs:
+      env: development
+    includeSelectors: false
+
+# En dev, une seule replica suffit (économise les ressources)
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+    target:
+      kind: Deployment
+      name: api
+
+# Tag de l'image à utiliser en dev
+images:
+  - name: your-repo/api
+    newTag: dev-latest

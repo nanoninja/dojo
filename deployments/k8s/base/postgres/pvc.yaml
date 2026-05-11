@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+  namespace: dojo
+spec:
+  accessModes:
+    - ReadWriteOnce                # un seul pod peut écrire à la fois (normal pour une DB)
+  resources:
+    requests:
+      storage: 5Gi

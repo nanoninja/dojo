@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed
+  namespace: dojo
+spec:
+  # Never retry automatically — seed failures require human review.
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: seed
+          image: your-repo/api:latest
+          command: ["/seed"]
+          envFrom:
+            - configMapRef:
+                name: api-config
+            - secretRef:
+                name: api-secret
+          env:
+            - name: SEED_SUPERADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: api-secret
+                  key: SEED_SUPERADMIN_EMAIL
+            - name: SEED_SUPERADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: api-secret
+                  key: SEED_SUPERADMIN_PASSWORD

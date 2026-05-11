@@ -1,0 +1,331 @@
+// Go API Dojo — Database Schema
+// Visualize at https://dbdiagram.io
+
+Project dojo {
+  database_type: "PostgreSQL"
+  Note: "Authentication and user management schema"
+}
+
+// ================================================================================
+// USERS
+// ================================================================================
+
+Table users {
+  // Identity
+  id             uuid         [pk, default: `UUID_v7()`, note: "UUID v7 — time-ordered"]
+  email          varchar(160) [unique, note: "not null"]
+  password_hash  varchar(255) [note: "not null"]
+  status         user_status  [default: "pending", note: "not null"]
+  is_verified    tinyint(1)   [default: 0, note: "not null"]
+  is_2fa_enabled tinyint(1)   [default: 0, note: "not null"]
+  role           user_role    [default: "user", note: "not null"]
+
+  // Profile
+  first_name   varchar(100)  [null]
+  last_name    varchar(100)  [null]
+  company_name varchar(100)  [null]
+  headline     varchar(150)  [null]
+  bio          text          [null]
+  avatar_url   varchar(512)  [null]
+  website      varchar(255)  [null]
+
+  // Address — address_line1 and address_line2 are encrypted at rest (AES-256-GCM)
+  address_line1 varchar(512)  [null]
+  address_line2 varchar(512)  [null]
+  city          varchar(100)  [null]
+  postal_code   varchar(20)   [null]
+  latitude      decimal(10,8) [null]
+  longitude     decimal(11,8) [null]
+
+  // Business — vat_number is encrypted at rest
+  vat_number   varchar(128) [null]
+  country_code char(2)      [null]
+
+  // Locale — birth_date is encrypted at rest, stored as base64
+  language   varchar(10) [default: "fr-FR", note: "not null"]
+  timezone   varchar(50) [default: "Europe/Paris", note: "not null"]
+  birth_date varchar(64) [null]
+
+  // Activity — last_login_ip is encrypted at rest
+  last_login_at         datetime     [null]
+  last_login_ip         varchar(128) [null]
+  login_count           int          [default: 0, note: "not null"]
+  failed_login_attempts int          [default: 0, note: "not null — incremented on bad password, reset on success"]
+  locked_until          datetime     [null, note: "account locked until this timestamp after too many failures"]
+
+  // Timestamps
+  created_at datetime [default: `CURRENT_TIMESTAMP`, note: "not null"]
+  updated_at datetime [null, note: "auto-updated on row change"]
+  banned_at  datetime [null]
+  deleted_at datetime [null, note: "soft delete — NULL means active"]
+
+  indexes {
+    email [unique]
+  }
+}
+
+// ================================================================================
+// VERIFICATION TOKENS
+// Used for three flows: email_verification, password_reset, otp
+// A token is consumed once (used_at) and expires after a short period.
+// ================================================================================
+
+Table verification_tokens {
+  id         uuid         [pk, default: `UUID_v7()`]
+  user_id    uuid         [ref: > users.id, note: "not null — cascade delete"]
+  token      varchar(255) [note: "not null — SHA-256 hash of the raw token"]
+  type       token_type   [note: "not null"]
+  attempts   tinyint      [default: 0, note: "not null — brute-force protection"]
+  expires_at datetime     [note: "not null"]
+  used_at    datetime     [null, note: "set when token is consumed"]
+  created_at datetime     [default: `CURRENT_TIMESTAMP`, note: "not null"]
+}
+
+// ================================================================================
+// REFRESH TOKENS
+// Rotating refresh tokens — old token is revoked when a new pair is issued.
+// ================================================================================
+
+Table refresh_tokens {
+  id         uuid        [pk, default: `UUID_v7()`]
+  user_id    uuid        [ref: > users.id, note: "not null — cascade delete"]
+  token_hash varchar(64) [unique, note: "not null — SHA-256 hash, raw token never stored"]
+  expires_at datetime    [note: "not null"]
+  created_at datetime    [default: `CURRENT_TIMESTAMP`, note: "not null"]
+  revoked_at datetime    [null, note: "set on logout or token rotation"]
+}
+
+// ================================================================================
+// LOGIN AUDIT LOGS
+// Append-only table — rows are never updated after insert.
+// user_id is nullable: attempts on unknown emails are still recorded.
+// ON DELETE SET NULL: logs are kept if the user account is deleted (anonymised).
+// ================================================================================
+
+Table login_audit_logs {
+  id         uuid        [pk, default: `uuidv7()`]
+  user_id    uuid        [null, ref: > users.id, note: "null when email is not found"]
+  email      varchar(256) [note: "not null — encrypted at rest (AES-256-GCM), sized for max 160-char plaintext"]
+  ip_address varchar(128) [note: "not null — encrypted at rest (AES-256-GCM), sized for IPv6 max 45 chars"]
+  user_agent text        [note: "not null"]
+  status     login_status [note: "not null"]
+  created_at timestamptz [default: `now()`, note: "not null"]
+
+  indexes {
+    user_id    [name: "idx_lal_user_id"]
+    created_at [name: "idx_lal_created_at"]
+  }
+}
+
+// ================================================================================
+// CATALOG & CONTENT
+// ================================================================================
+
+Table courses {
+  // Identity
+  id            uuid         [pk, default: `uuidv7()`]
+  instructor_id uuid         [ref: > users.id, note: "not null — restrict delete"]
+  slug          varchar(255) [unique, note: "not null"]
+
+  // Content
+  title         varchar(255) [note: "not null"]
+  subtitle      varchar(255) [null]
+  description   text         [null]
+  prerequisites text         [null]
+  objectives    text         [null]
+
+  // SEO
+  meta_title       varchar(255) [null]
+  meta_description varchar(255) [null]
+  meta_keywords    varchar(255) [null]
+
+  // Media
+  thumbnail_url varchar(512) [null]
+  trailer_url   varchar(512) [null]
+
+  // Classification
+  level            course_level [default: "beginner"]
+  content_type     content_type [default: "video"]
+  language         varchar(10)  [default: "fr-FR"]
+  duration_minutes int          [default: 0]
+
+  // Pricing
+  is_free           boolean [default: false]
+  subscription_only boolean [default: false]
+  price_cents       int     [default: 0]
+  currency          char(3) [default: "EUR"]
+
+  // Visibility
+  is_published        boolean  [default: false]
+  is_featured         boolean  [default: false]
+  certificate_enabled boolean  [default: false]
+  sort_order          smallint [default: 0]
+
+  // Stats (denormalized)
+  student_count  int            [default: 0]
+  rating_average decimal(3,2)   [default: 0.00]
+  rating_count   int            [default: 0]
+
+  // Timestamps
+  published_at timestamptz [null]
+  created_at   timestamptz [default: `now()`, note: "not null"]
+  updated_at   timestamptz [null]
+  deleted_at   timestamptz [null]
+}
+
+Table course_chapters {
+  id               uuid         [pk, default: `uuidv7()`]
+  course_id        uuid         [ref: > courses.id, note: "not null — cascade delete"]
+  title            varchar(255) [note: "not null"]
+  slug             varchar(255) [note: "not null — unique per course"]
+  description      text         [null]
+  sort_order       smallint     [default: 10, note: "not null"]
+  is_free          boolean      [default: false]
+  is_published     boolean      [default: false]
+  duration_minutes int          [default: 0]
+  created_at       timestamptz  [default: `now()`, note: "not null"]
+  updated_at       timestamptz  [null]
+
+  indexes {
+    (course_id, slug) [unique, name: "uq_course_chapters_course_slug"]
+  }
+}
+
+Table lessons {
+  id               uuid         [pk, default: `uuidv7()`]
+  chapter_id       uuid         [ref: > course_chapters.id, note: "not null — cascade delete"]
+  title            varchar(255) [note: "not null"]
+  slug             varchar(255) [note: "not null — unique per chapter"]
+  description      text         [null]
+  sort_order       smallint     [default: 0, note: "not null"]
+  content_type     content_type [default: "video", note: "not null"]
+  media_url        varchar(512) [null]
+  duration_minutes int          [default: 0]
+  is_free          boolean      [default: false]
+  is_published     boolean      [default: false]
+  created_at       timestamptz  [default: `now()`, note: "not null"]
+  updated_at       timestamptz  [null]
+
+  indexes {
+    (chapter_id, slug) [unique, name: "uq_lessons_chapter_slug"]
+  }
+}
+
+Table lesson_resources {
+  id              uuid         [pk, default: `uuidv7()`]
+  lesson_id       uuid         [ref: > lessons.id, note: "not null — cascade delete"]
+  title           varchar(255) [note: "not null"]
+  description     varchar(255) [null]
+  file_url        varchar(512) [note: "not null"]
+  file_name       varchar(255) [note: "not null"]
+  file_size_bytes bigint       [null]
+  mime_type       varchar(100) [null]
+  sort_order      smallint     [default: 10]
+  is_public       boolean      [default: false]
+  download_count  int          [default: 0]
+  created_at      timestamptz  [default: `now()`, note: "not null"]
+}
+
+Table course_categories {
+  // Identity
+  id        uuid         [pk, default: `uuidv7()`]
+  parent_id uuid         [null, ref: > course_categories.id, note: "self-referencing — set null on delete"]
+  slug      varchar(120) [unique, note: "not null"]
+
+  // Content
+  name        varchar(100) [note: "not null"]
+  description text         [null]
+
+  // Display
+  color_hex  char(9)  [null]
+  icon_url   varchar(255) [null]
+  sort_order smallint [default: 10, note: "not null"]
+  is_visible boolean  [default: true]
+
+  // Stats (denormalized)
+  course_count int [default: 0]
+
+  // Timestamps
+  created_at timestamptz [default: `now()`, note: "not null"]
+  updated_at timestamptz [null]
+  deleted_at timestamptz [null]
+}
+
+Table course_category_assignments {
+  course_id   uuid        [ref: > courses.id, note: "cascade delete"]
+  category_id uuid        [ref: > course_categories.id, note: "cascade delete"]
+  is_primary  boolean     [default: false, note: "not null — one primary per course"]
+  assigned_at timestamptz [default: `now()`, note: "not null"]
+
+  indexes {
+    (course_id, category_id) [pk]
+  }
+}
+
+Table tags {
+  id         uuid        [pk, default: `uuidv7()`]
+  slug       varchar(80) [unique, note: "not null"]
+  name       varchar(80) [note: "not null"]
+  created_at timestamptz [default: `now()`, note: "not null"]
+}
+
+Table course_tag_assignments {
+  course_id   uuid        [ref: > courses.id, note: "cascade delete"]
+  tag_id      uuid        [ref: > tags.id, note: "cascade delete"]
+  assigned_at timestamptz [default: `now()`, note: "not null"]
+
+  indexes {
+    (course_id, tag_id) [pk]
+  }
+}
+
+// ================================================================================
+// ENUMS
+// ================================================================================
+
+Enum user_status {
+  pending   [note: "registered, email not yet verified"]
+  active    [note: "verified and fully operational"]
+  suspended [note: "temporarily restricted"]
+  banned    [note: "permanently restricted"]
+  deleted   [note: "soft-deleted"]
+}
+
+Enum user_role {
+  user       [note: "10 — standard authenticated user"]
+  moderator  [note: "20 — content moderation"]
+  manager    [note: "30 — user and resource management"]
+  admin      [note: "40 — full user administration"]
+  superadmin [note: "50 — critical and irreversible operations"]
+  system     [note: "100 — internal service accounts, non-human"]
+}
+
+Enum token_type {
+  email_verification [note: "confirms a new account — expires in 24h"]
+  password_reset     [note: "authorizes a password change — expires in 1h"]
+  otp                [note: "validates 2FA identity during login — expires in 10min"]
+}
+
+Enum login_status {
+  success           [note: "credentials valid, login accepted"]
+  failed_password   [note: "email found but password incorrect"]
+  failed_locked     [note: "account temporarily locked after too many failures"]
+  failed_not_found  [note: "no account matches the given email"]
+  failed_unverified [note: "account exists but email not yet verified"]
+}
+
+Enum course_level {
+  beginner     [note: "no prior knowledge required"]
+  intermediate [note: "basic knowledge expected"]
+  advanced     [note: "solid experience required"]
+  expert       [note: "deep expertise expected"]
+}
+
+Enum content_type {
+  video    [note: "video-based lesson"]
+  article  [note: "written content"]
+  audio    [note: "audio-based lesson"]
+  live     [note: "live session"]
+  document [note: "PDF or downloadable document"]
+  mixed    [note: "combination of multiple types"]
+}

@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api
+  namespace: dojo
+  annotations:
+    # Preserve the real client IP in X-Real-IP and X-Forwarded-For.
+    # The ingress rewrites these headers before forwarding to the pod,
+    # so the app can trust X-Real-IP without risk of header forgery.
+    nginx.ingress.kubernetes.io/use-forwarded-headers: "true"
+    nginx.ingress.kubernetes.io/compute-full-forwarded-for: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.example.com        # replace with your domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api
+                port:
+                  number: 80

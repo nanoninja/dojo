@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../base
+  - configmap.yaml
+
+labels:
+  - pairs:
+      env: production
+    includeSelectors: false
+
+# Image à déployer en production.
+# newName : ton registry réel (remplace your-repo par ton username GitHub)
+# newTag  : mis à jour à chaque déploiement avec le SHA git du commit
+#           → ne jamais mettre "latest" ici
+images:
+  - name: your-repo/api
+    newName: ghcr.io/ton-username/api
+    newTag: latest  # remplacé automatiquement par le SHA en CI/CD

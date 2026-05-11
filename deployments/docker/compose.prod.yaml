@@ -1,0 +1,91 @@
+networks:
+  backend:
+    driver: bridge
+  frontend:
+    driver: bridge
+
+name: ${APP_NAME}
+
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.prod
+    networks:
+      - frontend
+      - backend
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    env_file:
+      - ../../.env
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:18.3-alpine
+    networks:
+      - backend
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  cache:
+    image: redis:8.6.2-alpine
+    networks:
+      - backend
+    volumes:
+      - cache_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  prometheus:
+    image: prom/prometheus:latest
+    networks:
+      - backend
+    volumes:
+      - ../../deployments/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    networks:
+      - backend
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - ../../deployments/grafana/provisioning:/etc/grafana/provisioning
+      - ../../deployments/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    name: ${APP_NAME}_postgres_data
+  cache_data:
+    name: ${APP_NAME}_cache_data
+  prometheus_data:
+    name: ${APP_NAME}_prometheus_data
+  grafana_data:
+    name: ${APP_NAME}_grafana_data

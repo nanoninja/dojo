@@ -1,0 +1,24 @@
+services:
+  db-test:
+    image: postgres:18.3-alpine
+    container_name: dojo_db_test
+    networks:
+      - backend
+    environment:
+      POSTGRES_USER: ${DB_USER:-admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin}
+      POSTGRES_DB: dojo_test
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+networks:
+  backend:
+    name: dojo_test_network
+    driver: bridge
