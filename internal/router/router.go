@@ -28,13 +28,14 @@ import (
 
 // Handlers groups all HTTP handlers.
 type Handlers struct {
-	Auth     *handler.AuthHandler
-	User     *handler.UserHandler
-	Course   *handler.CourseHandler
-	Category *handler.CategoryHandler
-	Tag      *handler.TagHandler
-	Chapter  *handler.ChapterHandler
-	Lesson   *handler.LessonHandler
+	Auth       *handler.AuthHandler
+	User       *handler.UserHandler
+	Course     *handler.CourseHandler
+	Category   *handler.CategoryHandler
+	Tag        *handler.TagHandler
+	Chapter    *handler.ChapterHandler
+	Lesson     *handler.LessonHandler
+	Enrollment *handler.EnrollmentHandler
 }
 
 // New builds and returns the main HTTP router with all middleware and routes configured.
@@ -175,6 +176,7 @@ func New(
 
 				// Tags — read
 				r.Get("/tags", httputil.Handle(handlers.Tag.List, logger))
+				r.Get("/tags/slug/{slug}", httputil.Handle(handlers.Tag.GetBySlug, logger))
 				r.Get("/tags/{id}", httputil.Handle(handlers.Tag.GetByID, logger))
 
 				// Chapters — read
@@ -184,6 +186,13 @@ func New(
 				// Lessons — read
 				r.Get("/lessons/{id}", httputil.Handle(handlers.Lesson.GetByID, logger))
 				r.Get("/lessons/{id}/resources", httputil.Handle(handlers.Lesson.ListResources, logger))
+
+				// Enrollments
+				r.Get("/enrollments", httputil.Handle(handlers.Enrollment.List, logger))
+				r.Get("/enrollments/{id}", httputil.Handle(handlers.Enrollment.GetByID, logger))
+				r.Post("/enrollments", httputil.Handle(handlers.Enrollment.Enroll, logger))
+				r.Patch("/enrollments/{id}/status", httputil.Handle(handlers.Enrollment.UpdateStatus, logger))
+				r.Delete("/enrollments/{id}", httputil.Handle(handlers.Enrollment.Delete, logger))
 
 				// Instructor+ — gestion des cours, chapitres, leçons
 				r.Group(func(r chi.Router) {

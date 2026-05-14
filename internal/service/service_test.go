@@ -816,7 +816,7 @@ func (f *fakeCoursesCategoriesStore) Assign(_ context.Context, courseID, categor
 func (f *fakeCoursesCategoriesStore) Unassign(_ context.Context, courseID, categoryID string) error {
 	result := f.assignments[:0]
 	for _, a := range f.assignments {
-		if !(a.CourseID == courseID && a.CategoryID == categoryID) {
+		if a.CourseID != courseID || a.CategoryID != categoryID {
 			result = append(result, a)
 		}
 	}
@@ -859,7 +859,7 @@ func (f *fakeCoursesTagsStore) Assign(_ context.Context, courseID, tagID string)
 func (f *fakeCoursesTagsStore) Unassign(_ context.Context, courseID, tagID string) error {
 	result := f.assignments[:0]
 	for _, a := range f.assignments {
-		if !(a.CourseID == courseID && a.TagID == tagID) {
+		if a.CourseID != courseID || a.TagID != tagID {
 			result = append(result, a)
 		}
 	}
@@ -889,13 +889,15 @@ func (f *fakeTxRunner) WithTx(_ context.Context, fn func(database.Querier) error
 // Stores created inside WithTx will succeed without touching a real DB.
 type noopQuerier struct{}
 
-func (noopQuerier) GetContext(_ context.Context, _ any, _ string, _ ...any) error   { return nil }
+func (noopQuerier) GetContext(_ context.Context, _ any, _ string, _ ...any) error    { return nil }
 func (noopQuerier) SelectContext(_ context.Context, _ any, _ string, _ ...any) error { return nil }
 func (noopQuerier) QueryxContext(_ context.Context, _ string, _ ...any) (*sqlx.Rows, error) {
 	return nil, nil
 }
+
 func (noopQuerier) QueryRowContext(_ context.Context, _ string, _ ...any) *sql.Row { return nil }
 func (noopQuerier) ExecContext(_ context.Context, _ string, _ ...any) (sql.Result, error) {
 	return nil, nil
 }
+
 func (noopQuerier) Rebind(query string) string { return query }

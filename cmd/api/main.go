@@ -91,6 +91,7 @@ func run(logger *slog.Logger) error {
 	chapterStore := store.NewChapterStore(db)
 	lessonStore := store.NewLessonStore(db)
 	lessonResourceStore := store.NewLessonResourceStore(db)
+	enrollmentStore := store.NewEnrollmentStore(db)
 
 	// Course domain - services
 	courseService := service.NewCourseService(db, courseStore, coursesCategoriesStore, coursesTagsStore)
@@ -98,6 +99,7 @@ func run(logger *slog.Logger) error {
 	tagService := service.NewTagService(tagStore)
 	chapterService := service.NewChapterService(chapterStore)
 	lessonService := service.NewLessonService(lessonStore, lessonResourceStore)
+	enrollmentService := service.NewEnrollmentService(enrollmentStore)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -133,13 +135,14 @@ func run(logger *slog.Logger) error {
 
 	// Handlers
 	handlers := &router.Handlers{
-		Auth:     handler.NewAuthHandler(authService, userService, cfg.AuthTransport, cfg.JWT, logger, &wg),
-		User:     handler.NewUserHandler(userService),
-		Course:   handler.NewCourseHandler(courseService),
-		Category: handler.NewCategoryHandler(categoryService),
-		Tag:      handler.NewTagHandler(tagService),
-		Chapter:  handler.NewChapterHandler(chapterService),
-		Lesson:   handler.NewLessonHandler(lessonService),
+		Auth:       handler.NewAuthHandler(authService, userService, cfg.AuthTransport, cfg.JWT, logger, &wg),
+		User:       handler.NewUserHandler(userService),
+		Course:     handler.NewCourseHandler(courseService),
+		Category:   handler.NewCategoryHandler(categoryService),
+		Tag:        handler.NewTagHandler(tagService),
+		Chapter:    handler.NewChapterHandler(chapterService),
+		Lesson:     handler.NewLessonHandler(lessonService),
+		Enrollment: handler.NewEnrollmentHandler(enrollmentService),
 	}
 
 	// Server

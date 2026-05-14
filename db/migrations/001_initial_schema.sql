@@ -51,6 +51,13 @@ CREATE TYPE content_type AS ENUM (
     'mixed'
 );
 
+CREATE TYPE enrollment_status AS ENUM (
+    'active',
+    'completed',
+    'expired'
+    'refunded'
+);
+
 -- FUNCTIONS ===================================================
 
 -- +goose StatementBegin
@@ -456,6 +463,30 @@ CREATE TABLE courses_tags (
         FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 );
 
+-- ENROLLMENTS =================================================
+
+CREATE TABLE course_enrollments (
+    id               UUID              PRIMARY KEY NOT NULL DEFAULT uuidv7(),
+    user_id          UUID              NOT NULL,
+    course_id        UUID              NOT NULL,
+    status           enrollment_status NOT NULL DEFAULT 'active',
+    progress_percent NUMERIC(5,2)      NOT NULL DEFAULT 0.00,
+    last_accessed_at TIMESTAMPTZ       NULL,
+    enrolled_at      TIMESTAMPTZ       NOT NULL DEFAULT NOW(),
+    completed_at     TIMESTAMPTZ       NULL,
+    expired_at       TIMESTAMPTZ       NULL,
+
+    CONSTRAINT uq_course_enrollments_user_course UNIQUE (user_id, course_id),
+
+    CONSTRAINT fk_course_enrollments_user_id
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_course_enrollments_course_id
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_ce_user_id   ON course_enrollments (user_id);
+CREATE INDEX idx_ce_course_id ON course_enrollments (course_id);
+CREATE INDEX idx_ce_status    ON course_enrollments (status);
 
 -- GOOSE DOWN ==================================================
 
@@ -470,6 +501,9 @@ DROP INDEX IF EXISTS idx_courses_instructor_id;
 DROP INDEX IF EXISTS idx_courses_is_published;
 DROP INDEX IF EXISTS idx_courses_level;
 DROP INDEX IF EXISTS idx_lessons_chapter_id;
+DROP INDEX IF EXISTS idx_ce_status;
+DROP INDEX IF EXISTS idx_ce_course_id;
+DROP INDEX IF EXISTS idx_ce_user_id;
 
 DROP TRIGGER IF EXISTS sync_category_course_count_on_assignment ON courses_categories;
 DROP TRIGGER IF EXISTS sync_chapter_duration_on_lesson ON lessons;
@@ -480,6 +514,7 @@ DROP TRIGGER IF EXISTS update_chapters_updated_at ON chapters;
 DROP TRIGGER IF EXISTS update_courses_updated_at ON courses;
 DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 
+DROP TABLE IF EXISTS course_enrollments;
 DROP TABLE IF EXISTS courses_tags;
 DROP TABLE IF EXISTS courses_categories;
 DROP TABLE IF EXISTS login_audit_logs;
@@ -504,3 +539,4 @@ DROP TYPE IF EXISTS user_status;
 DROP TYPE IF EXISTS login_status;
 DROP TYPE IF EXISTS course_level;
 DROP TYPE IF EXISTS content_type;
+DROP TYPE IF EXISTS enrollment_status;

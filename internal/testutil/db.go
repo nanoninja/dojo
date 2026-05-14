@@ -24,7 +24,7 @@ const defaultTestDSN = "postgres://admin:admin@localhost:5433/dojo_test?sslmode=
 
 // OpenTestDB opens a connection to the test database.
 // The connection is automatically closed when the test ends.
-func OpenTestDB(t *testing.T) *database.DB {
+func OpenTestDB(t testing.TB) *database.DB {
 	t.Helper()
 
 	dsn := os.Getenv("TEST_DB_DSN")
@@ -68,7 +68,7 @@ func RunMigrations(dir string) {
 }
 
 // NewTestCipher creates an AES cipher using APP_ENCRYPTION_KEY env var.
-func NewTestCipher(t *testing.T) *security.Cipher {
+func NewTestCipher(t testing.TB) *security.Cipher {
 	t.Helper()
 
 	key := os.Getenv("APP_ENCRYPTION_KEY")
@@ -86,7 +86,7 @@ func NewTestCipher(t *testing.T) *security.Cipher {
 // TruncateTable deletes all rows from the given tables.
 // In PostgreSQL, we use TRUNCATE ... CASCADE to handle foreign key constraints
 // or we truncate multiple tables in a single command.
-func TruncateTable(t *testing.T, db *database.DB, tables ...string) {
+func TruncateTable(t testing.TB, db *database.DB, tables ...string) {
 	t.Helper()
 
 	for _, table := range tables {

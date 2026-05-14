@@ -45,6 +45,11 @@ func toFault(err error) error {
 	case errors.Is(err, service.ErrLessonResourceNotFound):
 		return fault.NotFound("lesson resource", err)
 
+	case errors.Is(err, service.ErrEnrollmentNotFound):
+		return fault.NotFound("enrollment", err)
+	case errors.Is(err, service.ErrAlreadyEnrolled):
+		return fault.Conflict("user already enrolled in this course", err)
+
 	default:
 		return fault.Internal(err)
 	}

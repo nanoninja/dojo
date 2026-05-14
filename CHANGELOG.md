@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] - 2026-05-14
+
+### Added
+
+- Course enrollments: migration, model, store, service, handler and routes
+- Store integration tests for tag, category, chapter, lesson, lesson resources, course, courses_categories, courses_tags
+
+### Changed
+
+- `httputil.ValidateUUID` now returns `bool` instead of `error`; error messages are now contextualized at each call site
+
+---
+
 ## [0.1.0] - 2026-05-11
 
 ### Added

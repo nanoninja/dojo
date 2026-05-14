@@ -37,7 +37,7 @@ type categoryService struct {
 
 // NewCategoryService creates a CategoryService backed by the given store.
 func NewCategoryService(s store.CategoryStore) CategoryService {
-	return &categoryService{store: s}
+	return categoryService{store: s}
 }
 
 func (s categoryService) List(ctx context.Context) ([]model.Category, error) {
