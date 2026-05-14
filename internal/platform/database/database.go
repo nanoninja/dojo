@@ -25,6 +25,11 @@ type Querier interface {
 	Rebind(query string) string
 }
 
+// TxRunner can execute a function within a database transaction.
+type TxRunner interface {
+	WithTx(ctx context.Context, fn func(q Querier) error) error
+}
+
 // DB wraps sqlx.DB to provide a configured PostgreSQL connection pool.
 type DB struct {
 	*sqlx.DB

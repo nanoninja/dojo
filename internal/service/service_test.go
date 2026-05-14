@@ -5,10 +5,13 @@ package service_test
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/nanoninja/dojo/internal/model"
+	"github.com/nanoninja/dojo/internal/platform/database"
 	"github.com/nanoninja/dojo/internal/store"
 )
 
@@ -364,3 +367,535 @@ func (f *fakeLoginAuditStore) List(_ context.Context, _ store.AuditFilter) ([]mo
 func (f *fakeLoginAuditStore) Purge(_ context.Context, _ time.Duration, _ int) (int64, error) {
 	return 0, nil
 }
+
+// ============================================================================
+// fakeTagStore
+// ============================================================================
+
+type fakeTagStore struct {
+	tags map[string]*model.Tag
+	seq  int
+}
+
+func newFakeTagStore() *fakeTagStore {
+	return &fakeTagStore{tags: make(map[string]*model.Tag)}
+}
+
+func (f *fakeTagStore) nextID() string {
+	f.seq++
+	return fmt.Sprintf("tag-%d", f.seq)
+}
+
+func (f *fakeTagStore) List(_ context.Context) ([]model.Tag, error) {
+	result := make([]model.Tag, 0, len(f.tags))
+	for _, t := range f.tags {
+		result = append(result, *t)
+	}
+	return result, nil
+}
+
+func (f *fakeTagStore) FindByID(_ context.Context, id string) (*model.Tag, error) {
+	t, ok := f.tags[id]
+	if !ok {
+		return nil, nil
+	}
+	cp := *t
+	return &cp, nil
+}
+
+func (f *fakeTagStore) FindBySlug(_ context.Context, slug string) (*model.Tag, error) {
+	for _, t := range f.tags {
+		if t.Slug == slug {
+			cp := *t
+			return &cp, nil
+		}
+	}
+	return nil, nil
+}
+
+func (f *fakeTagStore) Create(_ context.Context, t *model.Tag) error {
+	t.ID = f.nextID()
+	cp := *t
+	f.tags[t.ID] = &cp
+	return nil
+}
+
+func (f *fakeTagStore) Update(_ context.Context, t *model.Tag) error {
+	if _, ok := f.tags[t.ID]; !ok {
+		return fmt.Errorf("tag not found")
+	}
+	cp := *t
+	f.tags[t.ID] = &cp
+	return nil
+}
+
+func (f *fakeTagStore) Delete(_ context.Context, id string) error {
+	if _, ok := f.tags[id]; !ok {
+		return fmt.Errorf("tag not found")
+	}
+	delete(f.tags, id)
+	return nil
+}
+
+// ============================================================================
+// fakeCategoryStore
+// ============================================================================
+
+type fakeCategoryStore struct {
+	categories map[string]*model.Category
+	seq        int
+}
+
+func newFakeCategoryStore() *fakeCategoryStore {
+	return &fakeCategoryStore{categories: make(map[string]*model.Category)}
+}
+
+func (f *fakeCategoryStore) nextID() string {
+	f.seq++
+	return fmt.Sprintf("cat-%d", f.seq)
+}
+
+func (f *fakeCategoryStore) List(_ context.Context) ([]model.Category, error) {
+	result := make([]model.Category, 0, len(f.categories))
+	for _, c := range f.categories {
+		if c.DeletedAt == nil {
+			result = append(result, *c)
+		}
+	}
+	return result, nil
+}
+
+func (f *fakeCategoryStore) FindByID(_ context.Context, id string) (*model.Category, error) {
+	c, ok := f.categories[id]
+	if !ok || c.DeletedAt != nil {
+		return nil, nil
+	}
+	cp := *c
+	return &cp, nil
+}
+
+func (f *fakeCategoryStore) FindBySlug(_ context.Context, slug string) (*model.Category, error) {
+	for _, c := range f.categories {
+		if c.Slug == slug && c.DeletedAt == nil {
+			cp := *c
+			return &cp, nil
+		}
+	}
+	return nil, nil
+}
+
+func (f *fakeCategoryStore) Create(_ context.Context, c *model.Category) error {
+	c.ID = f.nextID()
+	cp := *c
+	f.categories[c.ID] = &cp
+	return nil
+}
+
+func (f *fakeCategoryStore) Update(_ context.Context, c *model.Category) error {
+	if _, ok := f.categories[c.ID]; !ok {
+		return fmt.Errorf("category not found")
+	}
+	cp := *c
+	f.categories[c.ID] = &cp
+	return nil
+}
+
+func (f *fakeCategoryStore) Delete(_ context.Context, id string) error {
+	c, ok := f.categories[id]
+	if !ok {
+		return fmt.Errorf("category not found")
+	}
+	now := time.Now()
+	c.DeletedAt = &now
+	return nil
+}
+
+// ============================================================================
+// fakeChapterStore
+// ============================================================================
+
+type fakeChapterStore struct {
+	chapters map[string]*model.Chapter
+	seq      int
+}
+
+func newFakeChapterStore() *fakeChapterStore {
+	return &fakeChapterStore{chapters: make(map[string]*model.Chapter)}
+}
+
+func (f *fakeChapterStore) nextID() string {
+	f.seq++
+	return fmt.Sprintf("chapter-%d", f.seq)
+}
+
+func (f *fakeChapterStore) List(_ context.Context, courseID string) ([]model.Chapter, error) {
+	result := make([]model.Chapter, 0)
+	for _, c := range f.chapters {
+		if c.CourseID == courseID {
+			result = append(result, *c)
+		}
+	}
+	return result, nil
+}
+
+func (f *fakeChapterStore) FindByID(_ context.Context, id string) (*model.Chapter, error) {
+	c, ok := f.chapters[id]
+	if !ok {
+		return nil, nil
+	}
+	cp := *c
+	return &cp, nil
+}
+
+func (f *fakeChapterStore) FindBySlug(_ context.Context, courseID, slug string) (*model.Chapter, error) {
+	for _, c := range f.chapters {
+		if c.CourseID == courseID && c.Slug == slug {
+			cp := *c
+			return &cp, nil
+		}
+	}
+	return nil, nil
+}
+
+func (f *fakeChapterStore) Create(_ context.Context, c *model.Chapter) error {
+	c.ID = f.nextID()
+	cp := *c
+	f.chapters[c.ID] = &cp
+	return nil
+}
+
+func (f *fakeChapterStore) Update(_ context.Context, c *model.Chapter) error {
+	if _, ok := f.chapters[c.ID]; !ok {
+		return fmt.Errorf("chapter not found")
+	}
+	cp := *c
+	f.chapters[c.ID] = &cp
+	return nil
+}
+
+func (f *fakeChapterStore) Delete(_ context.Context, id string) error {
+	if _, ok := f.chapters[id]; !ok {
+		return fmt.Errorf("chapter not found")
+	}
+	delete(f.chapters, id)
+	return nil
+}
+
+// ============================================================================
+// fakeLessonStore
+// ============================================================================
+
+type fakeLessonStore struct {
+	lessons map[string]*model.Lesson
+	seq     int
+}
+
+func newFakeLessonStore() *fakeLessonStore {
+	return &fakeLessonStore{lessons: make(map[string]*model.Lesson)}
+}
+
+func (f *fakeLessonStore) nextID() string {
+	f.seq++
+	return fmt.Sprintf("lesson-%d", f.seq)
+}
+
+func (f *fakeLessonStore) List(_ context.Context, chapterID string) ([]model.Lesson, error) {
+	result := make([]model.Lesson, 0)
+	for _, l := range f.lessons {
+		if l.ChapterID == chapterID {
+			result = append(result, *l)
+		}
+	}
+	return result, nil
+}
+
+func (f *fakeLessonStore) FindByID(_ context.Context, id string) (*model.Lesson, error) {
+	l, ok := f.lessons[id]
+	if !ok {
+		return nil, nil
+	}
+	cp := *l
+	return &cp, nil
+}
+
+func (f *fakeLessonStore) FindBySlug(_ context.Context, chapterID, slug string) (*model.Lesson, error) {
+	for _, l := range f.lessons {
+		if l.ChapterID == chapterID && l.Slug == slug {
+			cp := *l
+			return &cp, nil
+		}
+	}
+	return nil, nil
+}
+
+func (f *fakeLessonStore) Create(_ context.Context, l *model.Lesson) error {
+	l.ID = f.nextID()
+	cp := *l
+	f.lessons[l.ID] = &cp
+	return nil
+}
+
+func (f *fakeLessonStore) Update(_ context.Context, l *model.Lesson) error {
+	if _, ok := f.lessons[l.ID]; !ok {
+		return fmt.Errorf("lesson not found")
+	}
+	cp := *l
+	f.lessons[l.ID] = &cp
+	return nil
+}
+
+func (f *fakeLessonStore) Delete(_ context.Context, id string) error {
+	if _, ok := f.lessons[id]; !ok {
+		return fmt.Errorf("lesson not found")
+	}
+	delete(f.lessons, id)
+	return nil
+}
+
+// ============================================================================
+// fakeLessonResourceStore
+// ============================================================================
+
+type fakeLessonResourceStore struct {
+	resources map[string]*model.LessonResource
+	seq       int
+}
+
+func newFakeLessonResourceStore() *fakeLessonResourceStore {
+	return &fakeLessonResourceStore{resources: make(map[string]*model.LessonResource)}
+}
+
+func (f *fakeLessonResourceStore) nextID() string {
+	f.seq++
+	return fmt.Sprintf("res-%d", f.seq)
+}
+
+func (f *fakeLessonResourceStore) List(_ context.Context, lessonID string) ([]model.LessonResource, error) {
+	result := make([]model.LessonResource, 0)
+	for _, r := range f.resources {
+		if r.LessonID == lessonID {
+			result = append(result, *r)
+		}
+	}
+	return result, nil
+}
+
+func (f *fakeLessonResourceStore) FindByID(_ context.Context, id string) (*model.LessonResource, error) {
+	r, ok := f.resources[id]
+	if !ok {
+		return nil, nil
+	}
+	cp := *r
+	return &cp, nil
+}
+
+func (f *fakeLessonResourceStore) Create(_ context.Context, r *model.LessonResource) error {
+	r.ID = f.nextID()
+	cp := *r
+	f.resources[r.ID] = &cp
+	return nil
+}
+
+func (f *fakeLessonResourceStore) Update(_ context.Context, r *model.LessonResource) error {
+	if _, ok := f.resources[r.ID]; !ok {
+		return fmt.Errorf("resource not found")
+	}
+	cp := *r
+	f.resources[r.ID] = &cp
+	return nil
+}
+
+func (f *fakeLessonResourceStore) Delete(_ context.Context, id string) error {
+	if _, ok := f.resources[id]; !ok {
+		return fmt.Errorf("resource not found")
+	}
+	delete(f.resources, id)
+	return nil
+}
+
+// ============================================================================
+// fakeCourseStore
+// ============================================================================
+
+type fakeCourseStore struct {
+	courses map[string]*model.Course
+	seq     int
+}
+
+func newFakeCourseStore() *fakeCourseStore {
+	return &fakeCourseStore{courses: make(map[string]*model.Course)}
+}
+
+func (f *fakeCourseStore) nextID() string {
+	f.seq++
+	return fmt.Sprintf("course-%d", f.seq)
+}
+
+func (f *fakeCourseStore) List(_ context.Context, _ store.CourseFilter) ([]model.Course, error) {
+	result := make([]model.Course, 0, len(f.courses))
+	for _, c := range f.courses {
+		if c.DeletedAt == nil {
+			result = append(result, *c)
+		}
+	}
+	return result, nil
+}
+
+func (f *fakeCourseStore) FindByID(_ context.Context, id string) (*model.Course, error) {
+	c, ok := f.courses[id]
+	if !ok || c.DeletedAt != nil {
+		return nil, nil
+	}
+	cp := *c
+	return &cp, nil
+}
+
+func (f *fakeCourseStore) FindBySlug(_ context.Context, slug string) (*model.Course, error) {
+	for _, c := range f.courses {
+		if c.Slug == slug && c.DeletedAt == nil {
+			cp := *c
+			return &cp, nil
+		}
+	}
+	return nil, nil
+}
+
+func (f *fakeCourseStore) Create(_ context.Context, c *model.Course) error {
+	c.ID = f.nextID()
+	cp := *c
+	f.courses[c.ID] = &cp
+	return nil
+}
+
+func (f *fakeCourseStore) Update(_ context.Context, c *model.Course) error {
+	if _, ok := f.courses[c.ID]; !ok {
+		return fmt.Errorf("course not found")
+	}
+	cp := *c
+	f.courses[c.ID] = &cp
+	return nil
+}
+
+func (f *fakeCourseStore) Delete(_ context.Context, id string) error {
+	c, ok := f.courses[id]
+	if !ok {
+		return fmt.Errorf("course not found")
+	}
+	now := time.Now()
+	c.DeletedAt = &now
+	return nil
+}
+
+// ============================================================================
+// fakeCoursesCategoriesStore
+// ============================================================================
+
+type fakeCoursesCategoriesStore struct {
+	assignments []model.CategoryAssignment
+}
+
+func (f *fakeCoursesCategoriesStore) List(_ context.Context, courseID string) ([]model.CategoryAssignment, error) {
+	result := make([]model.CategoryAssignment, 0)
+	for _, a := range f.assignments {
+		if a.CourseID == courseID {
+			result = append(result, a)
+		}
+	}
+	return result, nil
+}
+
+func (f *fakeCoursesCategoriesStore) Assign(_ context.Context, courseID, categoryID string, isPrimary bool) error {
+	f.assignments = append(f.assignments, model.CategoryAssignment{
+		CourseID:   courseID,
+		CategoryID: categoryID,
+		IsPrimary:  isPrimary,
+	})
+	return nil
+}
+
+func (f *fakeCoursesCategoriesStore) Unassign(_ context.Context, courseID, categoryID string) error {
+	result := f.assignments[:0]
+	for _, a := range f.assignments {
+		if !(a.CourseID == courseID && a.CategoryID == categoryID) {
+			result = append(result, a)
+		}
+	}
+	f.assignments = result
+	return nil
+}
+
+func (f *fakeCoursesCategoriesStore) SetPrimary(_ context.Context, courseID, categoryID string) error {
+	for i := range f.assignments {
+		if f.assignments[i].CourseID == courseID {
+			f.assignments[i].IsPrimary = f.assignments[i].CategoryID == categoryID
+		}
+	}
+	return nil
+}
+
+// ============================================================================
+// fakeCoursesTagsStore
+// ============================================================================
+
+type fakeCoursesTagsStore struct {
+	assignments []model.CourseTagAssignment
+}
+
+func (f *fakeCoursesTagsStore) List(_ context.Context, courseID string) ([]model.CourseTagAssignment, error) {
+	result := make([]model.CourseTagAssignment, 0)
+	for _, a := range f.assignments {
+		if a.CourseID == courseID {
+			result = append(result, a)
+		}
+	}
+	return result, nil
+}
+
+func (f *fakeCoursesTagsStore) Assign(_ context.Context, courseID, tagID string) error {
+	f.assignments = append(f.assignments, model.CourseTagAssignment{CourseID: courseID, TagID: tagID})
+	return nil
+}
+
+func (f *fakeCoursesTagsStore) Unassign(_ context.Context, courseID, tagID string) error {
+	result := f.assignments[:0]
+	for _, a := range f.assignments {
+		if !(a.CourseID == courseID && a.TagID == tagID) {
+			result = append(result, a)
+		}
+	}
+	f.assignments = result
+	return nil
+}
+
+// ============================================================================
+// fakeTxRunner
+// ============================================================================
+
+// fakeTxRunner simulates WithTx by calling fn with a no-op querier.
+// The real stores created inside fn will issue no-op SQL calls.
+// This lets us test error propagation and happy-path flow without a real DB.
+type fakeTxRunner struct {
+	err error // when set, WithTx returns this error without calling fn
+}
+
+func (f *fakeTxRunner) WithTx(_ context.Context, fn func(database.Querier) error) error {
+	if f.err != nil {
+		return f.err
+	}
+	return fn(noopQuerier{})
+}
+
+// noopQuerier satisfies database.Querier with no-ops.
+// Stores created inside WithTx will succeed without touching a real DB.
+type noopQuerier struct{}
+
+func (noopQuerier) GetContext(_ context.Context, _ any, _ string, _ ...any) error   { return nil }
+func (noopQuerier) SelectContext(_ context.Context, _ any, _ string, _ ...any) error { return nil }
+func (noopQuerier) QueryxContext(_ context.Context, _ string, _ ...any) (*sqlx.Rows, error) {
+	return nil, nil
+}
+func (noopQuerier) QueryRowContext(_ context.Context, _ string, _ ...any) *sql.Row { return nil }
+func (noopQuerier) ExecContext(_ context.Context, _ string, _ ...any) (sql.Result, error) {
+	return nil, nil
+}
+func (noopQuerier) Rebind(query string) string { return query }

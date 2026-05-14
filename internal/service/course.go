@@ -40,7 +40,7 @@ type CourseService interface {
 }
 
 type courseService struct {
-	db         *database.DB
+	db         database.TxRunner
 	courses    store.CourseStore
 	categories store.CoursesCategoriesStore
 	tags       store.CoursesTagsStore
@@ -48,7 +48,7 @@ type courseService struct {
 
 // NewCourseService creates a CourseService backed by the given stores.
 func NewCourseService(
-	db *database.DB,
+	db database.TxRunner,
 	courses store.CourseStore,
 	categories store.CoursesCategoriesStore,
 	tags store.CoursesTagsStore,

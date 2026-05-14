@@ -214,3 +214,226 @@ func (m *mockUserService) Delete(_ context.Context, _ string) error {
 func (m *mockUserService) LoginHistory(_ context.Context, _ string, _ int) ([]model.LoginAuditLog, error) {
 	return m.loginHistory, m.loginHistoryErr
 }
+
+// ============================================================================
+// mockTagService
+// ============================================================================
+
+type mockTagService struct {
+	tag       *model.Tag
+	tags      []model.Tag
+	getErr    error
+	createErr error
+	updateErr error
+	deleteErr error
+}
+
+func (m *mockTagService) List(_ context.Context) ([]model.Tag, error) {
+	return m.tags, m.getErr
+}
+
+func (m *mockTagService) GetByID(_ context.Context, _ string) (*model.Tag, error) {
+	return m.tag, m.getErr
+}
+
+func (m *mockTagService) GetBySlug(_ context.Context, _ string) (*model.Tag, error) {
+	return m.tag, m.getErr
+}
+
+func (m *mockTagService) Create(_ context.Context, t *model.Tag) error {
+	t.ID = "01966b0a-aaaa-7abc-def0-000000000001"
+	return m.createErr
+}
+
+func (m *mockTagService) Update(_ context.Context, _ *model.Tag) error {
+	return m.updateErr
+}
+
+func (m *mockTagService) Delete(_ context.Context, _ string) error {
+	return m.deleteErr
+}
+
+// ============================================================================
+// mockCategoryService
+// ============================================================================
+
+type mockCategoryService struct {
+	category   *model.Category
+	categories []model.Category
+	getErr     error
+	createErr  error
+	updateErr  error
+	deleteErr  error
+}
+
+func (m *mockCategoryService) List(_ context.Context) ([]model.Category, error) {
+	return m.categories, m.getErr
+}
+
+func (m *mockCategoryService) GetByID(_ context.Context, _ string) (*model.Category, error) {
+	return m.category, m.getErr
+}
+
+func (m *mockCategoryService) GetBySlug(_ context.Context, _ string) (*model.Category, error) {
+	return m.category, m.getErr
+}
+
+func (m *mockCategoryService) Create(_ context.Context, c *model.Category) error {
+	c.ID = "01966b0a-bbbb-7abc-def0-000000000002"
+	return m.createErr
+}
+
+func (m *mockCategoryService) Update(_ context.Context, _ *model.Category) error {
+	return m.updateErr
+}
+
+func (m *mockCategoryService) Delete(_ context.Context, _ string) error {
+	return m.deleteErr
+}
+
+// ============================================================================
+// mockChapterService
+// ============================================================================
+
+type mockChapterService struct {
+	chapter   *model.Chapter
+	chapters  []model.Chapter
+	getErr    error
+	createErr error
+	updateErr error
+	deleteErr error
+}
+
+func (m *mockChapterService) List(_ context.Context, _ string) ([]model.Chapter, error) {
+	return m.chapters, m.getErr
+}
+
+func (m *mockChapterService) GetByID(_ context.Context, _ string) (*model.Chapter, error) {
+	return m.chapter, m.getErr
+}
+
+func (m *mockChapterService) GetBySlug(_ context.Context, _, _ string) (*model.Chapter, error) {
+	return m.chapter, m.getErr
+}
+
+func (m *mockChapterService) Create(_ context.Context, c *model.Chapter) error {
+	c.ID = "01966b0a-cccc-7abc-def0-000000000003"
+	return m.createErr
+}
+
+func (m *mockChapterService) Update(_ context.Context, _ *model.Chapter) error {
+	return m.updateErr
+}
+
+func (m *mockChapterService) Delete(_ context.Context, _ string) error {
+	return m.deleteErr
+}
+
+// ============================================================================
+// mockLessonService
+// ============================================================================
+
+type mockLessonService struct {
+	lesson    *model.Lesson
+	lessons   []model.Lesson
+	resource  *model.LessonResource
+	resources []model.LessonResource
+	getErr    error
+	createErr error
+	updateErr error
+	deleteErr error
+}
+
+func (m *mockLessonService) List(_ context.Context, _ string) ([]model.Lesson, error) {
+	return m.lessons, m.getErr
+}
+
+func (m *mockLessonService) GetByID(_ context.Context, _ string) (*model.Lesson, error) {
+	return m.lesson, m.getErr
+}
+
+func (m *mockLessonService) GetBySlug(_ context.Context, _, _ string) (*model.Lesson, error) {
+	return m.lesson, m.getErr
+}
+
+func (m *mockLessonService) Create(_ context.Context, l *model.Lesson) error {
+	l.ID = "01966b0a-dddd-7abc-def0-000000000004"
+	return m.createErr
+}
+
+func (m *mockLessonService) Update(_ context.Context, _ *model.Lesson) error {
+	return m.updateErr
+}
+
+func (m *mockLessonService) Delete(_ context.Context, _ string) error {
+	return m.deleteErr
+}
+
+func (m *mockLessonService) ListResources(_ context.Context, _ string) ([]model.LessonResource, error) {
+	return m.resources, m.getErr
+}
+
+func (m *mockLessonService) GetResourceByID(_ context.Context, _ string) (*model.LessonResource, error) {
+	return m.resource, m.getErr
+}
+
+func (m *mockLessonService) AddResource(_ context.Context, r *model.LessonResource) error {
+	r.ID = "01966b0a-eeee-7abc-def0-000000000005"
+	return m.createErr
+}
+
+func (m *mockLessonService) UpdateResource(_ context.Context, _ *model.LessonResource) error {
+	return m.updateErr
+}
+
+func (m *mockLessonService) RemoveResource(_ context.Context, _ string) error {
+	return m.deleteErr
+}
+
+// ============================================================================
+// mockCourseService
+// ============================================================================
+
+type mockCourseService struct {
+	course           *model.Course
+	courses          []model.Course
+	getErr           error
+	createErr        error
+	updateErr        error
+	deleteErr        error
+	setCategoriesErr error
+	setTagsErr       error
+}
+
+func (m *mockCourseService) List(_ context.Context, _ store.CourseFilter) ([]model.Course, error) {
+	return m.courses, m.getErr
+}
+
+func (m *mockCourseService) GetByID(_ context.Context, _ string) (*model.Course, error) {
+	return m.course, m.getErr
+}
+
+func (m *mockCourseService) GetBySlug(_ context.Context, _ string) (*model.Course, error) {
+	return m.course, m.getErr
+}
+
+func (m *mockCourseService) Create(_ context.Context, c *model.Course, _ []string, _ string, _ []string) error {
+	c.ID = "01966b0a-ffff-7abc-def0-000000000006"
+	return m.createErr
+}
+
+func (m *mockCourseService) Update(_ context.Context, _ *model.Course) error {
+	return m.updateErr
+}
+
+func (m *mockCourseService) SetCategories(_ context.Context, _ string, _ []string, _ string) error {
+	return m.setCategoriesErr
+}
+
+func (m *mockCourseService) SetTags(_ context.Context, _ string, _ []string) error {
+	return m.setTagsErr
+}
+
+func (m *mockCourseService) Delete(_ context.Context, _ string) error {
+	return m.deleteErr
+}

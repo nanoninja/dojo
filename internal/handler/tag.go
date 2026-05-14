@@ -71,6 +71,29 @@ func (h *TagHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 }
 
 // ============================================================================
+// GetBySlug
+// ============================================================================
+
+// GetBySlug handles GET /api/v1/tags/slug/{slug}
+//
+// @Summary   Get a tag by slug
+// @Tags      tags
+// @Produce   json
+// @Security  BearerAuth
+// @Param     slug  path      string  true  "Tag slug"
+// @Success   200   {object}  model.Tag
+// @Failure   404   {object}  fault.ErrorResponse  "tag not found"
+// @Router    /api/v1/tags/slug/{slug} [get]
+func (h *TagHandler) GetBySlug(w http.ResponseWriter, r *http.Request) error {
+	slug := chi.URLParam(r, "slug")
+	t, err := h.tag.GetBySlug(r.Context(), slug)
+	if err != nil {
+		return toFault(err)
+	}
+	return httputil.OK(w, t)
+}
+
+// ============================================================================
 // Create
 // ============================================================================
 
