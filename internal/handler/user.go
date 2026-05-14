@@ -47,8 +47,8 @@ func NewUserHandler(user service.UserService) *UserHandler {
 // @Router    /api/v1/users/{id} [get]
 func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid user id", nil)
 	}
 	u, err := h.user.GetByID(r.Context(), id)
 	if err != nil {
@@ -240,8 +240,8 @@ func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) erro
 	}
 
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid user id", nil)
 	}
 
 	// Users may only update their own profile.
@@ -307,8 +307,8 @@ func (h *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Request) err
 	}
 
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid user id", nil)
 	}
 
 	// Users may only change their own password.
@@ -343,8 +343,8 @@ func (h *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Request) err
 // @Router    /api/v1/users/{id} [delete]
 func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid user id", nil)
 	}
 
 	// A user can only delete their own account

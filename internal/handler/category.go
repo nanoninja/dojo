@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/nanoninja/dojo/internal/fault"
 	"github.com/nanoninja/dojo/internal/httputil"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
@@ -60,8 +61,8 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) error {
 // @Router    /api/v1/categories/{id} [get]
 func (h *CategoryHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid category id", nil)
 	}
 	c, err := h.category.GetByID(r.Context(), id)
 	if err != nil {
@@ -154,8 +155,8 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid category id", nil)
 	}
 	c, err := h.category.GetByID(r.Context(), id)
 	if err != nil {
@@ -191,8 +192,8 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) error {
 // @Failure   404  {object}  fault.ErrorResponse  "category not found"
 func (h *CategoryHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid category id", nil)
 	}
 	if err := h.category.Delete(r.Context(), id); err != nil {
 		return toFault(err)

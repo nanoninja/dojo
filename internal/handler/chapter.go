@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/nanoninja/dojo/internal/fault"
 	"github.com/nanoninja/dojo/internal/httputil"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
@@ -39,8 +40,8 @@ func NewChapterHandler(chapter service.ChapterService) *ChapterHandler {
 // @Router    /api/v1/courses/{course_id}/chapters [get]
 func (h *ChapterHandler) List(w http.ResponseWriter, r *http.Request) error {
 	courseID := chi.URLParam(r, "course_id")
-	if err := httputil.ValidateUUID(courseID); err != nil {
-		return err
+	if !httputil.ValidateUUID(courseID) {
+		return fault.BadRequest("invalid course id", nil)
 	}
 	chapters, err := h.chapter.List(r.Context(), courseID)
 	if err != nil {
@@ -66,8 +67,8 @@ func (h *ChapterHandler) List(w http.ResponseWriter, r *http.Request) error {
 // @Router    /api/v1/chapters/{id} [get]
 func (h *ChapterHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid chapter id", nil)
 	}
 	chapter, err := h.chapter.GetByID(r.Context(), id)
 	if err != nil {
@@ -159,8 +160,8 @@ func (h *ChapterHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid chapter id", nil)
 	}
 	c, err := h.chapter.GetByID(r.Context(), id)
 	if err != nil {
@@ -196,8 +197,8 @@ func (h *ChapterHandler) Update(w http.ResponseWriter, r *http.Request) error {
 // @Router    /api/v1/chapters/{id} [delete]
 func (h *ChapterHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid chapter id", nil)
 	}
 	if err := h.chapter.Delete(r.Context(), id); err != nil {
 		return toFault(err)

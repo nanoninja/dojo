@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/nanoninja/dojo/internal/fault"
 	"github.com/nanoninja/dojo/internal/httputil"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
@@ -39,8 +40,8 @@ func NewLessonHandler(lesson service.LessonService) *LessonHandler {
 // @Router    /api/v1/chapters/{chapter_id}/lessons [get]
 func (h *LessonHandler) List(w http.ResponseWriter, r *http.Request) error {
 	chapterID := chi.URLParam(r, "chapter_id")
-	if err := httputil.ValidateUUID(chapterID); err != nil {
-		return err
+	if !httputil.ValidateUUID(chapterID) {
+		return fault.BadRequest("invalid chapter id", nil)
 	}
 	lessons, err := h.lesson.List(r.Context(), chapterID)
 	if err != nil {
@@ -66,8 +67,8 @@ func (h *LessonHandler) List(w http.ResponseWriter, r *http.Request) error {
 // @Router    /api/v1/lessons/{id} [get]
 func (h *LessonHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid lesson id", nil)
 	}
 	lesson, err := h.lesson.GetByID(r.Context(), id)
 	if err != nil {
@@ -165,8 +166,8 @@ func (h *LessonHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid lesson id", nil)
 	}
 	l, err := h.lesson.GetByID(r.Context(), id)
 	if err != nil {
@@ -204,8 +205,8 @@ func (h *LessonHandler) Update(w http.ResponseWriter, r *http.Request) error {
 // @Router    /api/v1/lessons/{id} [delete]
 func (h *LessonHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid lesson id", nil)
 	}
 	if err := h.lesson.Delete(r.Context(), id); err != nil {
 		return toFault(err)
@@ -231,8 +232,8 @@ func (h *LessonHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 // @Router    /api/v1/lessons/{id}/resources [get]
 func (h *LessonHandler) ListResources(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid lesson id", nil)
 	}
 	resources, err := h.lesson.ListResources(r.Context(), id)
 	if err != nil {
@@ -272,8 +273,8 @@ type AddResourceRequest struct {
 // @Router    /api/v1/lessons/{id}/resources [post]
 func (h *LessonHandler) AddResource(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid lesson id", nil)
 	}
 	var req AddResourceRequest
 	if err := httputil.Bind(r, &req); err != nil {
@@ -331,8 +332,8 @@ func (h *LessonHandler) UpdateResource(w http.ResponseWriter, r *http.Request) e
 		return err
 	}
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid lesson id", nil)
 	}
 	res, err := h.lesson.GetResourceByID(r.Context(), id)
 	if err != nil {
@@ -369,8 +370,8 @@ func (h *LessonHandler) UpdateResource(w http.ResponseWriter, r *http.Request) e
 // @Router    /api/v1/lessons/resources/{id} [delete]
 func (h *LessonHandler) RemoveResource(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid lesson id", nil)
 	}
 	if err := h.lesson.RemoveResource(r.Context(), id); err != nil {
 		return toFault(err)

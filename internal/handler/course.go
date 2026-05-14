@@ -93,14 +93,14 @@ func (h *CourseHandler) List(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if id := q.Get("instructor_id"); id != "" {
-		if err := httputil.ValidateUUID(id); err != nil {
+		if !httputil.ValidateUUID(id) {
 			return fault.BadRequest("invalid instructor_id", nil)
 		}
 		filter.InstructorID = id
 	}
 
 	if id := q.Get("category_id"); id != "" {
-		if err := httputil.ValidateUUID(id); err != nil {
+		if !httputil.ValidateUUID(id) {
 			return fault.BadRequest("invalid category_id", nil)
 		}
 		filter.CategoryID = id
@@ -130,8 +130,8 @@ func (h *CourseHandler) List(w http.ResponseWriter, r *http.Request) error {
 // @Router    /api/v1/courses/{id} [get]
 func (h *CourseHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid course id", nil)
 	}
 	c, err := h.course.GetByID(r.Context(), id)
 	if err != nil {
@@ -274,8 +274,8 @@ func (h *CourseHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid course id", nil)
 	}
 
 	c, err := h.course.GetByID(r.Context(), id)
@@ -342,8 +342,8 @@ func (h *CourseHandler) SetCategories(w http.ResponseWriter, r *http.Request) er
 		return err
 	}
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid course id", nil)
 	}
 	if err := h.course.SetCategories(r.Context(), id, req.CategoryIDs, req.PrimaryCategoryID); err != nil {
 		return toFault(err)
@@ -380,8 +380,8 @@ func (h *CourseHandler) SetTags(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid course id", nil)
 	}
 	if err := h.course.SetTags(r.Context(), id, req.TagIDs); err != nil {
 		return toFault(err)
@@ -407,8 +407,8 @@ func (h *CourseHandler) SetTags(w http.ResponseWriter, r *http.Request) error {
 // @Router    /api/v1/courses/{id} [delete]
 func (h *CourseHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid course id", nil)
 	}
 	if err := h.course.Delete(r.Context(), id); err != nil {
 		return toFault(err)

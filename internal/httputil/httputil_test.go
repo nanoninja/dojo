@@ -22,18 +22,15 @@ import (
 // ============================================================================
 
 func TestValidateUUID_Valid(t *testing.T) {
-	err := httputil.ValidateUUID("01966b0a-1234-7abc-def0-1234567890ab")
-	assert.NoError(t, err)
+	assert.True(t, httputil.ValidateUUID("01966b0a-1234-7abc-def0-1234567890ab"))
 }
 
 func TestValidateUUID_Invalid(t *testing.T) {
-	err := httputil.ValidateUUID("not-a-uuid")
-	assert.Error(t, err)
+	assert.False(t, httputil.ValidateUUID("not-a-uuid"))
 }
 
 func TestValidateUUID_Empty(t *testing.T) {
-	err := httputil.ValidateUUID("")
-	assert.Error(t, err)
+	assert.False(t, httputil.ValidateUUID(""))
 }
 
 // ============================================================================

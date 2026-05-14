@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/nanoninja/dojo/internal/fault"
 	"github.com/nanoninja/dojo/internal/httputil"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
@@ -60,8 +61,8 @@ func (h *TagHandler) List(w http.ResponseWriter, r *http.Request) error {
 // @Router    /api/v1/tags/{id} [get]
 func (h *TagHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid tag id", nil)
 	}
 	t, err := h.tag.GetByID(r.Context(), id)
 	if err != nil {
@@ -159,8 +160,8 @@ func (h *TagHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid tag id", nil)
 	}
 	t, err := h.tag.GetByID(r.Context(), id)
 	if err != nil {
@@ -191,8 +192,8 @@ func (h *TagHandler) Update(w http.ResponseWriter, r *http.Request) error {
 // @Router    /api/v1/tags/{id} [delete]
 func (h *TagHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	if err := httputil.ValidateUUID(id); err != nil {
-		return err
+	if !httputil.ValidateUUID(id) {
+		return fault.BadRequest("invalid tag id", nil)
 	}
 	if err := h.tag.Delete(r.Context(), id); err != nil {
 		return toFault(err)

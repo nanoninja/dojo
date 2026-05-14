@@ -63,10 +63,7 @@ func Bind(r *http.Request, v any) error {
 	return nil
 }
 
-// ValidateUUID returns a BadRequest error if id is not a valid UUID.
-func ValidateUUID(id string) error {
-	if err := validate.Var(id, "required,uuid"); err != nil {
-		return fault.BadRequest("invalid user id", err)
-	}
-	return nil
+// ValidateUUID reports whether id is a valid UUID.
+func ValidateUUID(id string) bool {
+	return validate.Var(id, "required,uuid") == nil
 }
