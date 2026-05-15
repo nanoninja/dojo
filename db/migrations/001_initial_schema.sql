@@ -474,7 +474,7 @@ CREATE TABLE course_enrollments (
     last_accessed_at TIMESTAMPTZ       NULL,
     enrolled_at      TIMESTAMPTZ       NOT NULL DEFAULT NOW(),
     completed_at     TIMESTAMPTZ       NULL,
-    expired_at       TIMESTAMPTZ       NULL,
+    expires_at       TIMESTAMPTZ       NULL,
 
     CONSTRAINT uq_course_enrollments_user_course UNIQUE (user_id, course_id),
 

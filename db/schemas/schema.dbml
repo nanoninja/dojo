@@ -279,6 +279,18 @@ Table courses_tags {
   }
 }
 
+Table course_enrollments {
+  id               uuid               [pk, default: `uuidv7()`]
+  user_id          uuid               [ref: > users.id, note: "not null - cascade delete"]
+  course_id        uuid               [ref: > courses.id, note: "not null - cascade delete"]
+  status           enrollment_status  [default: "active", note: "not null"]
+  progress_percent decimal(5,2)       [default: 0.00, note: "not null"]
+  last_accessed_at timestamptz        [null]
+  enrolled_at      timestamptz        [default: `now()`, note: "not null"]
+  completed_at     timestamptz        [null]
+  expired_at       timestamptz        [null]
+}
+
 // ================================================================================
 // ENUMS
 // ================================================================================
@@ -329,4 +341,11 @@ Enum content_type {
   live     [note: "live session"]
   document [note: "PDF or downloadable document"]
   mixed    [note: "combination of multiple types"]
+}
+
+Enum enrollment_status {
+  active    [note: "enrollment is active"]
+  completed [note: "user has completed the course"]
+  expired   [note: "enrollment has passed its expiry date"]
+  refunded  [note: "enrollment was refunded"]
 }
