@@ -885,6 +885,84 @@ func (f *fakeTxRunner) WithTx(_ context.Context, fn func(database.Querier) error
 	return fn(noopQuerier{})
 }
 
+// ============================================================================
+// fakeEnrollmentStore
+// ============================================================================
+
+type fakeEnrollmentStore struct {
+	enrollments map[string]*model.CourseEnrollment
+	seq         int
+}
+
+func newFakeEnrollmentStore() *fakeEnrollmentStore {
+	return &fakeEnrollmentStore{enrollments: map[string]*model.CourseEnrollment{}}
+}
+
+func (f *fakeEnrollmentStore) nextID() string {
+	f.seq++
+	return fmt.Sprintf("enrollment-%d", f.seq)
+}
+
+func (f *fakeEnrollmentStore) List(_ context.Context, filter store.EnrollmentFilter) ([]model.CourseEnrollment, error) {
+	result := make([]model.CourseEnrollment, 0)
+	for _, e := range f.enrollments {
+		if filter.UserID != "" && e.UserID != filter.UserID {
+			continue
+		}
+		if filter.CourseID != "" && e.CourseID != filter.CourseID {
+			continue
+		}
+		if filter.Status != "" && e.CourseID != filter.CourseID {
+			continue
+		}
+		result = append(result, *e)
+	}
+	return result, nil
+}
+
+func (f *fakeEnrollmentStore) FindByID(_ context.Context, id string) (*model.CourseEnrollment, error) {
+	e, ok := f.enrollments[id]
+	if !ok {
+		return nil, nil
+	}
+	cp := *e
+	return &cp, nil
+}
+
+func (f *fakeEnrollmentStore) FindByUserAndCourse(_ context.Context, userID, courseID string) (*model.CourseEnrollment, error) {
+	for _, e := range f.enrollments {
+		if e.UserID == userID && e.CourseID == courseID {
+			cp := *e
+			return &cp, nil
+		}
+	}
+	return nil, nil
+}
+
+func (f *fakeEnrollmentStore) Create(_ context.Context, e *model.CourseEnrollment) error {
+	e.ID = f.nextID()
+	cp := *e
+	f.enrollments[e.ID] = &cp
+	return nil
+}
+
+func (f *fakeEnrollmentStore) Update(_ context.Context, e *model.CourseEnrollment) error {
+	if _, ok := f.enrollments[e.ID]; !ok {
+		return fmt.Errorf("enrollment not found")
+	}
+	cp := *e
+	f.enrollments[e.ID] = &cp
+	return nil
+}
+
+func (f *fakeEnrollmentStore) Delete(_ context.Context, id string) error {
+	if _, ok := f.enrollments[id]; !ok {
+		return fmt.Errorf("enrollmnent not found")
+	}
+	delete(f.enrollments, id)
+	return nil
+}
+
 // noopQuerier satisfies database.Querier with no-ops.
 // Stores created inside WithTx will succeed without touching a real DB.
 type noopQuerier struct{}
