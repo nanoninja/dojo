@@ -882,6 +882,269 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/enrollments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "enrollments"
+                ],
+                "summary": "List enrollments with optional filters",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by user",
+                        "name": "user_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by course",
+                        "name": "course_id",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "active",
+                            "completed",
+                            "expired",
+                            "refunded"
+                        ],
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Items per page",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.CourseEnrollment"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "enrollments"
+                ],
+                "summary": "Enroll a user in a course",
+                "parameters": [
+                    {
+                        "description": "Enrollment payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.EnrollRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.CourseEnrollment"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "user already enrolled",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/enrollments/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "enrollments"
+                ],
+                "summary": "Get an enrollment by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Enrollment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.CourseEnrollment"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid uuid",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "enrollment not found",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "enrollments"
+                ],
+                "summary": "Delete an enrollment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Enrollment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "invalid uuid",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "enrollment not found",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/enrollments/{id}/status": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "enrollments"
+                ],
+                "summary": "Update the status of an enrollment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Enrollment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "enrollment not found",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/lessons": {
             "post": {
                 "security": [
@@ -1340,6 +1603,45 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "missing or invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tags/slug/{slug}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tags"
+                ],
+                "summary": "Get a tag by slug",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tag slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Tag"
+                        }
+                    },
+                    "404": {
+                        "description": "tag not found",
                         "schema": {
                             "$ref": "#/definitions/fault.ErrorResponse"
                         }
@@ -2730,6 +3032,21 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.EnrollRequest": {
+            "type": "object",
+            "required": [
+                "course_id",
+                "user_id"
+            ],
+            "properties": {
+                "course_id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.HealthResponse": {
             "type": "object",
             "properties": {
@@ -3454,6 +3771,27 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.UpdateStatusRequest": {
+            "type": "object",
+            "required": [
+                "status"
+            ],
+            "properties": {
+                "status": {
+                    "enum": [
+                        "active",
+                        "completed",
+                        "expired",
+                        "refunded"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.EnrollmentStatus"
+                        }
+                    ]
+                }
+            }
+        },
         "handler.UpdateTagRequest": {
             "type": "object",
             "required": [
@@ -3511,43 +3849,43 @@ const docTemplate = `{
         "model.Category": {
             "type": "object",
             "properties": {
-                "colorHex": {
+                "color_hex": {
                     "type": "string"
                 },
-                "courseCount": {
+                "course_count": {
                     "type": "integer"
                 },
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
-                "deletedAt": {
+                "deleted_at": {
                     "type": "string"
                 },
                 "description": {
                     "type": "string"
                 },
-                "iconURL": {
+                "icon_url": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "isVisible": {
+                "is_visible": {
                     "type": "boolean"
                 },
                 "name": {
                     "type": "string"
                 },
-                "parentID": {
+                "parent_id": {
                     "type": "string"
                 },
                 "slug": {
                     "type": "string"
                 },
-                "sortOrder": {
+                "sort_order": {
                     "type": "integer"
                 },
-                "updatedAt": {
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -3555,37 +3893,37 @@ const docTemplate = `{
         "model.Chapter": {
             "type": "object",
             "properties": {
-                "courseID": {
+                "course_id": {
                     "type": "string"
                 },
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
                 "description": {
                     "type": "string"
                 },
-                "durationMinutes": {
+                "duration_minutes": {
                     "type": "integer"
                 },
                 "id": {
                     "type": "string"
                 },
-                "isFree": {
+                "is_free": {
                     "type": "boolean"
                 },
-                "isPublished": {
+                "is_published": {
                     "type": "boolean"
                 },
                 "slug": {
                     "type": "string"
                 },
-                "sortOrder": {
+                "sort_order": {
                     "type": "integer"
                 },
                 "title": {
                     "type": "string"
                 },
-                "updatedAt": {
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -3612,40 +3950,40 @@ const docTemplate = `{
         "model.Course": {
             "type": "object",
             "properties": {
-                "certificateEnabled": {
+                "certificate_enabled": {
                     "type": "boolean"
                 },
-                "contentType": {
+                "content_type": {
                     "$ref": "#/definitions/model.ContentType"
                 },
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
                 "currency": {
                     "type": "string"
                 },
-                "deletedAt": {
+                "deleted_at": {
                     "type": "string"
                 },
                 "description": {
                     "type": "string"
                 },
-                "durationMinutes": {
+                "duration_minutes": {
                     "type": "integer"
                 },
                 "id": {
                     "type": "string"
                 },
-                "instructorID": {
+                "instructor_id": {
                     "type": "string"
                 },
-                "isFeatured": {
+                "is_featured": {
                     "type": "boolean"
                 },
-                "isFree": {
+                "is_free": {
                     "type": "boolean"
                 },
-                "isPublished": {
+                "is_published": {
                     "type": "boolean"
                 },
                 "language": {
@@ -3654,13 +3992,13 @@ const docTemplate = `{
                 "level": {
                     "$ref": "#/definitions/model.CourseLevel"
                 },
-                "metaDescription": {
+                "meta_description": {
                     "type": "string"
                 },
-                "metaKeywords": {
+                "meta_keywords": {
                     "type": "string"
                 },
-                "metaTitle": {
+                "meta_title": {
                     "type": "string"
                 },
                 "objectives": {
@@ -3669,43 +4007,75 @@ const docTemplate = `{
                 "prerequisites": {
                     "type": "string"
                 },
-                "priceCents": {
+                "price_cents": {
                     "type": "integer"
                 },
-                "publishedAt": {
+                "published_at": {
                     "type": "string"
                 },
-                "ratingAverage": {
+                "rating_average": {
                     "type": "number"
                 },
-                "ratingCount": {
+                "rating_count": {
                     "type": "integer"
                 },
                 "slug": {
                     "type": "string"
                 },
-                "sortOrder": {
+                "sort_order": {
                     "type": "integer"
                 },
-                "studentCount": {
+                "student_count": {
                     "type": "integer"
                 },
-                "subscriptionOnly": {
+                "subscription_only": {
                     "type": "boolean"
                 },
                 "subtitle": {
                     "type": "string"
                 },
-                "thumbnailURL": {
+                "thumbnail_url": {
                     "type": "string"
                 },
                 "title": {
                     "type": "string"
                 },
-                "trailerURL": {
+                "trailer_url": {
                     "type": "string"
                 },
-                "updatedAt": {
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.CourseEnrollment": {
+            "type": "object",
+            "properties": {
+                "completed_at": {
+                    "type": "string"
+                },
+                "course_id": {
+                    "type": "string"
+                },
+                "enrolled_at": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_accessed_at": {
+                    "type": "string"
+                },
+                "progress_percent": {
+                    "type": "number"
+                },
+                "status": {
+                    "$ref": "#/definitions/model.EnrollmentStatus"
+                },
+                "user_id": {
                     "type": "string"
                 }
             }
@@ -3725,46 +4095,61 @@ const docTemplate = `{
                 "CourseLevelExpert"
             ]
         },
+        "model.EnrollmentStatus": {
+            "type": "string",
+            "enum": [
+                "active",
+                "completed",
+                "expired",
+                "refunded"
+            ],
+            "x-enum-varnames": [
+                "EnrollmentStatusActive",
+                "EnrollmentStatusCompleted",
+                "EnrollmentStatusExpired",
+                "EnrollmentStatusRefunded"
+            ]
+        },
         "model.Lesson": {
             "type": "object",
             "properties": {
-                "chapterID": {
+                "chapter_id": {
                     "type": "string"
                 },
-                "contentType": {
+                "content_type": {
                     "$ref": "#/definitions/model.ContentType"
                 },
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
                 "description": {
                     "type": "string"
                 },
-                "durationMinutes": {
+                "duration_minutes": {
                     "type": "integer"
                 },
                 "id": {
                     "type": "string"
                 },
-                "isFree": {
+                "is_free": {
                     "type": "boolean"
                 },
-                "isPublished": {
+                "is_published": {
                     "type": "boolean"
                 },
-                "mediaURL": {
+                "media_url": {
                     "type": "string"
                 },
                 "slug": {
                     "type": "string"
                 },
-                "sortOrder": {
+                "sort_order": {
                     "type": "integer"
                 },
                 "title": {
                     "type": "string"
                 },
-                "updatedAt": {
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -3772,37 +4157,37 @@ const docTemplate = `{
         "model.LessonResource": {
             "type": "object",
             "properties": {
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
                 "description": {
                     "type": "string"
                 },
-                "downloadCount": {
+                "download_count": {
                     "type": "integer"
                 },
-                "fileName": {
+                "file_name": {
                     "type": "string"
                 },
-                "fileSizeBytes": {
+                "file_size_bytes": {
                     "type": "integer"
                 },
-                "fileURL": {
+                "file_url": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "isPublic": {
+                "is_public": {
                     "type": "boolean"
                 },
-                "lessonID": {
+                "lesson_id": {
                     "type": "string"
                 },
-                "mimeType": {
+                "mime_type": {
                     "type": "string"
                 },
-                "sortOrder": {
+                "sort_order": {
                     "type": "integer"
                 },
                 "title": {
@@ -3851,7 +4236,7 @@ const docTemplate = `{
         "model.Tag": {
             "type": "object",
             "properties": {
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
                 "id": {
