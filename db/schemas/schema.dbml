@@ -123,16 +123,16 @@ Table login_audit_logs {
 
 Table courses {
   // Identity
-  id            uuid         [pk, default: `uuidv7()`]
-  instructor_id uuid         [ref: > users.id, note: "not null — restrict delete"]
-  slug          varchar(255) [unique, note: "not null"]
+  id            uuid            [pk, default: `uuidv7()`]
+  instructor_id uuid            [ref: > users.id, note: "not null — restrict delete"]
+  slug          varchar(255)    [unique, note: "not null"]
 
   // Content
-  title         varchar(255) [note: "not null"]
-  subtitle      varchar(255) [null]
-  description   text         [null]
-  prerequisites text         [null]
-  objectives    text         [null]
+  title         varchar(255)    [note: "not null"]
+  subtitle      varchar(255)    [null]
+  description   text            [null]
+  prerequisites text            [null]
+  objectives    text            [null]
 
   // SEO
   meta_title       varchar(255) [null]
@@ -140,8 +140,8 @@ Table courses {
   meta_keywords    varchar(255) [null]
 
   // Media
-  thumbnail_url varchar(512) [null]
-  trailer_url   varchar(512) [null]
+  thumbnail_url varchar(512)    [null]
+  trailer_url   varchar(512)    [null]
 
   // Classification
   level            course_level [default: "beginner"]
@@ -150,16 +150,16 @@ Table courses {
   duration_minutes int          [default: 0]
 
   // Pricing
-  is_free           boolean [default: false]
-  subscription_only boolean [default: false]
-  price_cents       int     [default: 0]
-  currency          char(3) [default: "EUR"]
+  is_free           boolean     [default: false]
+  subscription_only boolean     [default: false]
+  price_cents       int         [default: 0]
+  currency          char(3)     [default: "EUR"]
 
   // Visibility
-  is_published        boolean  [default: false]
-  is_featured         boolean  [default: false]
-  certificate_enabled boolean  [default: false]
-  sort_order          smallint [default: 0]
+  is_published        boolean   [default: false]
+  is_featured         boolean   [default: false]
+  certificate_enabled boolean   [default: false]
+  sort_order          smallint  [default: 0]
 
   // Stats (denormalized)
   student_count  int            [default: 0]
@@ -167,10 +167,10 @@ Table courses {
   rating_count   int            [default: 0]
 
   // Timestamps
-  published_at timestamptz [null]
-  created_at   timestamptz [default: `now()`, note: "not null"]
-  updated_at   timestamptz [null]
-  deleted_at   timestamptz [null]
+  published_at timestamptz      [null]
+  created_at   timestamptz      [default: `now()`, note: "not null"]
+  updated_at   timestamptz      [null]
+  deleted_at   timestamptz      [null]
 }
 
 Table chapters {
@@ -228,19 +228,19 @@ Table lesson_resources {
 
 Table categories {
   // Identity
-  id        uuid         [pk, default: `uuidv7()`]
-  parent_id uuid         [null, ref: > categories.id, note: "self-referencing — set null on delete"]
-  slug      varchar(120) [unique, note: "not null"]
+  id        uuid           [pk, default: `uuidv7()`]
+  parent_id uuid           [null, ref: > categories.id, note: "self-referencing — set null on delete"]
+  slug      varchar(120)   [unique, note: "not null"]
 
   // Content
   name        varchar(100) [note: "not null"]
   description text         [null]
 
   // Display
-  color_hex  char(9)  [null]
+  color_hex  char(9)      [null]
   icon_url   varchar(255) [null]
-  sort_order smallint [default: 10, note: "not null"]
-  is_visible boolean  [default: true]
+  sort_order smallint     [default: 10, note: "not null"]
+  is_visible boolean      [default: true]
 
   // Stats (denormalized)
   course_count int [default: 0]
@@ -252,10 +252,10 @@ Table categories {
 }
 
 Table courses_categories {
-  course_id   uuid        [ref: > courses.id, note: "cascade delete"]
-  category_id uuid        [ref: > categories.id, note: "cascade delete"]
-  is_primary  boolean     [default: false, note: "not null — one primary per course"]
-  assigned_at timestamptz [default: `now()`, note: "not null"]
+  course_id   uuid           [ref: > courses.id, note: "cascade delete"]
+  category_id uuid           [ref: > categories.id, note: "cascade delete"]
+  is_primary  boolean        [default: false, note: "not null — one primary per course"]
+  assigned_at timestamptz    [default: `now()`, note: "not null"]
 
   indexes {
     (course_id, category_id) [pk]
@@ -263,16 +263,16 @@ Table courses_categories {
 }
 
 Table tags {
-  id         uuid        [pk, default: `uuidv7()`]
-  slug       varchar(80) [unique, note: "not null"]
-  name       varchar(80) [note: "not null"]
-  created_at timestamptz [default: `now()`, note: "not null"]
+  id         uuid            [pk, default: `uuidv7()`]
+  slug       varchar(80)     [unique, note: "not null"]
+  name       varchar(80)     [note: "not null"]
+  created_at timestamptz     [default: `now()`, note: "not null"]
 }
 
 Table courses_tags {
-  course_id   uuid        [ref: > courses.id, note: "cascade delete"]
-  tag_id      uuid        [ref: > tags.id, note: "cascade delete"]
-  assigned_at timestamptz [default: `now()`, note: "not null"]
+  course_id   uuid           [ref: > courses.id, note: "cascade delete"]
+  tag_id      uuid           [ref: > tags.id, note: "cascade delete"]
+  assigned_at timestamptz    [default: `now()`, note: "not null"]
 
   indexes {
     (course_id, tag_id) [pk]
@@ -280,15 +280,55 @@ Table courses_tags {
 }
 
 Table course_enrollments {
-  id               uuid               [pk, default: `uuidv7()`]
-  user_id          uuid               [ref: > users.id, note: "not null - cascade delete"]
-  course_id        uuid               [ref: > courses.id, note: "not null - cascade delete"]
-  status           enrollment_status  [default: "active", note: "not null"]
-  progress_percent decimal(5,2)       [default: 0.00, note: "not null"]
-  last_accessed_at timestamptz        [null]
-  enrolled_at      timestamptz        [default: `now()`, note: "not null"]
-  completed_at     timestamptz        [null]
-  expired_at       timestamptz        [null]
+  id               uuid              [pk, default: `uuidv7()`]
+  user_id          uuid              [ref: > users.id, note: "not null - cascade delete"]
+  course_id        uuid              [ref: > courses.id, note: "not null - cascade delete"]
+  status           enrollment_status [default: "active", note: "not null"]
+  progress_percent decimal(5,2)      [default: 0.00, note: "not null"]
+  last_accessed_at timestamptz       [null]
+  enrolled_at      timestamptz       [default: `now()`, note: "not null"]
+  completed_at     timestamptz       [null]
+  expired_at       timestamptz       [null]
+}
+
+Table bundles {
+  id            uuid         [pk, default: `uuidv7()`]
+  instructor_id uuid         [ref: > users.id, note: "not null - restrict delete"]
+  slug          varchar(255) [unique, note: "not null"]
+
+  title         varchar(255) [note: "not null"]
+  subtitle      varchar(255) [null]
+  description   text [null]
+
+  thumbnail_url varchar(512) [null]
+
+  is_free       boolean      [default: false, note: "not null"]
+  price_cents   int          [default: 0, note: "not null"]
+  currency      char(3)      [default: "EUR", note: "not null"]
+
+  is_published  boolean      [default: false, note: "not null"]
+  sort_order    smallint     [default: 0, note: "not null"]
+  student_count int          [default: 0, note: "not null"]
+
+  created_at    timestamptz  [default: `now()`, note: "not null"]
+  updated_at    timestamptz  [null]
+  deleted_at    timestamptz  [null]
+
+  indexes {
+    instructor_id [name: "idx_bundles_instructor_id"]
+    is_published  [name: "idx_bundles_is_published"]
+  }
+}
+
+Table bundle_courses {
+  bundle_id   uuid        [ref: > bundles.id, note: "cascade delete"]
+  course_id   uuid        [ref: > courses.id, note: "cascade delete"]
+  sort_order  smallint    [default: 10, note: "not null"]
+  assigned_at timestamptz [default: `now()`, note: "not null"]
+
+  indexes {
+    (bundle_id, course_id) [pk]
+  }
 }
 
 // ================================================================================

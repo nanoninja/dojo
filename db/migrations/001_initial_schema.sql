@@ -488,6 +488,61 @@ CREATE INDEX idx_ce_user_id   ON course_enrollments (user_id);
 CREATE INDEX idx_ce_course_id ON course_enrollments (course_id);
 CREATE INDEX idx_ce_status    ON course_enrollments (status);
 
+-- BUNDLES =====================================================
+
+CREATE TABLE bundles (
+    -- Identity
+    id            UUID         PRIMARY KEY NOT NULL DEFAULT uuidv7(),
+    instructor_id UUID         NOT NULL,
+    slug          VARCHAR(255) NOT NULL,
+
+    -- Content
+    title         VARCHAR(255) NOT NULL,
+    subtitle      VARCHAR(255) NULL,
+    description   TEXT NULL,
+
+    -- Media
+    thumbnail_url VARCHAR(512) NULL,
+
+    -- Pricing
+    is_free       BOOLEAN      NOT NULL DEFAULT false,
+    price_cents   INT          NOT NULL DEFAULT 0,
+    currency      CHAR(3)      NOT NULL DEFAULT 'EUR',
+
+    -- Visibility
+    is_published  BOOLEAN     NOT NULL DEFAULT false,
+    sort_order    SMALLINT    NOT NULL DEFAULT 0,
+
+    -- Stats (denormalized)
+    student_count INT         NOT NULL DEFAULT 0,
+
+    -- Timestamps
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ NULL,
+    deleted_at    TIMESTAMPTZ NULL,
+
+    -- CONSTRAINT pk_bundles PRIMARY KEY (id),
+    CONSTRAINT uq_bundles_slug UNIQUE (slug),
+    CONSTRAINT fk_bundles_instructor_id
+        FOREIGN KEY (instructor_id) REFERENCES users(id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_bundles_instructor_id ON bundles (instructor_id);
+CREATE INDEX idx_bundles_is_published  ON bundles (is_published);
+
+CREATE TABLE bundle_courses (
+    bundle_id UUID NOT NULL,
+    course_id UUID NOT NULL,
+    sort_order SMALLINT NOT NULL DEFAULT 10,
+    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT pk_bundle_courses PRIMARY KEY (bundle_id, course_id),
+    CONSTRAINT fk_bc_bundle_id
+        FOREIGN KEY (bundle_id) REFERENCES bundles(id) ON DELETE CASCADE,
+    CONSTRAINT fk_bc_course_id
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+);
+
 -- GOOSE DOWN ==================================================
 
 -- +goose Down
@@ -504,6 +559,8 @@ DROP INDEX IF EXISTS idx_lessons_chapter_id;
 DROP INDEX IF EXISTS idx_ce_status;
 DROP INDEX IF EXISTS idx_ce_course_id;
 DROP INDEX IF EXISTS idx_ce_user_id;
+DROP INDEX IF EXISTS idx_bundles_is_published;
+DROP INDEX IF EXISTS idx_bundles_instructor_id;
 
 DROP TRIGGER IF EXISTS sync_category_course_count_on_assignment ON courses_categories;
 DROP TRIGGER IF EXISTS sync_chapter_duration_on_lesson ON lessons;
@@ -514,6 +571,8 @@ DROP TRIGGER IF EXISTS update_chapters_updated_at ON chapters;
 DROP TRIGGER IF EXISTS update_courses_updated_at ON courses;
 DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 
+DROP TABLE IF EXISTS bundle_courses;
+DROP TABLE IF EXISTS bundles;
 DROP TABLE IF EXISTS course_enrollments;
 DROP TABLE IF EXISTS courses_tags;
 DROP TABLE IF EXISTS courses_categories;
