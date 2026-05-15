@@ -437,3 +437,44 @@ func (m *mockCourseService) SetTags(_ context.Context, _ string, _ []string) err
 func (m *mockCourseService) Delete(_ context.Context, _ string) error {
 	return m.deleteErr
 }
+
+// ============================================================================
+// mockEnrollmentService
+// ============================================================================
+
+type mockEnrollmentService struct {
+	enrollment  *model.CourseEnrollment
+	enrollments []model.CourseEnrollment
+	getErr      error
+	enrollErr   error
+	updateErr   error
+	deleteErr   error
+}
+
+func (m *mockEnrollmentService) List(_ context.Context, _ store.EnrollmentFilter) ([]model.CourseEnrollment, error) {
+	return m.enrollments, m.getErr
+}
+
+func (m *mockEnrollmentService) GetByID(_ context.Context, _ string) (*model.CourseEnrollment, error) {
+	return m.enrollment, m.getErr
+}
+
+func (m *mockEnrollmentService) Enroll(_ context.Context, userID, courseID string) (*model.CourseEnrollment, error) {
+	if m.enrollErr != nil {
+		return nil, m.enrollErr
+	}
+	return &model.CourseEnrollment{
+		ID:       "01966b0a-eeee-7abc-def0-000000000099",
+		UserID:   userID,
+		CourseID: courseID,
+		Status:   model.EnrollmentStatusActive,
+	}, nil
+}
+
+func (m *mockEnrollmentService) UpdateStatus(_ context.Context, _ string, _ model.EnrollmentStatus) error {
+	return m.updateErr
+}
+
+func (m *mockEnrollmentService) Delete(_ context.Context, _ string) error {
+	return m.deleteErr
+}
