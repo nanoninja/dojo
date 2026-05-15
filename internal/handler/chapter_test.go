@@ -4,6 +4,7 @@
 package handler_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,6 +15,44 @@ import (
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
 )
+
+// ============================================================================
+// mockChapterService
+// ============================================================================
+
+type mockChapterService struct {
+	chapter   *model.Chapter
+	chapters  []model.Chapter
+	getErr    error
+	createErr error
+	updateErr error
+	deleteErr error
+}
+
+func (m *mockChapterService) List(_ context.Context, _ string) ([]model.Chapter, error) {
+	return m.chapters, m.getErr
+}
+
+func (m *mockChapterService) GetByID(_ context.Context, _ string) (*model.Chapter, error) {
+	return m.chapter, m.getErr
+}
+
+func (m *mockChapterService) GetBySlug(_ context.Context, _, _ string) (*model.Chapter, error) {
+	return m.chapter, m.getErr
+}
+
+func (m *mockChapterService) Create(_ context.Context, c *model.Chapter) error {
+	c.ID = "01966b0a-cccc-7abc-def0-000000000003"
+	return m.createErr
+}
+
+func (m *mockChapterService) Update(_ context.Context, _ *model.Chapter) error {
+	return m.updateErr
+}
+
+func (m *mockChapterService) Delete(_ context.Context, _ string) error {
+	return m.deleteErr
+}
 
 const testChapterID = "01966b0a-cccc-7abc-def0-000000000003"
 

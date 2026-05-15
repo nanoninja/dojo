@@ -4,6 +4,7 @@
 package handler_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,6 +15,44 @@ import (
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
 )
+
+// ============================================================================
+// mockCategoryService
+// ============================================================================
+
+type mockCategoryService struct {
+	category   *model.Category
+	categories []model.Category
+	getErr     error
+	createErr  error
+	updateErr  error
+	deleteErr  error
+}
+
+func (m *mockCategoryService) List(_ context.Context) ([]model.Category, error) {
+	return m.categories, m.getErr
+}
+
+func (m *mockCategoryService) GetByID(_ context.Context, _ string) (*model.Category, error) {
+	return m.category, m.getErr
+}
+
+func (m *mockCategoryService) GetBySlug(_ context.Context, _ string) (*model.Category, error) {
+	return m.category, m.getErr
+}
+
+func (m *mockCategoryService) Create(_ context.Context, c *model.Category) error {
+	c.ID = "01966b0a-bbbb-7abc-def0-000000000002"
+	return m.createErr
+}
+
+func (m *mockCategoryService) Update(_ context.Context, _ *model.Category) error {
+	return m.updateErr
+}
+
+func (m *mockCategoryService) Delete(_ context.Context, _ string) error {
+	return m.deleteErr
+}
 
 const testCategoryID = "01966b0a-bbbb-7abc-def0-000000000002"
 

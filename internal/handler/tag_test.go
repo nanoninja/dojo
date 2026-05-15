@@ -4,6 +4,7 @@
 package handler_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,6 +15,44 @@ import (
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
 )
+
+// ============================================================================
+// mockTagService
+// ============================================================================
+
+type mockTagService struct {
+	tag       *model.Tag
+	tags      []model.Tag
+	getErr    error
+	createErr error
+	updateErr error
+	deleteErr error
+}
+
+func (m *mockTagService) List(_ context.Context) ([]model.Tag, error) {
+	return m.tags, m.getErr
+}
+
+func (m *mockTagService) GetByID(_ context.Context, _ string) (*model.Tag, error) {
+	return m.tag, m.getErr
+}
+
+func (m *mockTagService) GetBySlug(_ context.Context, _ string) (*model.Tag, error) {
+	return m.tag, m.getErr
+}
+
+func (m *mockTagService) Create(_ context.Context, t *model.Tag) error {
+	t.ID = "01966b0a-aaaa-7abc-def0-000000000001"
+	return m.createErr
+}
+
+func (m *mockTagService) Update(_ context.Context, _ *model.Tag) error {
+	return m.updateErr
+}
+
+func (m *mockTagService) Delete(_ context.Context, _ string) error {
+	return m.deleteErr
+}
 
 const testTagID = "01966b0a-aaaa-7abc-def0-000000000001"
 

@@ -4,6 +4,7 @@
 package handler_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,7 +14,49 @@ import (
 	"github.com/nanoninja/dojo/internal/handler"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
+	"github.com/nanoninja/dojo/internal/store"
 )
+
+// ============================================================================
+// mockEnrollmentService
+// ============================================================================
+
+type mockEnrollmentService struct {
+	enrollment  *model.CourseEnrollment
+	enrollments []model.CourseEnrollment
+	getErr      error
+	enrollErr   error
+	updateErr   error
+	deleteErr   error
+}
+
+func (m *mockEnrollmentService) List(_ context.Context, _ store.EnrollmentFilter) ([]model.CourseEnrollment, error) {
+	return m.enrollments, m.getErr
+}
+
+func (m *mockEnrollmentService) GetByID(_ context.Context, _ string) (*model.CourseEnrollment, error) {
+	return m.enrollment, m.getErr
+}
+
+func (m *mockEnrollmentService) Enroll(_ context.Context, userID, courseID string) (*model.CourseEnrollment, error) {
+	if m.enrollErr != nil {
+		return nil, m.enrollErr
+	}
+	return &model.CourseEnrollment{
+		ID:       "01966b0a-eeee-7abc-def0-000000000099",
+		UserID:   userID,
+		CourseID: courseID,
+		Status:   model.EnrollmentStatusActive,
+	}, nil
+}
+
+func (m *mockEnrollmentService) UpdateStatus(_ context.Context, _ string, _ model.EnrollmentStatus) error {
+	return m.updateErr
+}
+
+func (m *mockEnrollmentService) Delete(_ context.Context, _ string) error {
+	return m.deleteErr
+}
 
 const (
 	testEnrollmentID          = "01966b0a-eeee-7abc-def0-000000000099"
@@ -85,6 +128,8 @@ func TestEnrollmentHandler_GetByID_Found(t *testing.T) {
 	req := httptest.NewRequest("GET", "/enrollments/"+testEnrollmentID, nil)
 
 	serve(newEnrollmentHandler(s).GetByID, rec, withChiParam(req, "id", testEnrollmentID))
+
+	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
 func TestEnrollmentHandler_GetByID_NotFound(t *testing.T) {
@@ -103,6 +148,8 @@ func TestEnrollmentHandler_GetByID_InvalidUUID(t *testing.T) {
 	req := httptest.NewRequest("GET", "/enrollments/bad", nil)
 
 	serve(newEnrollmentHandler(s).GetByID, rec, req)
+
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
 func TestEnrollmentHandler_Enroll(t *testing.T) {

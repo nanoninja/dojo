@@ -4,6 +4,7 @@
 package handler_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,7 +14,56 @@ import (
 	"github.com/nanoninja/dojo/internal/handler"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
+	"github.com/nanoninja/dojo/internal/store"
 )
+
+// ============================================================================
+// mockCourseService
+// ============================================================================
+
+type mockCourseService struct {
+	course           *model.Course
+	courses          []model.Course
+	getErr           error
+	createErr        error
+	updateErr        error
+	deleteErr        error
+	setCategoriesErr error
+	setTagsErr       error
+}
+
+func (m *mockCourseService) List(_ context.Context, _ store.CourseFilter) ([]model.Course, error) {
+	return m.courses, m.getErr
+}
+
+func (m *mockCourseService) GetByID(_ context.Context, _ string) (*model.Course, error) {
+	return m.course, m.getErr
+}
+
+func (m *mockCourseService) GetBySlug(_ context.Context, _ string) (*model.Course, error) {
+	return m.course, m.getErr
+}
+
+func (m *mockCourseService) Create(_ context.Context, c *model.Course, _ []string, _ string, _ []string) error {
+	c.ID = "01966b0a-ffff-7abc-def0-000000000006"
+	return m.createErr
+}
+
+func (m *mockCourseService) Update(_ context.Context, _ *model.Course) error {
+	return m.updateErr
+}
+
+func (m *mockCourseService) SetCategories(_ context.Context, _ string, _ []string, _ string) error {
+	return m.setCategoriesErr
+}
+
+func (m *mockCourseService) SetTags(_ context.Context, _ string, _ []string) error {
+	return m.setTagsErr
+}
+
+func (m *mockCourseService) Delete(_ context.Context, _ string) error {
+	return m.deleteErr
+}
 
 const testCourseID = "01966b0a-ffff-7abc-def0-000000000006"
 

@@ -4,6 +4,7 @@
 package handler_test
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +18,63 @@ import (
 	"github.com/nanoninja/dojo/internal/handler"
 	"github.com/nanoninja/dojo/internal/service"
 )
+
+// ============================================================================
+// mockAuthService
+// ============================================================================
+
+type mockAuthService struct {
+	loginResult      *service.LoginResult
+	loginErr         error
+	logoutErr        error
+	verifyAccErr     error
+	sendResetErr     error
+	resetPassErr     error
+	sendOTPErr       error
+	verifyOTPPair    *service.TokenPair
+	verifyOTPErr     error
+	refreshPair      *service.TokenPair
+	refreshErr       error
+	lastRefreshToken string
+	sendVerifyErr    error
+}
+
+func (m *mockAuthService) Login(_ context.Context, _, _, _, _ string) (*service.LoginResult, error) {
+	return m.loginResult, m.loginErr
+}
+
+func (m *mockAuthService) Logout(_ context.Context, _ string) error {
+	return m.logoutErr
+}
+
+func (m *mockAuthService) SendAccountVerification(_ context.Context, _ string) error {
+	return m.sendVerifyErr
+}
+
+func (m *mockAuthService) VerifyAccount(_ context.Context, _, _ string) error {
+	return m.verifyAccErr
+}
+
+func (m *mockAuthService) SendPasswordReset(_ context.Context, _ string) error {
+	return m.sendResetErr
+}
+
+func (m *mockAuthService) ResetPassword(_ context.Context, _, _, _ string) error {
+	return m.resetPassErr
+}
+
+func (m *mockAuthService) SendOTP(_ context.Context, _ string) error {
+	return m.sendOTPErr
+}
+
+func (m *mockAuthService) VerifyOTP(_ context.Context, _, _ string) (*service.TokenPair, error) {
+	return m.verifyOTPPair, m.verifyOTPErr
+}
+
+func (m *mockAuthService) RefreshToken(_ context.Context, token string) (*service.TokenPair, error) {
+	m.lastRefreshToken = token
+	return m.refreshPair, m.refreshErr
+}
 
 func newAuthHandler(auth *mockAuthService, user *mockUserService) *handler.AuthHandler {
 	return newAuthHandlerWithTransport(auth, user, config.AuthTransport{

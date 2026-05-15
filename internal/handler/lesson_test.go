@@ -4,6 +4,7 @@
 package handler_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,6 +15,67 @@ import (
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
 )
+
+// ============================================================================
+// mockLessonService
+// ============================================================================
+
+type mockLessonService struct {
+	lesson    *model.Lesson
+	lessons   []model.Lesson
+	resource  *model.LessonResource
+	resources []model.LessonResource
+	getErr    error
+	createErr error
+	updateErr error
+	deleteErr error
+}
+
+func (m *mockLessonService) List(_ context.Context, _ string) ([]model.Lesson, error) {
+	return m.lessons, m.getErr
+}
+
+func (m *mockLessonService) GetByID(_ context.Context, _ string) (*model.Lesson, error) {
+	return m.lesson, m.getErr
+}
+
+func (m *mockLessonService) GetBySlug(_ context.Context, _, _ string) (*model.Lesson, error) {
+	return m.lesson, m.getErr
+}
+
+func (m *mockLessonService) Create(_ context.Context, l *model.Lesson) error {
+	l.ID = "01966b0a-dddd-7abc-def0-000000000004"
+	return m.createErr
+}
+
+func (m *mockLessonService) Update(_ context.Context, _ *model.Lesson) error {
+	return m.updateErr
+}
+
+func (m *mockLessonService) Delete(_ context.Context, _ string) error {
+	return m.deleteErr
+}
+
+func (m *mockLessonService) ListResources(_ context.Context, _ string) ([]model.LessonResource, error) {
+	return m.resources, m.getErr
+}
+
+func (m *mockLessonService) GetResourceByID(_ context.Context, _ string) (*model.LessonResource, error) {
+	return m.resource, m.getErr
+}
+
+func (m *mockLessonService) AddResource(_ context.Context, r *model.LessonResource) error {
+	r.ID = "01966b0a-eeee-7abc-def0-000000000005"
+	return m.createErr
+}
+
+func (m *mockLessonService) UpdateResource(_ context.Context, _ *model.LessonResource) error {
+	return m.updateErr
+}
+
+func (m *mockLessonService) RemoveResource(_ context.Context, _ string) error {
+	return m.deleteErr
+}
 
 const (
 	testLessonID   = "01966b0a-dddd-7abc-def0-000000000004"
