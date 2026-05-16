@@ -5,6 +5,7 @@ package service_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/nanoninja/assert"
@@ -12,6 +13,84 @@ import (
 	"github.com/nanoninja/dojo/internal/service"
 	"github.com/nanoninja/dojo/internal/store"
 )
+
+// ============================================================================
+// fakeEnrollmentStore
+// ============================================================================
+
+type fakeEnrollmentStore struct {
+	enrollments map[string]*model.CourseEnrollment
+	seq         int
+}
+
+func newFakeEnrollmentStore() *fakeEnrollmentStore {
+	return &fakeEnrollmentStore{enrollments: map[string]*model.CourseEnrollment{}}
+}
+
+func (f *fakeEnrollmentStore) nextID() string {
+	f.seq++
+	return fmt.Sprintf("enrollment-%d", f.seq)
+}
+
+func (f *fakeEnrollmentStore) List(_ context.Context, filter store.EnrollmentFilter) ([]model.CourseEnrollment, error) {
+	result := make([]model.CourseEnrollment, 0)
+	for _, e := range f.enrollments {
+		if filter.UserID != "" && e.UserID != filter.UserID {
+			continue
+		}
+		if filter.CourseID != "" && e.CourseID != filter.CourseID {
+			continue
+		}
+		if filter.Status != "" && e.Status != filter.Status {
+			continue
+		}
+		result = append(result, *e)
+	}
+	return result, nil
+}
+
+func (f *fakeEnrollmentStore) FindByID(_ context.Context, id string) (*model.CourseEnrollment, error) {
+	e, ok := f.enrollments[id]
+	if !ok {
+		return nil, nil
+	}
+	cp := *e
+	return &cp, nil
+}
+
+func (f *fakeEnrollmentStore) FindByUserAndCourse(_ context.Context, userID, courseID string) (*model.CourseEnrollment, error) {
+	for _, e := range f.enrollments {
+		if e.UserID == userID && e.CourseID == courseID {
+			cp := *e
+			return &cp, nil
+		}
+	}
+	return nil, nil
+}
+
+func (f *fakeEnrollmentStore) Create(_ context.Context, e *model.CourseEnrollment) error {
+	e.ID = f.nextID()
+	cp := *e
+	f.enrollments[e.ID] = &cp
+	return nil
+}
+
+func (f *fakeEnrollmentStore) Update(_ context.Context, e *model.CourseEnrollment) error {
+	if _, ok := f.enrollments[e.ID]; !ok {
+		return fmt.Errorf("enrollment not found")
+	}
+	cp := *e
+	f.enrollments[e.ID] = &cp
+	return nil
+}
+
+func (f *fakeEnrollmentStore) Delete(_ context.Context, id string) error {
+	if _, ok := f.enrollments[id]; !ok {
+		return fmt.Errorf("enrollment not found")
+	}
+	delete(f.enrollments, id)
+	return nil
+}
 
 func newEnrollmentService(enrollments store.EnrollmentStore) service.EnrollmentService {
 	return service.NewEnrollmentService(enrollments)

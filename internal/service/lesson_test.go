@@ -5,12 +5,145 @@ package service_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/nanoninja/assert"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
 )
+
+// ============================================================================
+// fakeLessonStore
+// ============================================================================
+
+type fakeLessonStore struct {
+	lessons map[string]*model.Lesson
+	seq     int
+}
+
+func newFakeLessonStore() *fakeLessonStore {
+	return &fakeLessonStore{lessons: make(map[string]*model.Lesson)}
+}
+
+func (f *fakeLessonStore) nextID() string {
+	f.seq++
+	return fmt.Sprintf("lesson-%d", f.seq)
+}
+
+func (f *fakeLessonStore) List(_ context.Context, chapterID string) ([]model.Lesson, error) {
+	result := make([]model.Lesson, 0)
+	for _, l := range f.lessons {
+		if l.ChapterID == chapterID {
+			result = append(result, *l)
+		}
+	}
+	return result, nil
+}
+
+func (f *fakeLessonStore) FindByID(_ context.Context, id string) (*model.Lesson, error) {
+	l, ok := f.lessons[id]
+	if !ok {
+		return nil, nil
+	}
+	cp := *l
+	return &cp, nil
+}
+
+func (f *fakeLessonStore) FindBySlug(_ context.Context, chapterID, slug string) (*model.Lesson, error) {
+	for _, l := range f.lessons {
+		if l.ChapterID == chapterID && l.Slug == slug {
+			cp := *l
+			return &cp, nil
+		}
+	}
+	return nil, nil
+}
+
+func (f *fakeLessonStore) Create(_ context.Context, l *model.Lesson) error {
+	l.ID = f.nextID()
+	cp := *l
+	f.lessons[l.ID] = &cp
+	return nil
+}
+
+func (f *fakeLessonStore) Update(_ context.Context, l *model.Lesson) error {
+	if _, ok := f.lessons[l.ID]; !ok {
+		return fmt.Errorf("lesson not found")
+	}
+	cp := *l
+	f.lessons[l.ID] = &cp
+	return nil
+}
+
+func (f *fakeLessonStore) Delete(_ context.Context, id string) error {
+	if _, ok := f.lessons[id]; !ok {
+		return fmt.Errorf("lesson not found")
+	}
+	delete(f.lessons, id)
+	return nil
+}
+
+// ============================================================================
+// fakeLessonResourceStore
+// ============================================================================
+
+type fakeLessonResourceStore struct {
+	resources map[string]*model.LessonResource
+	seq       int
+}
+
+func newFakeLessonResourceStore() *fakeLessonResourceStore {
+	return &fakeLessonResourceStore{resources: make(map[string]*model.LessonResource)}
+}
+
+func (f *fakeLessonResourceStore) nextID() string {
+	f.seq++
+	return fmt.Sprintf("res-%d", f.seq)
+}
+
+func (f *fakeLessonResourceStore) List(_ context.Context, lessonID string) ([]model.LessonResource, error) {
+	result := make([]model.LessonResource, 0)
+	for _, r := range f.resources {
+		if r.LessonID == lessonID {
+			result = append(result, *r)
+		}
+	}
+	return result, nil
+}
+
+func (f *fakeLessonResourceStore) FindByID(_ context.Context, id string) (*model.LessonResource, error) {
+	r, ok := f.resources[id]
+	if !ok {
+		return nil, nil
+	}
+	cp := *r
+	return &cp, nil
+}
+
+func (f *fakeLessonResourceStore) Create(_ context.Context, r *model.LessonResource) error {
+	r.ID = f.nextID()
+	cp := *r
+	f.resources[r.ID] = &cp
+	return nil
+}
+
+func (f *fakeLessonResourceStore) Update(_ context.Context, r *model.LessonResource) error {
+	if _, ok := f.resources[r.ID]; !ok {
+		return fmt.Errorf("resource not found")
+	}
+	cp := *r
+	f.resources[r.ID] = &cp
+	return nil
+}
+
+func (f *fakeLessonResourceStore) Delete(_ context.Context, id string) error {
+	if _, ok := f.resources[id]; !ok {
+		return fmt.Errorf("resource not found")
+	}
+	delete(f.resources, id)
+	return nil
+}
 
 const testChapterID = "01966b0a-1111-7abc-def0-aaaaaaaaaaaa"
 

@@ -5,12 +5,84 @@ package service_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/nanoninja/assert"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
 )
+
+// ============================================================================
+// fakeChapterStore
+// ============================================================================
+
+type fakeChapterStore struct {
+	chapters map[string]*model.Chapter
+	seq      int
+}
+
+func newFakeChapterStore() *fakeChapterStore {
+	return &fakeChapterStore{chapters: make(map[string]*model.Chapter)}
+}
+
+func (f *fakeChapterStore) nextID() string {
+	f.seq++
+	return fmt.Sprintf("chapter-%d", f.seq)
+}
+
+func (f *fakeChapterStore) List(_ context.Context, courseID string) ([]model.Chapter, error) {
+	result := make([]model.Chapter, 0)
+	for _, c := range f.chapters {
+		if c.CourseID == courseID {
+			result = append(result, *c)
+		}
+	}
+	return result, nil
+}
+
+func (f *fakeChapterStore) FindByID(_ context.Context, id string) (*model.Chapter, error) {
+	c, ok := f.chapters[id]
+	if !ok {
+		return nil, nil
+	}
+	cp := *c
+	return &cp, nil
+}
+
+func (f *fakeChapterStore) FindBySlug(_ context.Context, courseID, slug string) (*model.Chapter, error) {
+	for _, c := range f.chapters {
+		if c.CourseID == courseID && c.Slug == slug {
+			cp := *c
+			return &cp, nil
+		}
+	}
+	return nil, nil
+}
+
+func (f *fakeChapterStore) Create(_ context.Context, c *model.Chapter) error {
+	c.ID = f.nextID()
+	cp := *c
+	f.chapters[c.ID] = &cp
+	return nil
+}
+
+func (f *fakeChapterStore) Update(_ context.Context, c *model.Chapter) error {
+	if _, ok := f.chapters[c.ID]; !ok {
+		return fmt.Errorf("chapter not found")
+	}
+	cp := *c
+	f.chapters[c.ID] = &cp
+	return nil
+}
+
+func (f *fakeChapterStore) Delete(_ context.Context, id string) error {
+	if _, ok := f.chapters[id]; !ok {
+		return fmt.Errorf("chapter not found")
+	}
+	delete(f.chapters, id)
+	return nil
+}
 
 const testCourseID = "01966b0a-0000-7abc-def0-000000000000"
 

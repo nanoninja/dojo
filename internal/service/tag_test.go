@@ -5,12 +5,82 @@ package service_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/nanoninja/assert"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
 )
+
+// ============================================================================
+// fakeTagStore
+// ============================================================================
+
+type fakeTagStore struct {
+	tags map[string]*model.Tag
+	seq  int
+}
+
+func newFakeTagStore() *fakeTagStore {
+	return &fakeTagStore{tags: make(map[string]*model.Tag)}
+}
+
+func (f *fakeTagStore) nextID() string {
+	f.seq++
+	return fmt.Sprintf("tag-%d", f.seq)
+}
+
+func (f *fakeTagStore) List(_ context.Context) ([]model.Tag, error) {
+	result := make([]model.Tag, 0, len(f.tags))
+	for _, t := range f.tags {
+		result = append(result, *t)
+	}
+	return result, nil
+}
+
+func (f *fakeTagStore) FindByID(_ context.Context, id string) (*model.Tag, error) {
+	t, ok := f.tags[id]
+	if !ok {
+		return nil, nil
+	}
+	cp := *t
+	return &cp, nil
+}
+
+func (f *fakeTagStore) FindBySlug(_ context.Context, slug string) (*model.Tag, error) {
+	for _, t := range f.tags {
+		if t.Slug == slug {
+			cp := *t
+			return &cp, nil
+		}
+	}
+	return nil, nil
+}
+
+func (f *fakeTagStore) Create(_ context.Context, t *model.Tag) error {
+	t.ID = f.nextID()
+	cp := *t
+	f.tags[t.ID] = &cp
+	return nil
+}
+
+func (f *fakeTagStore) Update(_ context.Context, t *model.Tag) error {
+	if _, ok := f.tags[t.ID]; !ok {
+		return fmt.Errorf("tag not found")
+	}
+	cp := *t
+	f.tags[t.ID] = &cp
+	return nil
+}
+
+func (f *fakeTagStore) Delete(_ context.Context, id string) error {
+	if _, ok := f.tags[id]; !ok {
+		return fmt.Errorf("tag not found")
+	}
+	delete(f.tags, id)
+	return nil
+}
 
 func newTagService(ts *fakeTagStore) service.TagService {
 	return service.NewTagService(ts)
