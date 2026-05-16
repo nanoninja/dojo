@@ -57,6 +57,9 @@ func (m *mockBundleService) SetCourses(_ context.Context, _ string, _ []string) 
 }
 
 func (m *mockBundleService) Delete(_ context.Context, _ string) error {
+	if m.getErr != nil {
+		return m.getErr
+	}
 	return m.saveErr
 }
 
@@ -302,7 +305,7 @@ func TestBundleHandler_Delete_InvalidUUID(t *testing.T) {
 }
 
 func TestBundleHandler_Delete_NotFound(t *testing.T) {
-	s := &mockBundleService{saveErr: service.ErrBundleNotFound}
+	s := &mockBundleService{getErr: service.ErrBundleNotFound}
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("DELETE", "/bundles/"+testBundleID, nil)
 

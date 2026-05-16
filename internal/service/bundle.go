@@ -130,5 +130,9 @@ func (s *bundleService) SetCourses(ctx context.Context, bundleID string, courseI
 }
 
 func (s *bundleService) Delete(ctx context.Context, id string) error {
+	if _, err := s.GetByID(ctx, id); err != nil {
+		return err
+	}
 	return s.bundles.Delete(ctx, id)
+
 }
