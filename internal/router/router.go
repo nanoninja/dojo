@@ -36,6 +36,7 @@ type Handlers struct {
 	Chapter    *handler.ChapterHandler
 	Lesson     *handler.LessonHandler
 	Enrollment *handler.EnrollmentHandler
+	Bundle     *handler.BundleHandler
 }
 
 // New builds and returns the main HTTP router with all middleware and routes configured.
@@ -194,6 +195,10 @@ func New(
 				r.Patch("/enrollments/{id}/status", httputil.Handle(handlers.Enrollment.UpdateStatus, logger))
 				r.Delete("/enrollments/{id}", httputil.Handle(handlers.Enrollment.Delete, logger))
 
+				// Bundles — read
+				r.Get("/bundles", httputil.Handle(handlers.Bundle.List, logger))
+				r.Get("/bundles/{id}", httputil.Handle(handlers.Bundle.GetByID, logger))
+
 				// Instructor+ — gestion des cours, chapitres, leçons
 				r.Group(func(r chi.Router) {
 					r.Use(mw.RequireRole(model.RoleInstructor))
@@ -214,6 +219,11 @@ func New(
 					r.Post("/lessons/{id}/resources", httputil.Handle(handlers.Lesson.AddResource, logger))
 					r.Put("/lessons/resources/{id}", httputil.Handle(handlers.Lesson.UpdateResource, logger))
 					r.Delete("/lessons/resources/{id}", httputil.Handle(handlers.Lesson.RemoveResource, logger))
+
+					r.Post("/bundles", httputil.Handle(handlers.Bundle.Create, logger))
+					r.Put("/bundles/{id}", httputil.Handle(handlers.Bundle.Update, logger))
+					r.Put("/bundles/{id}/courses", httputil.Handle(handlers.Bundle.SetCourses, logger))
+					r.Delete("/bundles/{id}", httputil.Handle(handlers.Bundle.Delete, logger))
 				})
 
 				// Admin — gestion des catégories et tags

@@ -50,6 +50,11 @@ func toFault(err error) error {
 	case errors.Is(err, service.ErrAlreadyEnrolled):
 		return fault.Conflict("user already enrolled in this course", err)
 
+	case errors.Is(err, service.ErrBundleNotFound):
+		return fault.NotFound("bundle", err)
+	case errors.Is(err, service.ErrBundleSlugTaken):
+		return fault.Conflict("bundle slug already taken", err)
+
 	default:
 		return fault.Internal(err)
 	}
