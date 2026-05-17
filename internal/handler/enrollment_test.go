@@ -12,6 +12,7 @@ import (
 	"github.com/nanoninja/assert"
 	"github.com/nanoninja/assert/require"
 	"github.com/nanoninja/dojo/internal/handler"
+	"github.com/nanoninja/dojo/internal/httputil"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
 	"github.com/nanoninja/dojo/internal/store"
@@ -30,8 +31,8 @@ type mockEnrollmentService struct {
 	deleteErr   error
 }
 
-func (m *mockEnrollmentService) List(_ context.Context, _ store.EnrollmentFilter) ([]model.CourseEnrollment, error) {
-	return m.enrollments, m.getErr
+func (m *mockEnrollmentService) List(_ context.Context, _ store.EnrollmentFilter) ([]model.CourseEnrollment, int, error) {
+	return m.enrollments, len(m.enrollments), m.getErr
 }
 
 func (m *mockEnrollmentService) GetByID(_ context.Context, _ string) (*model.CourseEnrollment, error) {
@@ -83,9 +84,10 @@ func TestEnrollmentHandler_List(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, rec.Code)
 
-	var body []map[string]any
+	var body httputil.PageResponse[model.CourseEnrollment]
 	decodeJSON(t, rec, &body)
-	assert.Len(t, body, 1)
+	assert.Len(t, body.Data, 1)
+	assert.Equal(t, 1, body.Meta.Total)
 }
 
 func TestEnrollmentHandler_List_InvalidUserID(t *testing.T) {

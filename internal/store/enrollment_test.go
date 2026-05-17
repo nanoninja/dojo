@@ -112,37 +112,41 @@ func TestEnrollmentStore_List(t *testing.T) {
 	assert.NoError(t, s.Create(ctx, newTestEnrollment(instructorID, course2.ID)))
 
 	t.Run("no filter", func(t *testing.T) {
-		enrollments, err := s.List(ctx, store.EnrollmentFilter{})
+		enrollments, total, err := s.List(ctx, store.EnrollmentFilter{})
 
 		assert.NoError(t, err)
 		assert.Len(t, enrollments, 2)
+		assert.Equal(t, 2, total)
 	})
 
 	t.Run("filter by user", func(t *testing.T) {
-		enrollemnts, err := s.List(ctx, store.EnrollmentFilter{
+		enrollments, total, err := s.List(ctx, store.EnrollmentFilter{
 			UserID: instructorID,
 		})
 
 		assert.NoError(t, err)
-		assert.Len(t, enrollemnts, 2)
+		assert.Len(t, enrollments, 2)
+		assert.Equal(t, 2, total)
 	})
 
 	t.Run("filter by course", func(t *testing.T) {
-		enrollments, err := s.List(ctx, store.EnrollmentFilter{
+		enrollments, total, err := s.List(ctx, store.EnrollmentFilter{
 			CourseID: course1.ID,
 		})
 
 		assert.NoError(t, err)
 		assert.Len(t, enrollments, 1)
+		assert.Equal(t, 1, total)
 	})
 
 	t.Run("filter by status", func(t *testing.T) {
-		enrollments, err := s.List(ctx, store.EnrollmentFilter{
+		enrollments, total, err := s.List(ctx, store.EnrollmentFilter{
 			Status: model.EnrollmentStatusActive,
 		})
 
 		assert.NoError(t, err)
 		assert.Len(t, enrollments, 2)
+		assert.Equal(t, 2, total)
 	})
 }
 

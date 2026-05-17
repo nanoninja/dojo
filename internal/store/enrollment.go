@@ -23,8 +23,8 @@ type EnrollmentFilter struct {
 
 // EnrollmentStore defines persistence operations for course enrollments.
 type EnrollmentStore interface {
-	// List returns enrollments matching the given filter.
-	List(ctx context.Context, f EnrollmentFilter) ([]model.CourseEnrollment, error)
+	// List returns enrollments matching the given filter and their total count without pagination.
+	List(ctx context.Context, f EnrollmentFilter) ([]model.CourseEnrollment, int, error)
 
 	// FindByID returns an enrollment by its ID, or nil if not found.
 	FindByID(ctx context.Context, id string) (*model.CourseEnrollment, error)
@@ -54,45 +54,47 @@ func NewEnrollmentStore(db database.Querier) EnrollmentStore {
 	return &enrollmentStore{db: db}
 }
 
-func (s *enrollmentStore) List(ctx context.Context, f EnrollmentFilter) ([]model.CourseEnrollment, error) {
-	query := `SELECT * FROM course_enrollments WHERE true`
+func (s *enrollmentStore) List(ctx context.Context, f EnrollmentFilter) ([]model.CourseEnrollment, int, error) {
+	where := ` WHERE true`
 	args := make([]any, 0, 4)
 
 	if f.UserID != "" {
-		query += ` AND user_id = ?`
+		where += ` AND user_id = ?`
 		args = append(args, f.UserID)
 	}
 	if f.CourseID != "" {
-		query += ` AND course_id = ?`
+		where += ` AND course_id = ?`
 		args = append(args, f.CourseID)
 	}
 	if f.Status != "" {
-		query += ` AND status = ?`
+		where += ` AND status = ?`
 		args = append(args, f.Status)
 	}
 
-	query += ` ORDER BY enrolled_at DESC`
+	var total int
+	countQuery := s.db.Rebind(`SELECT COUNT(*) FROM course_enrollments` + where)
+	if err := s.db.GetContext(ctx, &total, countQuery, args...); err != nil {
+		return nil, 0, err
+	}
 
 	if f.Limit <= 0 {
 		f.Limit = 100
 	}
 
-	query += ` LIMIT ?`
-	args = append(args, f.Limit)
+	query := s.db.Rebind(`SELECT * FROM course_enrollments` + where + ` ORDER BY enrolled_at DESC LIMIT ?`)
+	pageArgs := append(args, f.Limit)
 
 	if f.Offset > 0 {
-		query += ` OFFSET ?`
-		args = append(args, f.Offset)
+		query = s.db.Rebind(`SELECT * FROM course_enrollments` + where + ` ORDER BY enrolled_at DESC LIMIT ? OFFSET ?`)
+		pageArgs = append(pageArgs, f.Offset)
 	}
 
-	query = s.db.Rebind(query)
 	enrollments := make([]model.CourseEnrollment, 0, f.Limit)
-
-	if err := s.db.SelectContext(ctx, &enrollments, query, args...); err != nil {
-		return nil, err
+	if err := s.db.SelectContext(ctx, &enrollments, query, pageArgs...); err != nil {
+		return nil, 0, err
 	}
 
-	return enrollments, nil
+	return enrollments, total, nil
 }
 
 func (s *enrollmentStore) FindByID(ctx context.Context, id string) (*model.CourseEnrollment, error) {

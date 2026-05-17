@@ -19,8 +19,8 @@ var ErrAlreadyEnrolled = errors.New("user already enrolled in this course")
 
 // EnrollmentService defines business operations for course enrollments.
 type EnrollmentService interface {
-	// List returns enrollments matching the given filter.
-	List(ctx context.Context, f store.EnrollmentFilter) ([]model.CourseEnrollment, error)
+	// List returns enrollments matching the given filter and their total count without pagination.
+	List(ctx context.Context, f store.EnrollmentFilter) ([]model.CourseEnrollment, int, error)
 
 	// GetByID returns an enrollment by its ID, or ErrEnrollmentNotFound.
 	GetByID(ctx context.Context, id string) (*model.CourseEnrollment, error)
@@ -44,7 +44,7 @@ func NewEnrollmentService(enrollments store.EnrollmentStore) EnrollmentService {
 	return &enrollmentService{enrollments: enrollments}
 }
 
-func (s *enrollmentService) List(ctx context.Context, f store.EnrollmentFilter) ([]model.CourseEnrollment, error) {
+func (s *enrollmentService) List(ctx context.Context, f store.EnrollmentFilter) ([]model.CourseEnrollment, int, error) {
 	return s.enrollments.List(ctx, f)
 }
 

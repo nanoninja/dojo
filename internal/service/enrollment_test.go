@@ -32,7 +32,7 @@ func (f *fakeEnrollmentStore) nextID() string {
 	return fmt.Sprintf("enrollment-%d", f.seq)
 }
 
-func (f *fakeEnrollmentStore) List(_ context.Context, filter store.EnrollmentFilter) ([]model.CourseEnrollment, error) {
+func (f *fakeEnrollmentStore) List(_ context.Context, filter store.EnrollmentFilter) ([]model.CourseEnrollment, int, error) {
 	result := make([]model.CourseEnrollment, 0)
 	for _, e := range f.enrollments {
 		if filter.UserID != "" && e.UserID != filter.UserID {
@@ -46,7 +46,7 @@ func (f *fakeEnrollmentStore) List(_ context.Context, filter store.EnrollmentFil
 		}
 		result = append(result, *e)
 	}
-	return result, nil
+	return result, len(result), nil
 }
 
 func (f *fakeEnrollmentStore) FindByID(_ context.Context, id string) (*model.CourseEnrollment, error) {
@@ -153,24 +153,27 @@ func TestEnrollmentService_List(t *testing.T) {
 	assert.NoError(t, func() error { _, err := svc.Enroll(ctx, "user-2", "course-1"); return err }())
 
 	t.Run("no filter", func(t *testing.T) {
-		result, err := svc.List(ctx, store.EnrollmentFilter{})
+		result, total, err := svc.List(ctx, store.EnrollmentFilter{})
 
 		assert.NoError(t, err)
 		assert.Len(t, result, 3)
+		assert.Equal(t, 3, total)
 	})
 
 	t.Run("filter by user", func(t *testing.T) {
-		result, err := svc.List(ctx, store.EnrollmentFilter{UserID: "user-1"})
+		result, total, err := svc.List(ctx, store.EnrollmentFilter{UserID: "user-1"})
 
 		assert.NoError(t, err)
 		assert.Len(t, result, 2)
+		assert.Equal(t, 2, total)
 	})
 
 	t.Run("filter by course", func(t *testing.T) {
-		result, err := svc.List(ctx, store.EnrollmentFilter{CourseID: "course-1"})
+		result, total, err := svc.List(ctx, store.EnrollmentFilter{CourseID: "course-1"})
 
 		assert.NoError(t, err)
 		assert.Len(t, result, 2)
+		assert.Equal(t, 2, total)
 	})
 }
 

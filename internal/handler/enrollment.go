@@ -28,6 +28,9 @@ func NewEnrollmentHandler(enrollment service.EnrollmentService) *EnrollmentHandl
 // List
 // ============================================================================
 
+//nolint:unused
+type enrollmentPageResponse = httputil.PageResponse[model.CourseEnrollment]
+
 // List handles GET /api/v1/enrollments
 //
 // @Summary  List enrollments with optional filters
@@ -39,7 +42,7 @@ func NewEnrollmentHandler(enrollment service.EnrollmentService) *EnrollmentHandl
 // @Param    status     query    string  false  "Filter by status"  Enums(active,completed,expired,refunded)
 // @Param    page       query    int     false  "Page number"    default(1)
 // @Param    limit      query    int     false  "Items per page" default(20)
-// @Success  200  {array}   model.CourseEnrollment
+// @Success  200  {object}  enrollmentPageResponse
 // @Failure  400  {object}  fault.ErrorResponse
 // @Failure  500  {object}  fault.ErrorResponse
 // @Router   /api/v1/enrollments [get]
@@ -79,11 +82,12 @@ func (h *EnrollmentHandler) List(w http.ResponseWriter, r *http.Request) error {
 		f.Status = status
 	}
 
-	enrollments, err := h.enrollment.List(r.Context(), f)
+	enrollments, total, err := h.enrollment.List(r.Context(), f)
 	if err != nil {
 		return toFault(err)
 	}
-	return httputil.OK(w, enrollments)
+
+	return httputil.OKPaginated(w, enrollments, page, limit, total)
 }
 
 // ============================================================================

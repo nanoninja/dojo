@@ -1237,10 +1237,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.CourseEnrollment"
-                            }
+                            "$ref": "#/definitions/handler.enrollmentPageResponse"
                         }
                     },
                     "400": {
@@ -4427,6 +4424,9 @@ const docTemplate = `{
             "type": "object"
         },
         "handler.coursePageResponse": {
+            "type": "object"
+        },
+        "handler.enrollmentPageResponse": {
             "type": "object"
         },
         "model.Bundle": {
