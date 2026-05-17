@@ -55,9 +55,7 @@ type coursePageResponse = httputil.PageResponse[model.Course]
 // @Router    /api/v1/courses [get]
 func (h *CourseHandler) List(w http.ResponseWriter, r *http.Request) error {
 	q := r.URL.Query()
-
-	page := parseIntQuery(q.Get("page"), 1)
-	limit := min(parseIntQuery(q.Get("limit"), 20), maxPageLimit)
+	page, limit := parsePage(q)
 
 	search := q.Get("search")
 	if len(search) > 100 {

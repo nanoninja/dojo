@@ -48,9 +48,7 @@ type enrollmentPageResponse = httputil.PageResponse[model.CourseEnrollment]
 // @Router   /api/v1/enrollments [get]
 func (h *EnrollmentHandler) List(w http.ResponseWriter, r *http.Request) error {
 	q := r.URL.Query()
-
-	page := parseIntQuery(q.Get("page"), 1)
-	limit := min(parseIntQuery(q.Get("limit"), 20), maxPageLimit)
+	page, limit := parsePage(q)
 
 	f := store.EnrollmentFilter{
 		Limit:  limit,

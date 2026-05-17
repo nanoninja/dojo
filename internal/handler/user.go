@@ -5,7 +5,6 @@ package handler
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -16,8 +15,6 @@ import (
 	"github.com/nanoninja/dojo/internal/service"
 	"github.com/nanoninja/dojo/internal/store"
 )
-
-const maxPageLimit = 100
 
 // UserHandler handles HTTP requests for user account endpoints.
 type UserHandler struct {
@@ -166,9 +163,7 @@ type ListUsersResponse struct {
 // @Router    /api/v1/users [get]
 func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) error {
 	q := r.URL.Query()
-
-	page := parseIntQuery(q.Get("page"), 1)
-	limit := min(parseIntQuery(q.Get("limit"), 20), maxPageLimit)
+	page, limit := parsePage(q)
 
 	sortOrder := q.Get("sort")
 	if sortOrder != "asc" && sortOrder != "desc" && sortOrder != "" {
@@ -403,28 +398,4 @@ func (h *UserHandler) LoginHistory(w http.ResponseWriter, r *http.Request) error
 		}
 	}
 	return httputil.OK(w, entries)
-}
-
-// parseIntQuery parses a query parameter as int, returning def if absent or invalid.
-func parseIntQuery(s string, def int) int {
-	if s == "" {
-		return def
-	}
-	n, err := strconv.Atoi(s)
-	if err != nil || n < 1 {
-		return def
-	}
-	return n
-}
-
-// parseBoolPtr parses a query parameter as *bool, returning nil if absent or invalid.
-func parseBoolPtr(s string) *bool {
-	if s == "" {
-		return nil
-	}
-	b, err := strconv.ParseBool(s)
-	if err != nil {
-		return nil
-	}
-	return &b
 }
