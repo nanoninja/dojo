@@ -28,6 +28,8 @@ func NewCourseHandler(course service.CourseService) *CourseHandler {
 // List
 // ============================================================================
 
+type coursePageResponse = httputil.PageResponse[model.Course]
+
 // List handles GET /api/v1/courses
 //
 // @Summary   List courses with optional filters
@@ -44,7 +46,7 @@ func NewCourseHandler(course service.CourseService) *CourseHandler {
 // @Param     sort           query    string  false  "Sort order"  Enums(asc,desc)
 // @Param     page           query    int     false  "Page number"    default(1)
 // @Param     limit          query    int     false  "Items per page" default(20)
-// @Success   200  {array}   model.Course
+// @Success   200  {object}  coursePageResponse
 // @Failure   400  {object}  fault.ErrorResponse
 // @Failure   500  {object}  fault.ErrorResponse
 // @Router    /api/v1/courses [get]

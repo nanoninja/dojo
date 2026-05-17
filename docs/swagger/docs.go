@@ -826,10 +826,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Course"
-                            }
+                            "$ref": "#/definitions/handler.coursePageResponse"
                         }
                     },
                     "400": {
@@ -4428,6 +4425,9 @@ const docTemplate = `{
                     "example": "01966b0a-1234-7abc-def0-1234567890ab"
                 }
             }
+        },
+        "handler.coursePageResponse": {
+            "type": "object"
         },
         "model.Bundle": {
             "type": "object",

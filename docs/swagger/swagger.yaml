@@ -932,6 +932,8 @@ definitions:
     - code
     - user_id
     type: object
+  handler.coursePageResponse:
+    type: object
   model.Bundle:
     properties:
       created_at:
@@ -1864,9 +1866,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/model.Course'
-            type: array
+            $ref: '#/definitions/handler.coursePageResponse'
         "400":
           description: Bad Request
           schema:
