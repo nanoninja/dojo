@@ -22,8 +22,8 @@ type BundleFilter struct {
 
 // BundleStore defines persistence operations for bundles.
 type BundleStore interface {
-	// List returns bundles matching the given filter.
-	List(ctx context.Context, f BundleFilter) ([]model.Bundle, error)
+	// List returns bundles matching the given filter and their total count without pagination.
+	List(ctx context.Context, f BundleFilter) ([]model.Bundle, int, error)
 
 	// FindByID returns a bundle by its ID, or nil if not found.
 	FindByID(ctx context.Context, id string) (*model.Bundle, error)
@@ -62,40 +62,42 @@ func NewBundleStore(db database.Querier) BundleStore {
 	return &bundleStore{db: db}
 }
 
-func (s *bundleStore) List(ctx context.Context, f BundleFilter) ([]model.Bundle, error) {
-	query := `SELECT * FROM bundles WHERE deleted_at IS NULL`
+func (s *bundleStore) List(ctx context.Context, f BundleFilter) ([]model.Bundle, int, error) {
+	where := ` WHERE deleted_at IS NULL`
 	args := make([]any, 0, 4)
 
 	if f.InstructorID != "" {
-		query += ` AND instructor_id = ?`
+		where += ` AND instructor_id = ?`
 		args = append(args, f.InstructorID)
 	}
 	if f.IsPublished != nil {
-		query += ` AND is_published = ?`
+		where += ` AND is_published = ?`
 		args = append(args, *f.IsPublished)
 	}
 
-	query += ` ORDER BY sort_order ASC, created_at DESC`
+	var total int
+	countQuery := s.db.Rebind(`SELECT COUNT(*) FROM bundles` + where)
+	if err := s.db.GetContext(ctx, &total, countQuery, args...); err != nil {
+		return nil, 0, err
+	}
 
 	if f.Limit <= 0 {
 		f.Limit = 100
 	}
 
-	query += ` LIMIT ?`
-	args = append(args, f.Limit)
+	query := s.db.Rebind(`SELECT * FROM bundles` + where + ` ORDER BY sort_order ASC, created_at DESC LIMIT ?`)
+	pageArgs := append(args, f.Limit)
 
 	if f.Offset > 0 {
-		query += ` OFFSET ?`
-		args = append(args, f.Offset)
+		query = s.db.Rebind(`SELECT * FROM bundles` + where + ` ORDER BY sort_order ASC, created_at DESC LIMIT ? OFFSET ?`)
+		pageArgs = append(pageArgs, f.Offset)
 	}
 
-	query = s.db.Rebind(query)
 	bundles := make([]model.Bundle, 0, f.Limit)
-
-	if err := s.db.SelectContext(ctx, &bundles, query, args...); err != nil {
-		return nil, err
+	if err := s.db.SelectContext(ctx, &bundles, query, pageArgs...); err != nil {
+		return nil, 0, err
 	}
-	return bundles, nil
+	return bundles, total, nil
 }
 
 func (s *bundleStore) FindByID(ctx context.Context, id string) (*model.Bundle, error) {

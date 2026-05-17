@@ -111,25 +111,28 @@ func TestBundleStore_List(t *testing.T) {
 	assert.NoError(t, s.Create(ctx, b2), "setup: Create() b2")
 
 	t.Run("no filter", func(t *testing.T) {
-		bundles, err := s.List(ctx, store.BundleFilter{})
+		bundles, total, err := s.List(ctx, store.BundleFilter{})
 
 		assert.NoError(t, err)
 		assert.Len(t, bundles, 2)
+		assert.Equal(t, 2, total)
 	})
 
 	t.Run("filter by instructor", func(t *testing.T) {
-		bundles, err := s.List(ctx, store.BundleFilter{InstructorID: instructorID})
+		bundles, total, err := s.List(ctx, store.BundleFilter{InstructorID: instructorID})
 
 		assert.NoError(t, err)
 		assert.Len(t, bundles, 2)
+		assert.Equal(t, 2, total)
 	})
 
 	t.Run("filter by published", func(t *testing.T) {
 		published := true
-		bundles, err := s.List(ctx, store.BundleFilter{IsPublished: &published})
+		bundles, total, err := s.List(ctx, store.BundleFilter{IsPublished: &published})
 
 		assert.NoError(t, err)
 		assert.Len(t, bundles, 1)
+		assert.Equal(t, 1, total)
 		assert.Equal(t, b2.Slug, bundles[0].Slug)
 	})
 }

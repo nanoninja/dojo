@@ -12,6 +12,7 @@ import (
 	"github.com/nanoninja/assert"
 	"github.com/nanoninja/assert/require"
 	"github.com/nanoninja/dojo/internal/handler"
+	"github.com/nanoninja/dojo/internal/httputil"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
 	"github.com/nanoninja/dojo/internal/store"
@@ -28,8 +29,8 @@ type mockBundleService struct {
 	saveErr error
 }
 
-func (m *mockBundleService) List(_ context.Context, _ store.BundleFilter) ([]model.Bundle, error) {
-	return m.bundles, m.getErr
+func (m *mockBundleService) List(_ context.Context, _ store.BundleFilter) ([]model.Bundle, int, error) {
+	return m.bundles, len(m.bundles), m.getErr
 }
 
 func (m *mockBundleService) GetByID(_ context.Context, _ string) (*model.Bundle, error) {
@@ -97,9 +98,10 @@ func TestBundleHandler_List(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, rec.Code)
 
-	var body []map[string]any
+	var body httputil.PageResponse[model.Bundle]
 	decodeJSON(t, rec, &body)
-	assert.Len(t, body, 1)
+	assert.Len(t, body.Data, 1)
+	assert.Equal(t, 1, body.Meta.Total)
 }
 
 func TestBundleHandler_List_InvalidInstructorID(t *testing.T) {

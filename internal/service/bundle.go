@@ -22,8 +22,8 @@ var (
 
 // BundleService handles bundle management and course assignments.
 type BundleService interface {
-	// List returns bundles matching the given filter.
-	List(ctx context.Context, f store.BundleFilter) ([]model.Bundle, error)
+	// List returns bundles matching the given filter and their total count without pagination.
+	List(ctx context.Context, f store.BundleFilter) ([]model.Bundle, int, error)
 
 	// GetByID returns a bundle by ID, or ErrBundleNotFound if not found.
 	GetByID(ctx context.Context, id string) (*model.Bundle, error)
@@ -62,7 +62,7 @@ func NewBundleService(
 		courses: courses,
 	}
 }
-func (s *bundleService) List(ctx context.Context, f store.BundleFilter) ([]model.Bundle, error) {
+func (s *bundleService) List(ctx context.Context, f store.BundleFilter) ([]model.Bundle, int, error) {
 	return s.bundles.List(ctx, f)
 }
 

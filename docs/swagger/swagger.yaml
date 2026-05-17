@@ -932,6 +932,8 @@ definitions:
     - code
     - user_id
     type: object
+  handler.bundlePageResponse:
+    type: object
   handler.coursePageResponse:
     type: object
   model.Bundle:
@@ -1383,9 +1385,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/model.Bundle'
-            type: array
+            $ref: '#/definitions/handler.bundlePageResponse'
         "400":
           description: Bad Request
           schema:

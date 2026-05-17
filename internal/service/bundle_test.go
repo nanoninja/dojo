@@ -33,7 +33,7 @@ func (s *fakeBundleStore) nextID() string {
 	return fmt.Sprintf("bundle-%d", s.seq)
 }
 
-func (s *fakeBundleStore) List(_ context.Context, filter store.BundleFilter) ([]model.Bundle, error) {
+func (s *fakeBundleStore) List(_ context.Context, filter store.BundleFilter) ([]model.Bundle, int, error) {
 	result := make([]model.Bundle, 0)
 
 	for _, b := range s.bundles {
@@ -48,7 +48,7 @@ func (s *fakeBundleStore) List(_ context.Context, filter store.BundleFilter) ([]
 		}
 		result = append(result, *b)
 	}
-	return result, nil
+	return result, len(result), nil
 }
 
 func (s *fakeBundleStore) FindByID(_ context.Context, id string) (*model.Bundle, error) {
@@ -219,16 +219,19 @@ func TestBundleService_List(t *testing.T) {
 	assert.NoError(t, bs.Create(ctx, b2))
 
 	t.Run("no filter", func(t *testing.T) {
-		result, err := svc.List(ctx, store.BundleFilter{})
+		result, total, err := svc.List(ctx, store.BundleFilter{})
 
 		assert.NoError(t, err)
 		assert.Len(t, result, 2)
+		assert.Equal(t, 2, total)
 	})
 
 	t.Run("filter by instructor", func(t *testing.T) {
-		result, err := svc.List(ctx, store.BundleFilter{InstructorID: "instructor-1"})
+		result, total, err := svc.List(ctx, store.BundleFilter{InstructorID: "instructor-1"})
+
 		assert.NoError(t, err)
 		assert.Len(t, result, 1)
+		assert.Equal(t, 1, total)
 	})
 }
 

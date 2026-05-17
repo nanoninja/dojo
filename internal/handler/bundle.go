@@ -28,6 +28,11 @@ func NewBundleHandler(bundle service.BundleService) *BundleHandler {
 // List
 // ============================================================================
 
+// bundlePageResponse is used only for Swagger documentation.
+//
+//nolint:unused
+type bundlePageResponse = httputil.PageResponse[model.Bundle]
+
 // List handles GET /api/v1/bundles
 //
 // @Summary  List bundles with optional filters
@@ -38,7 +43,7 @@ func NewBundleHandler(bundle service.BundleService) *BundleHandler {
 // @Param    is_published   query    bool    false  "Filter by published state"
 // @Param    page           query    int     false  "Page number"    default(1)
 // @Param    limit          query    int     false  "Items per page" default(20)
-// @Success  200  {array}   model.Bundle
+// @Success  200  {object}  bundlePageResponse
 // @Failure  400  {object}  fault.ErrorResponse
 // @Failure  500  {object}  fault.ErrorResponse
 // @Router   /api/v1/bundles [get]
@@ -64,11 +69,12 @@ func (h *BundleHandler) List(w http.ResponseWriter, r *http.Request) error {
 		f.IsPublished = &published
 	}
 
-	bundles, err := h.bundle.List(r.Context(), f)
+	bundles, total, err := h.bundle.List(r.Context(), f)
 	if err != nil {
 		return toFault(err)
 	}
-	return httputil.OK(w, bundles)
+
+	return httputil.OKPaginated(w, bundles, page, limit, total)
 }
 
 // ============================================================================
