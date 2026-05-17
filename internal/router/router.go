@@ -37,6 +37,7 @@ type Handlers struct {
 	Lesson     *handler.LessonHandler
 	Enrollment *handler.EnrollmentHandler
 	Bundle     *handler.BundleHandler
+	Progress   *handler.ProgressHandler
 }
 
 // New builds and returns the main HTTP router with all middleware and routes configured.
@@ -194,6 +195,11 @@ func New(
 				r.Post("/enrollments", httputil.Handle(handlers.Enrollment.Enroll, logger))
 				r.Patch("/enrollments/{id}/status", httputil.Handle(handlers.Enrollment.UpdateStatus, logger))
 				r.Delete("/enrollments/{id}", httputil.Handle(handlers.Enrollment.Delete, logger))
+
+				// Progress
+				r.Get("/progress/{user_id}/lessons/{lesson_id}", httputil.Handle(handlers.Progress.Get, logger))
+				r.Get("/progress/{user_id}/courses/course_id", httputil.Handle(handlers.Progress.ListByCourse, logger))
+				r.Post("/progress", httputil.Handle(handlers.Progress.Save, logger))
 
 				// Bundles — read
 				r.Get("/bundles", httputil.Handle(handlers.Bundle.List, logger))

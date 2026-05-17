@@ -58,8 +58,13 @@ func newJSONRequest(method, path string, body any) *http.Request {
 }
 
 // withChiParam injects a chi URL parameter into the request context.
+// If a chi route context already exists on the request, it is reused so that
+// multiple calls can be chained without overwriting previous parameters.
 func withChiParam(r *http.Request, key, value string) *http.Request {
-	rctx := chi.NewRouteContext()
+	rctx := chi.RouteContext(r.Context())
+	if rctx == nil {
+		rctx = chi.NewRouteContext()
+	}
 	rctx.URLParams.Add(key, value)
 	return r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 }

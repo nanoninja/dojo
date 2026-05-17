@@ -548,6 +548,22 @@ CREATE TABLE bundle_courses (
         FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 );
 
+CREATE TABLE user_lesson_progress (
+    user_id         UUID        NOT NULL,
+    lesson_id       UUID        NOT NULL,
+    is_completed    BOOLEAN     NOT NULL DEFAULT FALSE,
+    watched_seconds INT         NOT NULL DEFAULT 0,
+    last_watched_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    CONSTRAINT pk_ulp PRIMARY KEY (user_id, lesson_id),
+    CONSTRAINT fk_ulp_user_id
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ulp_lesson_id
+        FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_ulp_user_id ON user_lesson_progress (user_id);
+
 -- GOOSE DOWN ==================================================
 
 -- +goose Down
@@ -566,6 +582,7 @@ DROP INDEX IF EXISTS idx_ce_course_id;
 DROP INDEX IF EXISTS idx_ce_user_id;
 DROP INDEX IF EXISTS idx_bundles_is_published;
 DROP INDEX IF EXISTS idx_bundles_instructor_id;
+DROP INDEX IF EXISTS idx_ulp_user_id;
 
 DROP TRIGGER IF EXISTS sync_category_course_count_on_assignment ON courses_categories;
 DROP TRIGGER IF EXISTS sync_chapter_duration_on_lesson          ON lessons;
@@ -577,6 +594,7 @@ DROP TRIGGER IF EXISTS update_chapters_updated_at               ON chapters;
 DROP TRIGGER IF EXISTS update_courses_updated_at                ON courses;
 DROP TRIGGER IF EXISTS update_users_updated_at                  ON users;
 
+DROP TABLE IF EXISTS user_lesson_progress;
 DROP TABLE IF EXISTS bundle_courses;
 DROP TABLE IF EXISTS bundles;
 DROP TABLE IF EXISTS course_enrollments;

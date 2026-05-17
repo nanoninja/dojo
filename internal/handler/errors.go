@@ -55,6 +55,9 @@ func toFault(err error) error {
 	case errors.Is(err, service.ErrBundleSlugTaken):
 		return fault.Conflict("bundle slug already taken", err)
 
+	case errors.Is(err, service.ErrProgressNotFound):
+		return fault.NotFound("lesson progress", err)
+
 	default:
 		return fault.Internal(err)
 	}

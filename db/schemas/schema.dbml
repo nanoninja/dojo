@@ -331,6 +331,19 @@ Table bundle_courses {
   }
 }
 
+Table user_lesson_progress {
+  user_id         uuid        [ref: > users.id,   note: "cascade delete"]
+  lesson_id       uuid        [ref: > lessons.id, note: "cascade delete"]
+  is_completed    boolean     [default: false, note: "not null"]
+  watched_seconds int         [default: 0,     note: "not null"]
+  last_watched_at timestamptz [default: `now()`, note: "not null"]
+
+  indexes {
+    (user_id, lesson_id) [pk]
+    user_id              [name: "idx_ulp_user_id"]
+  }
+}
+
 // ================================================================================
 // ENUMS
 // ================================================================================

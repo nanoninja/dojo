@@ -38,6 +38,9 @@ type EnrollmentStore interface {
 	// Update persists status and progress changes to an existing enrollment.
 	Update(ctx context.Context, e *model.CourseEnrollment) error
 
+	// UpdateProgress sets the progress_percent for a user's enrollment in a course.
+	UpdateProgress(ctx context.Context, userID, courseID string, percent float64) error
+
 	// Delete removes an enrollment permanently.
 	Delete(ctx context.Context, id string) error
 }
@@ -156,6 +159,17 @@ func (s *enrollmentStore) Update(ctx context.Context, e *model.CourseEnrollment)
 		e.CompletedAt,
 		e.ExpiresAt,
 		e.ID,
+	)
+	return err
+}
+
+// UpdateProgress sets the progress_percent for a user's enrollment in a course.
+func (s *enrollmentStore) UpdateProgress(ctx context.Context, userID, courseID string, percent float64) error {
+	_, err := s.db.ExecContext(ctx, `
+		UPDATE course_enrollments
+			SET progress_percent = $1
+		WHERE user_id = $2 AND course_id = $3`,
+		percent, userID, courseID,
 	)
 	return err
 }

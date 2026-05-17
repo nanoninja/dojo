@@ -84,6 +84,16 @@ func (f *fakeEnrollmentStore) Update(_ context.Context, e *model.CourseEnrollmen
 	return nil
 }
 
+func (f *fakeEnrollmentStore) UpdateProgress(_ context.Context, userID, courseID string, percent float64) error {
+	for _, e := range f.enrollments {
+		if e.UserID == userID && e.CourseID == courseID {
+			e.ProgressPercent = percent
+			return nil
+		}
+	}
+	return nil
+}
+
 func (f *fakeEnrollmentStore) Delete(_ context.Context, id string) error {
 	if _, ok := f.enrollments[id]; !ok {
 		return fmt.Errorf("enrollment not found")
