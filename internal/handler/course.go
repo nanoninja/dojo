@@ -28,6 +28,9 @@ func NewCourseHandler(course service.CourseService) *CourseHandler {
 // List
 // ============================================================================
 
+// coursePageResponse is used only for Swagger documentation.
+//
+//nolint:unused
 type coursePageResponse = httputil.PageResponse[model.Course]
 
 // List handles GET /api/v1/courses
