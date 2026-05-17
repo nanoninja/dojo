@@ -86,7 +86,7 @@ func (s *bundleStore) List(ctx context.Context, f BundleFilter) ([]model.Bundle,
 	}
 
 	query := s.db.Rebind(`SELECT * FROM bundles` + where + ` ORDER BY sort_order ASC, created_at DESC LIMIT ?`)
-	pageArgs := append(args, f.Limit)
+	pageArgs := append(args[:len(args):len(args)], f.Limit)
 
 	if f.Offset > 0 {
 		query = s.db.Rebind(`SELECT * FROM bundles` + where + ` ORDER BY sort_order ASC, created_at DESC LIMIT ? OFFSET ?`)

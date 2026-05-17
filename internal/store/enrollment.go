@@ -82,7 +82,7 @@ func (s *enrollmentStore) List(ctx context.Context, f EnrollmentFilter) ([]model
 	}
 
 	query := s.db.Rebind(`SELECT * FROM course_enrollments` + where + ` ORDER BY enrolled_at DESC LIMIT ?`)
-	pageArgs := append(args, f.Limit)
+	pageArgs := append(args[:len(args):len(args)], f.Limit)
 
 	if f.Offset > 0 {
 		query = s.db.Rebind(`SELECT * FROM course_enrollments` + where + ` ORDER BY enrolled_at DESC LIMIT ? OFFSET ?`)

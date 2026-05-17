@@ -107,7 +107,7 @@ func (s *courseStore) List(ctx context.Context, f CourseFilter) ([]model.Course,
 	}
 
 	query := s.db.Rebind(`SELECT * FROM courses` + where + ` ORDER BY created_at ` + string(order) + ` LIMIT ?`)
-	pageArgs := append(args, f.Limit)
+	pageArgs := append(args[:len(args):len(args)], f.Limit)
 
 	if f.Offset > 0 {
 		query = s.db.Rebind(`SELECT * FROM courses` + where + ` ORDER BY created_at ` + string(order) + ` LIMIT ? OFFSET ?`)
