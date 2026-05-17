@@ -34,14 +34,14 @@ func (f *fakeCourseStore) nextID() string {
 	return fmt.Sprintf("course-%d", f.seq)
 }
 
-func (f *fakeCourseStore) List(_ context.Context, _ store.CourseFilter) ([]model.Course, error) {
+func (f *fakeCourseStore) List(_ context.Context, _ store.CourseFilter) ([]model.Course, int, error) {
 	result := make([]model.Course, 0, len(f.courses))
 	for _, c := range f.courses {
 		if c.DeletedAt == nil {
 			result = append(result, *c)
 		}
 	}
-	return result, nil
+	return result, len(result), nil
 }
 
 func (f *fakeCourseStore) FindByID(_ context.Context, id string) (*model.Course, error) {
@@ -244,9 +244,10 @@ func TestCourseService_List(t *testing.T) {
 		assert.NoError(t, cs.Create(ctx, c))
 	}
 
-	courses, err := svc.List(ctx, store.CourseFilter{Limit: 10})
+	courses, total, err := svc.List(ctx, store.CourseFilter{Limit: 10})
 	assert.NoError(t, err)
 	assert.Len(t, courses, 3)
+	assert.Equal(t, 3, total)
 }
 
 func TestCourseService_Update(t *testing.T) {

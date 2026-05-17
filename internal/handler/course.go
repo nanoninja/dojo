@@ -106,12 +106,12 @@ func (h *CourseHandler) List(w http.ResponseWriter, r *http.Request) error {
 		filter.CategoryID = id
 	}
 
-	courses, err := h.course.List(r.Context(), filter)
+	courses, total, err := h.course.List(r.Context(), filter)
 	if err != nil {
 		return toFault(err)
 	}
 
-	return httputil.OK(w, courses)
+	return httputil.OKPaginated(w, courses, page, limit, total)
 }
 
 // ============================================================================

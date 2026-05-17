@@ -13,8 +13,8 @@ import (
 
 // CourseService handles course management: creation, updates, categorization, and deletion.
 type CourseService interface {
-	// List returns courses matching the given filter.
-	List(ctx context.Context, f store.CourseFilter) ([]model.Course, error)
+	// List returns courses matching the given filter and the total count without pagination.
+	List(ctx context.Context, f store.CourseFilter) ([]model.Course, int, error)
 
 	// GetByID returns a course by ID, or ErrCourseNotFound if not found.
 	GetByID(ctx context.Context, id string) (*model.Course, error)
@@ -61,7 +61,7 @@ func NewCourseService(
 	}
 }
 
-func (s *courseService) List(ctx context.Context, f store.CourseFilter) ([]model.Course, error) {
+func (s *courseService) List(ctx context.Context, f store.CourseFilter) ([]model.Course, int, error) {
 	return s.courses.List(ctx, f)
 }
 

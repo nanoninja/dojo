@@ -28,11 +28,22 @@ type CourseFilter struct {
 
 // CourseStore defines persistence operations for courses.
 type CourseStore interface {
-	List(ctx context.Context, f CourseFilter) ([]model.Course, error)
+	// List returns courses matching the given filter and the total count without pagination.
+	List(ctx context.Context, f CourseFilter) ([]model.Course, int, error)
+
+	// FindByID returns a course by its ID, or nil if not found.
 	FindByID(ctx context.Context, id string) (*model.Course, error)
+
+	// FindBySlug returns a course by its slug, or nil if not found.
 	FindBySlug(ctx context.Context, slug string) (*model.Course, error)
+
+	// Create inserts a new course and sets its ID.
 	Create(ctx context.Context, c *model.Course) error
+
+	// Update persists changes to an existing course.
 	Update(ctx context.Context, c *model.Course) error
+
+	// Delete soft-deletes a course by setting deleted_at.
 	Delete(ctx context.Context, id string) error
 }
 
@@ -45,67 +56,70 @@ func NewCourseStore(db database.Querier) CourseStore {
 	return &courseStore{db: db}
 }
 
-func (s *courseStore) List(ctx context.Context, f CourseFilter) ([]model.Course, error) {
-	query := `SELECT * FROM courses WHERE deleted_at IS NULL`
+func (s *courseStore) List(ctx context.Context, f CourseFilter) ([]model.Course, int, error) {
+	where := ` WHERE deleted_at IS NULL`
 	args := make([]any, 0, 10)
 
 	if f.InstructorID != "" {
-		query += ` AND instructor_id = ?`
+		where += ` AND instructor_id = ?`
 		args = append(args, f.InstructorID)
 	}
 	if f.CategoryID != "" {
-		query += ` AND id IN (
+		where += ` AND id IN (
 			SELECT course_id FROM courses_categories WHERE category_id = ?
 		)`
 		args = append(args, f.CategoryID)
 	}
 	if f.Search != "" {
-		query += ` AND (title LIKE ? OR subtitle LIKE ?)`
+		where += ` AND (title LIKE ? OR subtitle LIKE ?)`
 		s := "%" + f.Search + "%"
 		args = append(args, s, s)
 	}
 	if f.Level != "" {
-		query += ` AND level = ?`
+		where += ` AND level = ?`
 		args = append(args, f.Level)
 	}
 	if f.Language != "" {
-		query += ` AND language = ?`
+		where += ` AND language = ?`
 		args = append(args, f.Language)
 	}
 	if f.IsFree != nil {
-		query += ` AND is_free = ?`
+		where += ` AND is_free = ?`
 		args = append(args, *f.IsFree)
 	}
 	if f.IsPublished != nil {
-		query += ` AND is_published = ?`
+		where += ` AND is_published = ?`
 		args = append(args, *f.IsPublished)
+	}
+
+	var total int
+	countQuery := s.db.Rebind(`SELECT COUNT(*) FROM courses` + where)
+	if err := s.db.GetContext(ctx, &total, countQuery, args...); err != nil {
+		return nil, 0, err
 	}
 
 	order := SortDirDesc
 	if f.SortDir == SortDirAsc {
 		order = SortDirAsc
 	}
-	query += ` ORDER BY created_at ` + string(order)
-
 	if f.Limit <= 0 {
 		f.Limit = 100
 	}
-	query += ` LIMIT ?`
-	args = append(args, f.Limit)
+
+	query := s.db.Rebind(`SELECT * FROM courses` + where + ` ORDER BY created_at ` + string(order) + ` LIMIT ?`)
+	pageArgs := append(args, f.Limit)
 
 	if f.Offset > 0 {
-		query += ` OFFSET ?`
-		args = append(args, f.Offset)
+		query = s.db.Rebind(`SELECT * FROM courses` + where + ` ORDER BY created_at ` + string(order) + ` LIMIT ? OFFSET ?`)
+		pageArgs = append(pageArgs, f.Offset)
 	}
 
-	query = s.db.Rebind(query)
 	courses := make([]model.Course, 0, f.Limit)
-
-	if err := s.db.SelectContext(ctx, &courses, query, args...); err != nil {
-		return nil, err
+	if err := s.db.SelectContext(ctx, &courses, query, pageArgs...); err != nil {
+		return nil, 0, err
 	}
 
-	return courses, nil
+	return courses, total, nil
 }
 
 func (s *courseStore) FindByID(ctx context.Context, id string) (*model.Course, error) {

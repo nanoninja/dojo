@@ -14,18 +14,34 @@ import (
 
 // TagStore defines persistence operations for tags.
 type TagStore interface {
+	// List returns all tags.
 	List(ctx context.Context) ([]model.Tag, error)
+
+	// FindByID returns a tag by its ID, or nil if not found.
 	FindByID(ctx context.Context, id string) (*model.Tag, error)
+
+	// FindBySlug returns a tag by its slug, or nil if not found.
 	FindBySlug(ctx context.Context, slug string) (*model.Tag, error)
+
+	// Create inserts a new tag and sets its ID.
 	Create(ctx context.Context, t *model.Tag) error
+
+	// Update persists changes to an existing tag.
 	Update(ctx context.Context, t *model.Tag) error
+
+	// Delete removes a tag by ID.
 	Delete(ctx context.Context, id string) error
 }
 
 // CoursesTagsStore defines persistence operations for course-tag assignments.
 type CoursesTagsStore interface {
+	// List returns all tag assignments for a course.
 	List(ctx context.Context, courseID string) ([]model.CourseTagAssignment, error)
+
+	// Assign adds a tag to a course.
 	Assign(ctx context.Context, courseID, tagID string) error
+
+	// Unassign removes a tag from a course.
 	Unassign(ctx context.Context, courseID, tagID string) error
 }
 

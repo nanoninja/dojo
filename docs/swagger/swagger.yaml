@@ -57,6 +57,44 @@ definitions:
     - current_password
     - new_password
     type: object
+  handler.CreateBundleRequest:
+    properties:
+      course_ids:
+        items:
+          type: string
+        type: array
+      currency:
+        type: string
+      description:
+        type: string
+      instructor_id:
+        type: string
+      is_free:
+        type: boolean
+      is_published:
+        type: boolean
+      price_cents:
+        type: integer
+      slug:
+        maxLength: 255
+        minLength: 1
+        type: string
+      sort_order:
+        type: integer
+      subtitle:
+        type: string
+      thumbnail_url:
+        type: string
+      title:
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - currency
+    - instructor_id
+    - slug
+    - title
+    type: object
   handler.CreateCategoryRequest:
     properties:
       color_hex:
@@ -502,6 +540,24 @@ definitions:
     - token
     - user_id
     type: object
+  handler.SaveProgressRequest:
+    properties:
+      course_id:
+        type: string
+      is_completed:
+        type: boolean
+      lesson_id:
+        type: string
+      user_id:
+        type: string
+      watched_seconds:
+        minimum: 0
+        type: integer
+    required:
+    - course_id
+    - lesson_id
+    - user_id
+    type: object
   handler.SendPasswordResetRequest:
     properties:
       email:
@@ -521,6 +577,15 @@ definitions:
     required:
     - category_ids
     type: object
+  handler.SetCoursesRequest:
+    properties:
+      course_ids:
+        items:
+          type: string
+        type: array
+    required:
+    - course_ids
+    type: object
   handler.SetTagsRequest:
     properties:
       tag_ids:
@@ -529,6 +594,37 @@ definitions:
         type: array
     required:
     - tag_ids
+    type: object
+  handler.UpdateBundleRequest:
+    properties:
+      currency:
+        type: string
+      description:
+        type: string
+      is_free:
+        type: boolean
+      is_published:
+        type: boolean
+      price_cents:
+        type: integer
+      slug:
+        maxLength: 255
+        minLength: 1
+        type: string
+      sort_order:
+        type: integer
+      subtitle:
+        type: string
+      thumbnail_url:
+        type: string
+      title:
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - currency
+    - slug
+    - title
     type: object
   handler.UpdateCategoryRequest:
     properties:
@@ -836,6 +932,41 @@ definitions:
     - code
     - user_id
     type: object
+  model.Bundle:
+    properties:
+      created_at:
+        type: string
+      currency:
+        type: string
+      deleted_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      instructor_id:
+        type: string
+      is_free:
+        type: boolean
+      is_published:
+        type: boolean
+      price_cents:
+        type: integer
+      slug:
+        type: string
+      sort_order:
+        type: integer
+      student_count:
+        type: integer
+      subtitle:
+        type: string
+      thumbnail_url:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
   model.Category:
     properties:
       color_hex:
@@ -1047,6 +1178,19 @@ definitions:
       updated_at:
         type: string
     type: object
+  model.LessonProgress:
+    properties:
+      is_completed:
+        type: boolean
+      last_watched_at:
+        type: string
+      lesson_id:
+        type: string
+      user_id:
+        type: string
+      watched_seconds:
+        type: integer
+    type: object
   model.LessonResource:
     properties:
       created_at:
@@ -1210,6 +1354,197 @@ info:
   title: Go API Dojo
   version: "1.0"
 paths:
+  /api/v1/bundles:
+    get:
+      parameters:
+      - description: Filter by instructor
+        in: query
+        name: instructor_id
+        type: string
+      - description: Filter by published state
+        in: query
+        name: is_published
+        type: boolean
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Bundle'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List bundles with optional filters
+      tags:
+      - bundles
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bundle payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateBundleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Bundle'
+        "400":
+          description: invalid request body
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "409":
+          description: slug already taken
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new bundle
+      tags:
+      - bundles
+  /api/v1/bundles/{id}:
+    delete:
+      parameters:
+      - description: Bundle ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: invalid uuid
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "404":
+          description: bundle not found
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a bundle
+      tags:
+      - bundles
+    get:
+      parameters:
+      - description: Bundle ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Bundle'
+        "400":
+          description: invalid uuid
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "404":
+          description: bundle not found
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a bundle by ID
+      tags:
+      - bundles
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bundle ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bundle payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateBundleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Bundle'
+        "400":
+          description: invalid request body
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "404":
+          description: bundle not found
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update an existing bundle
+      tags:
+      - bundles
+  /api/v1/bundles/{id}/courses:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bundle ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Course IDs payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SetCoursesRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: invalid request body
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "404":
+          description: bundle not found
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Replace all course assignments for a bundle
+      tags:
+      - bundles
   /api/v1/categories:
     get:
       produces:
@@ -2165,6 +2500,95 @@ paths:
       summary: Update a lesson resource
       tags:
       - lessons
+  /api/v1/progress:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Progress payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SaveProgressRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: invalid request body
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Record or update progress on a lesson
+      tags:
+      - progress
+  /api/v1/progress/{user_id}/courses/{course_id}:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.LessonProgress'
+            type: array
+        "400":
+          description: invalid uuid
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List a user's lesson progress for a course
+      tags:
+      - progress
+  /api/v1/progress/{user_id}/lessons/{lesson_id}:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Lesson ID
+        in: path
+        name: lesson_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.LessonProgress'
+        "400":
+          description: invalid uuid
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "404":
+          description: progress not found
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a user's progress on a specific lesson
+      tags:
+      - progress
   /api/v1/tags:
     get:
       produces:

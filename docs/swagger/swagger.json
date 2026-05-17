@@ -9,6 +9,309 @@
     "host": "localhost:8000",
     "basePath": "/",
     "paths": {
+        "/api/v1/bundles": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bundles"
+                ],
+                "summary": "List bundles with optional filters",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by instructor",
+                        "name": "instructor_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by published state",
+                        "name": "is_published",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Items per page",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Bundle"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bundles"
+                ],
+                "summary": "Create a new bundle",
+                "parameters": [
+                    {
+                        "description": "Bundle payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateBundleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.Bundle"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "slug already taken",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bundles/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bundles"
+                ],
+                "summary": "Get a bundle by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bundle ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Bundle"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid uuid",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "bundle not found",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bundles"
+                ],
+                "summary": "Update an existing bundle",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bundle ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Bundle payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateBundleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Bundle"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "bundle not found",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "bundles"
+                ],
+                "summary": "Delete a bundle",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bundle ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "invalid uuid",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "bundle not found",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bundles/{id}/courses": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bundles"
+                ],
+                "summary": "Replace all course assignments for a bundle",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bundle ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Course IDs payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.SetCoursesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "bundle not found",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/categories": {
             "get": {
                 "security": [
@@ -1523,6 +1826,148 @@
                 }
             }
         },
+        "/api/v1/progress": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "progress"
+                ],
+                "summary": "Record or update progress on a lesson",
+                "parameters": [
+                    {
+                        "description": "Progress payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.SaveProgressRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/progress/{user_id}/courses/{course_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "progress"
+                ],
+                "summary": "List a user's lesson progress for a course",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Course ID",
+                        "name": "course_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.LessonProgress"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "invalid uuid",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/progress/{user_id}/lessons/{lesson_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "progress"
+                ],
+                "summary": "Get a user's progress on a specific lesson",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Lesson ID",
+                        "name": "lesson_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.LessonProgress"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid uuid",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "progress not found",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/tags": {
             "get": {
                 "security": [
@@ -2742,6 +3187,60 @@
                 }
             }
         },
+        "handler.CreateBundleRequest": {
+            "type": "object",
+            "required": [
+                "currency",
+                "instructor_id",
+                "slug",
+                "title"
+            ],
+            "properties": {
+                "course_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "instructor_id": {
+                    "type": "string"
+                },
+                "is_free": {
+                    "type": "boolean"
+                },
+                "is_published": {
+                    "type": "boolean"
+                },
+                "price_cents": {
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                },
+                "sort_order": {
+                    "type": "integer"
+                },
+                "subtitle": {
+                    "type": "string"
+                },
+                "thumbnail_url": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                }
+            }
+        },
         "handler.CreateCategoryRequest": {
             "type": "object",
             "required": [
@@ -3372,6 +3871,32 @@
                 }
             }
         },
+        "handler.SaveProgressRequest": {
+            "type": "object",
+            "required": [
+                "course_id",
+                "lesson_id",
+                "user_id"
+            ],
+            "properties": {
+                "course_id": {
+                    "type": "string"
+                },
+                "is_completed": {
+                    "type": "boolean"
+                },
+                "lesson_id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "watched_seconds": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
         "handler.SendPasswordResetRequest": {
             "type": "object",
             "required": [
@@ -3401,6 +3926,20 @@
                 }
             }
         },
+        "handler.SetCoursesRequest": {
+            "type": "object",
+            "required": [
+                "course_ids"
+            ],
+            "properties": {
+                "course_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "handler.SetTagsRequest": {
             "type": "object",
             "required": [
@@ -3412,6 +3951,50 @@
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "handler.UpdateBundleRequest": {
+            "type": "object",
+            "required": [
+                "currency",
+                "slug",
+                "title"
+            ],
+            "properties": {
+                "currency": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "is_free": {
+                    "type": "boolean"
+                },
+                "is_published": {
+                    "type": "boolean"
+                },
+                "price_cents": {
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                },
+                "sort_order": {
+                    "type": "integer"
+                },
+                "subtitle": {
+                    "type": "string"
+                },
+                "thumbnail_url": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
                 }
             }
         },
@@ -3840,6 +4423,59 @@
                 }
             }
         },
+        "model.Bundle": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "instructor_id": {
+                    "type": "string"
+                },
+                "is_free": {
+                    "type": "boolean"
+                },
+                "is_published": {
+                    "type": "boolean"
+                },
+                "price_cents": {
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "sort_order": {
+                    "type": "integer"
+                },
+                "student_count": {
+                    "type": "integer"
+                },
+                "subtitle": {
+                    "type": "string"
+                },
+                "thumbnail_url": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "model.Category": {
             "type": "object",
             "properties": {
@@ -4145,6 +4781,26 @@
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "model.LessonProgress": {
+            "type": "object",
+            "properties": {
+                "is_completed": {
+                    "type": "boolean"
+                },
+                "last_watched_at": {
+                    "type": "string"
+                },
+                "lesson_id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "watched_seconds": {
+                    "type": "integer"
                 }
             }
         },

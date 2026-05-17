@@ -12,6 +12,7 @@ import (
 	"github.com/nanoninja/assert"
 	"github.com/nanoninja/assert/require"
 	"github.com/nanoninja/dojo/internal/handler"
+	"github.com/nanoninja/dojo/internal/httputil"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
 	"github.com/nanoninja/dojo/internal/store"
@@ -32,8 +33,8 @@ type mockCourseService struct {
 	setTagsErr       error
 }
 
-func (m *mockCourseService) List(_ context.Context, _ store.CourseFilter) ([]model.Course, error) {
-	return m.courses, m.getErr
+func (m *mockCourseService) List(_ context.Context, _ store.CourseFilter) ([]model.Course, int, error) {
+	return m.courses, len(m.courses), m.getErr
 }
 
 func (m *mockCourseService) GetByID(_ context.Context, _ string) (*model.Course, error) {
@@ -73,15 +74,21 @@ func newCourseHandler(cs *mockCourseService) *handler.CourseHandler {
 
 func TestCourseHandler_List(t *testing.T) {
 	ms := &mockCourseService{courses: []model.Course{
-		{ID: testCourseID, Title: "Go Fundamentals", Slug: "go-fundamentals"},
+		{
+			ID:    testCourseID,
+			Title: "Go Fundamentals",
+			Slug:  "go-fundamentals",
+		},
 	}}
 	w := httptest.NewRecorder()
 	serve(newCourseHandler(ms).List, w, httptest.NewRequest("GET", "/courses", nil))
 
 	require.Equal(t, http.StatusOK, w.Code)
-	var body []map[string]any
+
+	var body httputil.PageResponse[model.Course]
 	decodeJSON(t, w, &body)
-	assert.Len(t, body, 1)
+	assert.Len(t, body.Data, 1)
+	assert.Equal(t, 1, body.Meta.Total)
 }
 
 func TestCourseHandler_List_InvalidLevel(t *testing.T) {

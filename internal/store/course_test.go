@@ -108,9 +108,10 @@ func TestCourseStore_List(t *testing.T) {
 		assert.NoError(t, s.Create(ctx, c))
 	}
 
-	courses, err := s.List(ctx, store.CourseFilter{Limit: 10})
+	courses, total, err := s.List(ctx, store.CourseFilter{Limit: 10})
 	assert.NoError(t, err)
 	assert.Len(t, courses, 3)
+	assert.Equal(t, 3, total)
 }
 
 func TestCourseStore_Update(t *testing.T) {

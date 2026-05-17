@@ -24,6 +24,34 @@ func OK(w http.ResponseWriter, data any) error {
 	return Send(w, http.StatusOK, data)
 }
 
+// PageMeta holds pagination metadata returned with every paginated response.
+type PageMeta struct {
+	Limit int `json:"limit"`
+	Page  int `json:"page"`
+	Total int `json:"total"`
+}
+
+// PageResponse wraps a paginated list with its metadata.
+type PageResponse[T any] struct {
+	Data []T      `json:"data"`
+	Meta PageMeta `json:"meta"`
+}
+
+// OKPaginated writes a 200 JSON response with a paginated envelope.
+func OKPaginated[T any](w http.ResponseWriter, data []T, page, limit, total int) error {
+	if data == nil {
+		data = []T{}
+	}
+	return Send(w, http.StatusOK, PageResponse[T]{
+		Data: data,
+		Meta: PageMeta{
+			Page:  page,
+			Limit: limit,
+			Total: total,
+		},
+	})
+}
+
 // Created writes a 201 Created JSON response.
 func Created(w http.ResponseWriter, data any) error {
 	return Send(w, http.StatusCreated, data)
