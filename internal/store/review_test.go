@@ -15,12 +15,13 @@ import (
 )
 
 // setupCourseForReview inserts an instructor and a course, returning the course ID.
-func setupCourseForReview(t testing.TB, db *database.DB) string {
+func setupCourseForReview(t testing.TB, db *database.DB, instructorID string) string {
 	t.Helper()
-	instructorID := setupInstructor(t, db)
+
 	c := newTestCourse(instructorID)
 	c.Slug = "review-test-course"
 	cs := store.NewCourseStore(db)
+
 	assert.NoError(t, cs.Create(context.Background(), c), "setup: Create() course")
 	return c.ID
 }
@@ -40,7 +41,7 @@ func TestReviewStore_Create(t *testing.T) {
 
 	ctx := context.Background()
 	instructorID := setupInstructor(t, db)
-	courseID := setupCourseForReview(t, db)
+	courseID := setupCourseForReview(t, db, instructorID)
 	s := store.NewReviewStore(db)
 
 	r := newTestReview(instructorID, courseID)
@@ -54,7 +55,7 @@ func TestReviewStore_FindByID(t *testing.T) {
 
 	ctx := context.Background()
 	instructorID := setupInstructor(t, db)
-	courseID := setupCourseForReview(t, db)
+	courseID := setupCourseForReview(t, db, instructorID)
 	s := store.NewReviewStore(db)
 
 	r := newTestReview(instructorID, courseID)
@@ -80,7 +81,7 @@ func TestReviewStore_FindByUserAndCourse(t *testing.T) {
 
 	ctx := context.Background()
 	instructorID := setupInstructor(t, db)
-	courseID := setupCourseForReview(t, db)
+	courseID := setupCourseForReview(t, db, instructorID)
 	s := store.NewReviewStore(db)
 
 	r := newTestReview(instructorID, courseID)
@@ -105,7 +106,7 @@ func TestReviewStore_List(t *testing.T) {
 
 	ctx := context.Background()
 	instructorID := setupInstructor(t, db)
-	courseID := setupCourseForReview(t, db)
+	courseID := setupCourseForReview(t, db, instructorID)
 	s := store.NewReviewStore(db)
 
 	r1 := newTestReview(instructorID, courseID)
@@ -146,7 +147,7 @@ func TestReviewStore_Update(t *testing.T) {
 
 	ctx := context.Background()
 	instructorID := setupInstructor(t, db)
-	courseID := setupCourseForReview(t, db)
+	courseID := setupCourseForReview(t, db, instructorID)
 	s := store.NewReviewStore(db)
 
 	r := newTestReview(instructorID, courseID)
@@ -168,7 +169,7 @@ func TestReviewStore_Delete(t *testing.T) {
 
 	ctx := context.Background()
 	instructorID := setupInstructor(t, db)
-	courseID := setupCourseForReview(t, db)
+	courseID := setupCourseForReview(t, db, instructorID)
 	s := store.NewReviewStore(db)
 
 	r := newTestReview(instructorID, courseID)
@@ -186,7 +187,7 @@ func TestReviewStore_RecalcRating(t *testing.T) {
 
 	ctx := context.Background()
 	instructorID := setupInstructor(t, db)
-	courseID := setupCourseForReview(t, db)
+	courseID := setupCourseForReview(t, db, instructorID)
 	s := store.NewReviewStore(db)
 	cs := store.NewCourseStore(db)
 

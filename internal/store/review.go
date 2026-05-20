@@ -158,6 +158,7 @@ func (s *reviewStore) Update(ctx context.Context, r *model.Review) error {
 			rating  = $1,
 			comment = $2
 		WHERE id = $3`,
+		r.Rating,
 		r.Comment,
 		r.ID,
 	)
