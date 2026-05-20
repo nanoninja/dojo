@@ -39,7 +39,7 @@ func (m *mockEnrollmentService) GetByID(_ context.Context, _ string) (*model.Cou
 	return m.enrollment, m.getErr
 }
 
-func (m *mockEnrollmentService) Enroll(_ context.Context, userID, courseID string) (*model.CourseEnrollment, error) {
+func (m *mockEnrollmentService) Enroll(_ context.Context, userID, courseID string, _ model.EnrollmentSource) (*model.CourseEnrollment, error) {
 	if m.enrollErr != nil {
 		return nil, m.enrollErr
 	}
@@ -161,6 +161,7 @@ func TestEnrollmentHandler_Enroll(t *testing.T) {
 	r := newJSONRequest("POST", "/enrollments", map[string]any{
 		"user_id":   testUserID,
 		"course_id": testCourseIDForEnrollment,
+		"source":    "free",
 	})
 
 	serve(newEnrollmentHandler(s).Enroll, w, r)
@@ -174,7 +175,10 @@ func TestEnrollmentHandler_Enroll(t *testing.T) {
 func TestEnrollmentHandler_Enroll_InvalidBody(t *testing.T) {
 	s := &mockEnrollmentService{}
 	w := httptest.NewRecorder()
-	r := newJSONRequest("POST", "/enrollments", map[string]any{"user_id": "bad"})
+	r := newJSONRequest("POST", "/enrollments", map[string]any{
+		"user_id": "bad",
+		"source":  "free",
+	})
 
 	serve(newEnrollmentHandler(s).Enroll, w, r)
 
@@ -187,6 +191,7 @@ func TestEnrollmentHandler_Enroll_AlreadyEnrolled(t *testing.T) {
 	r := newJSONRequest("POST", "/enrollments", map[string]any{
 		"user_id":   testUserID,
 		"course_id": testCourseIDForEnrollment,
+		"source":    "free",
 	})
 
 	serve(newEnrollmentHandler(s).Enroll, w, r)

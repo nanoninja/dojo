@@ -99,10 +99,7 @@ func (s *enrollmentStore) List(ctx context.Context, f EnrollmentFilter) ([]model
 
 func (s *enrollmentStore) FindByID(ctx context.Context, id string) (*model.CourseEnrollment, error) {
 	var e model.CourseEnrollment
-	err := s.db.GetContext(ctx, &e, `
-		SELECT * FROM course_enrollments WHERE id = $1`,
-		id,
-	)
+	err := s.db.GetContext(ctx, &e, `SELECT * FROM course_enrollments WHERE id = $1`, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -116,7 +113,9 @@ func (s *enrollmentStore) FindByUserAndCourse(ctx context.Context, userID, cours
 	var e model.CourseEnrollment
 	err := s.db.GetContext(ctx, &e, `
 		SELECT * FROM course_enrollments 
-		WHERE user_id = $1 AND course_id = $2`,
+		WHERE 
+			user_id = $1 
+		AND course_id = $2`,
 		userID,
 		courseID,
 	)
@@ -131,16 +130,18 @@ func (s *enrollmentStore) FindByUserAndCourse(ctx context.Context, userID, cours
 
 func (s *enrollmentStore) Create(ctx context.Context, e *model.CourseEnrollment) error {
 	return s.db.GetContext(ctx, &e.ID, `
-		INSERT INTO course_enrollments (
-			user_id,
-			course_id,
-			status,
-			expires_at
-		) VALUES ($1, $2, $3, $4)
-		RETURNING id`,
+        INSERT INTO course_enrollments (
+            user_id,
+            course_id,
+            status,
+            source,
+            expires_at
+        ) VALUES ($1, $2, $3, $4, $5)
+        RETURNING id`,
 		e.UserID,
 		e.CourseID,
 		e.Status,
+		e.Source,
 		e.ExpiresAt,
 	)
 }
@@ -170,7 +171,9 @@ func (s *enrollmentStore) UpdateProgress(ctx context.Context, userID, courseID s
 	_, err := s.db.ExecContext(ctx, `
 		UPDATE course_enrollments
 			SET progress_percent = $1
-		WHERE user_id = $2 AND course_id = $3`,
+		WHERE 
+			user_id = $2
+		AND course_id = $3`,
 		percent, userID, courseID,
 	)
 	return err

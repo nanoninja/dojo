@@ -58,6 +58,13 @@ CREATE TYPE enrollment_status AS ENUM (
     'refunded'
 );
 
+CREATE TYPE enrollment_source AS ENUM (
+    'free',
+    'purchase',
+    'subscription'
+    'manual'
+);
+
 -- FUNCTIONS ===================================================
 
 -- +goose StatementBegin
@@ -470,6 +477,7 @@ CREATE TABLE course_enrollments (
     user_id          UUID              NOT NULL,
     course_id        UUID              NOT NULL,
     status           enrollment_status NOT NULL DEFAULT 'active',
+    source           enrollment_source NOT NULL DEFAULT 'free',
     progress_percent NUMERIC(5,2)      NOT NULL DEFAULT 0.00,
     last_accessed_at TIMESTAMPTZ       NULL,
     enrolled_at      TIMESTAMPTZ       NOT NULL DEFAULT NOW(),
@@ -651,3 +659,4 @@ DROP TYPE IF EXISTS login_status;
 DROP TYPE IF EXISTS course_level;
 DROP TYPE IF EXISTS content_type;
 DROP TYPE IF EXISTS enrollment_status;
+DROP TYPE IF EXISTS enrollment_source;

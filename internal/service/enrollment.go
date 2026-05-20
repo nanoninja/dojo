@@ -25,8 +25,8 @@ type EnrollmentService interface {
 	// GetByID returns an enrollment by its ID, or ErrEnrollmentNotFound.
 	GetByID(ctx context.Context, id string) (*model.CourseEnrollment, error)
 
-	// Enroll registers a user to a course, or returns ErrAlreadyEnrolled.
-	Enroll(ctx context.Context, userID, courseID string) (*model.CourseEnrollment, error)
+	// Enroll registers a user to a course with the given source, or ErrAlreadyEnrolled if already registered.
+	Enroll(ctx context.Context, userID, courseID string, source model.EnrollmentSource) (*model.CourseEnrollment, error)
 
 	// UpdateStatus changes the status of an existing enrollment.
 	UpdateStatus(ctx context.Context, id string, status model.EnrollmentStatus) error
@@ -59,7 +59,7 @@ func (s *enrollmentService) GetByID(ctx context.Context, id string) (*model.Cour
 	return e, nil
 }
 
-func (s *enrollmentService) Enroll(ctx context.Context, userID, courseID string) (*model.CourseEnrollment, error) {
+func (s *enrollmentService) Enroll(ctx context.Context, userID, courseID string, source model.EnrollmentSource) (*model.CourseEnrollment, error) {
 	existing, err := s.enrollments.FindByUserAndCourse(ctx, userID, courseID)
 	if err != nil {
 		return nil, err
@@ -71,6 +71,7 @@ func (s *enrollmentService) Enroll(ctx context.Context, userID, courseID string)
 		UserID:   userID,
 		CourseID: courseID,
 		Status:   model.EnrollmentStatusActive,
+		Source:   source,
 	}
 	if err := s.enrollments.Create(ctx, e); err != nil {
 		return nil, err

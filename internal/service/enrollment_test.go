@@ -111,7 +111,7 @@ func TestEnrollmentService_Enroll(t *testing.T) {
 	svc := newEnrollmentService(newFakeEnrollmentStore())
 
 	t.Run("success", func(t *testing.T) {
-		e, err := svc.Enroll(ctx, "user-1", "course-1")
+		e, err := svc.Enroll(ctx, "user-1", "course-1", model.EnrollmentSourceFree)
 
 		assert.NoError(t, err)
 		assert.NotEqual(t, "", e.ID)
@@ -119,7 +119,7 @@ func TestEnrollmentService_Enroll(t *testing.T) {
 	})
 
 	t.Run("already enrolled", func(t *testing.T) {
-		_, err := svc.Enroll(ctx, "user-1", "course-1")
+		_, err := svc.Enroll(ctx, "user-1", "course-1", model.EnrollmentSourceFree)
 
 		assert.ErrorIs(t, err, service.ErrAlreadyEnrolled)
 	})
@@ -129,7 +129,7 @@ func TestEnrollmentService_GetByID(t *testing.T) {
 	ctx := context.Background()
 	svc := newEnrollmentService(newFakeEnrollmentStore())
 
-	e, err := svc.Enroll(ctx, "user-1", "course-1")
+	e, err := svc.Enroll(ctx, "user-1", "course-1", model.EnrollmentSourceFree)
 	assert.NoError(t, err)
 
 	t.Run("found", func(t *testing.T) {
@@ -148,9 +148,9 @@ func TestEnrollmentService_List(t *testing.T) {
 	ctx := context.Background()
 	svc := newEnrollmentService(newFakeEnrollmentStore())
 
-	assert.NoError(t, func() error { _, err := svc.Enroll(ctx, "user-1", "course-1"); return err }())
-	assert.NoError(t, func() error { _, err := svc.Enroll(ctx, "user-1", "course-2"); return err }())
-	assert.NoError(t, func() error { _, err := svc.Enroll(ctx, "user-2", "course-1"); return err }())
+	assert.NoError(t, func() error { _, err := svc.Enroll(ctx, "user-1", "course-1", model.EnrollmentSourceFree); return err }())
+	assert.NoError(t, func() error { _, err := svc.Enroll(ctx, "user-1", "course-2", model.EnrollmentSourceFree); return err }())
+	assert.NoError(t, func() error { _, err := svc.Enroll(ctx, "user-2", "course-1", model.EnrollmentSourceFree); return err }())
 
 	t.Run("no filter", func(t *testing.T) {
 		result, total, err := svc.List(ctx, store.EnrollmentFilter{})
@@ -181,7 +181,7 @@ func TestEnrollmentService_UpdateStatus(t *testing.T) {
 	ctx := context.Background()
 	svc := newEnrollmentService(newFakeEnrollmentStore())
 
-	e, err := svc.Enroll(ctx, "user-1", "course-1")
+	e, err := svc.Enroll(ctx, "user-1", "course-1", model.EnrollmentSourceFree)
 	assert.NoError(t, err)
 
 	t.Run("success", func(t *testing.T) {
@@ -202,7 +202,7 @@ func TestEnrollmentService_Delete(t *testing.T) {
 	ctx := context.Background()
 	svc := newEnrollmentService(newFakeEnrollmentStore())
 
-	e, err := svc.Enroll(ctx, "user-1", "course-1")
+	e, err := svc.Enroll(ctx, "user-1", "course-1", model.EnrollmentSourceFree)
 	assert.NoError(t, err)
 
 	assert.NoError(t, svc.Delete(ctx, e.ID))

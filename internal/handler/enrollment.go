@@ -28,9 +28,6 @@ func NewEnrollmentHandler(enrollment service.EnrollmentService) *EnrollmentHandl
 // List
 // ============================================================================
 
-//nolint:unused
-type enrollmentPageResponse = httputil.PageResponse[model.CourseEnrollment]
-
 // List handles GET /api/v1/enrollments
 //
 // @Summary  List enrollments with optional filters
@@ -42,7 +39,7 @@ type enrollmentPageResponse = httputil.PageResponse[model.CourseEnrollment]
 // @Param    status     query    string  false  "Filter by status"  Enums(active,completed,expired,refunded)
 // @Param    page       query    int     false  "Page number"    default(1)
 // @Param    limit      query    int     false  "Items per page" default(20)
-// @Success  200  {object}  enrollmentPageResponse
+// @Success  200  {object}  httputil.PageResponse[model.CourseEnrollment]
 // @Failure  400  {object}  fault.ErrorResponse
 // @Failure  500  {object}  fault.ErrorResponse
 // @Router   /api/v1/enrollments [get]
@@ -121,8 +118,9 @@ func (h *EnrollmentHandler) GetByID(w http.ResponseWriter, r *http.Request) erro
 
 // EnrollRequest holds the fields required to enroll a user in a course.
 type EnrollRequest struct {
-	UserID   string `json:"user_id"   validate:"required,uuid"`
-	CourseID string `json:"course_id" validate:"required,uuid"`
+	UserID   string                 `json:"user_id"   validate:"required,uuid"`
+	CourseID string                 `json:"course_id" validate:"required,uuid"`
+	Source   model.EnrollmentSource `json:"source"    validate:"required,oneof=free purchase subscription manual"`
 }
 
 // Enroll handles POST /api/v1/enrollments
@@ -142,7 +140,7 @@ func (h *EnrollmentHandler) Enroll(w http.ResponseWriter, r *http.Request) error
 	if err := httputil.Bind(r, &req); err != nil {
 		return err
 	}
-	e, err := h.enrollment.Enroll(r.Context(), req.UserID, req.CourseID)
+	e, err := h.enrollment.Enroll(r.Context(), req.UserID, req.CourseID, req.Source)
 	if err != nil {
 		return toFault(err)
 	}
