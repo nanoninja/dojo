@@ -15,6 +15,10 @@ import (
 	"github.com/nanoninja/dojo/internal/service"
 )
 
+// ============================================================================
+// helpers
+// ============================================================================
+
 func newUserHandler(user *mockUserService) *handler.UserHandler {
 	return handler.NewUserHandler(user)
 }

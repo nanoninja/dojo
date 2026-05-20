@@ -16,6 +16,10 @@ import (
 	"github.com/nanoninja/dojo/internal/handler"
 )
 
+// ============================================================================
+// fakeDBPinger / fakeCachePinger
+// ============================================================================
+
 // fakeDBPinger lets tests control DB ping behavior.
 type fakeDBPinger struct {
 	pingFn func(ctx context.Context) error

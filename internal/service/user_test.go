@@ -14,6 +14,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// ============================================================================
+// helpers
+// ============================================================================
+
 func newUserService(us *fakeUserStore) service.UserService {
 	return service.NewUserService(us, &fakeLoginAuditStore{})
 }

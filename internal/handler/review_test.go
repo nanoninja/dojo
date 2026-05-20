@@ -59,11 +59,13 @@ func (m *mockReviewService) Delete(_ context.Context, _ string) error {
 // ============================================================================
 // helpers
 // ============================================================================
+
 const testReviewID = "01966b0a-aaaa-7abc-def0-000000000099"
 
 func newReviewHandler(s *mockReviewService) *handler.ReviewHandler {
 	return handler.NewReviewHandler(s)
 }
+
 func testReview() *model.Review {
 	return &model.Review{
 		ID:       testReviewID,
