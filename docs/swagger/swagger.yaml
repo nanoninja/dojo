@@ -1076,6 +1076,19 @@ definitions:
       updated_at:
         type: string
     type: object
+  model.Certificate:
+    properties:
+      course_id:
+        type: string
+      id:
+        type: string
+      issued_at:
+        type: string
+      user_id:
+        type: string
+      uuid:
+        type: string
+    type: object
   model.Chapter:
     properties:
       course_id:
@@ -1767,6 +1780,96 @@ paths:
       summary: Update a category
       tags:
       - categories
+  /api/v1/certificates:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Certificate'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List certificates for the authenticated user
+      tags:
+      - certificates
+  /api/v1/certificates/{id}:
+    get:
+      parameters:
+      - description: Certificate ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Certificate'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "404":
+          description: certificate not found
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a certificate by ID
+      tags:
+      - certificates
+  /api/v1/certificates/verify/{uuid}:
+    get:
+      parameters:
+      - description: Certificate public UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Certificate'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "404":
+          description: certificate not found
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      summary: Verify a certificate by its public UUID
+      tags:
+      - certificates
   /api/v1/chapters:
     post:
       consumes:

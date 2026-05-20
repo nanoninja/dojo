@@ -96,6 +96,7 @@ func run(logger *slog.Logger) error {
 	bundleStore := store.NewBundleStore(db)
 	bundleCourseStore := store.NewBundleCourseStore(db)
 	reviewStore := store.NewReviewStore(db)
+	certificateStore := store.NewCertificateStore(db)
 
 	// Course domain - services
 	courseService := service.NewCourseService(db, courseStore, coursesCategoriesStore, coursesTagsStore)
@@ -107,6 +108,7 @@ func run(logger *slog.Logger) error {
 	progressService := service.NewLessonProgressService(db, progressStore, enrollmentStore)
 	bundleService := service.NewBundleService(db, bundleStore, bundleCourseStore)
 	reviewService := service.NewReviewService(db, reviewStore)
+	certificateService := service.NewCertificateService(certificateStore)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -142,17 +144,18 @@ func run(logger *slog.Logger) error {
 
 	// Handlers
 	handlers := &router.Handlers{
-		Auth:       handler.NewAuthHandler(authService, userService, cfg.AuthTransport, cfg.JWT, logger, &wg),
-		User:       handler.NewUserHandler(userService),
-		Course:     handler.NewCourseHandler(courseService),
-		Category:   handler.NewCategoryHandler(categoryService),
-		Tag:        handler.NewTagHandler(tagService),
-		Chapter:    handler.NewChapterHandler(chapterService),
-		Lesson:     handler.NewLessonHandler(lessonService),
-		Enrollment: handler.NewEnrollmentHandler(enrollmentService),
-		Progress:   handler.NewProgressHandler(progressService),
-		Bundle:     handler.NewBundleHandler(bundleService),
-		Review:     handler.NewReviewHandler(reviewService),
+		Auth:        handler.NewAuthHandler(authService, userService, cfg.AuthTransport, cfg.JWT, logger, &wg),
+		User:        handler.NewUserHandler(userService),
+		Course:      handler.NewCourseHandler(courseService),
+		Category:    handler.NewCategoryHandler(categoryService),
+		Tag:         handler.NewTagHandler(tagService),
+		Chapter:     handler.NewChapterHandler(chapterService),
+		Lesson:      handler.NewLessonHandler(lessonService),
+		Enrollment:  handler.NewEnrollmentHandler(enrollmentService),
+		Progress:    handler.NewProgressHandler(progressService),
+		Bundle:      handler.NewBundleHandler(bundleService),
+		Review:      handler.NewReviewHandler(reviewService),
+		Certificate: handler.NewCertificateHandler(certificateService),
 	}
 
 	// Server

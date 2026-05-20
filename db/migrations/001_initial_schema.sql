@@ -470,6 +470,7 @@ CREATE TABLE courses_tags (
         FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 );
 
+
 -- ENROLLMENTS =================================================
 
 CREATE TABLE course_enrollments (
@@ -495,6 +496,7 @@ CREATE TABLE course_enrollments (
 CREATE INDEX idx_ce_user_id   ON course_enrollments (user_id);
 CREATE INDEX idx_ce_course_id ON course_enrollments (course_id);
 CREATE INDEX idx_ce_status    ON course_enrollments (status);
+
 
 -- BUNDLES =====================================================
 
@@ -556,6 +558,9 @@ CREATE TABLE bundle_courses (
         FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 );
 
+
+-- USER LESSON PROGRESS ========================================
+
 CREATE TABLE user_lesson_progress (
     user_id         UUID        NOT NULL,
     lesson_id       UUID        NOT NULL,
@@ -571,6 +576,9 @@ CREATE TABLE user_lesson_progress (
 );
 
 CREATE INDEX idx_ulp_user_id ON user_lesson_progress (user_id);
+
+
+-- COURSE REVIEWS ==============================================
 
 CREATE TABLE course_reviews (
     id         UUID        PRIMARY KEY NOT NULL DEFAULT uuidv7(),
@@ -595,6 +603,26 @@ CREATE TRIGGER update_course_reviews_updated_at
     BEFORE UPDATE ON course_reviews
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+
+-- CERTIFICATES== ==============================================
+
+CREATE TABLE certificates (
+    id        UUID PRIMARY KEY NOT NULL DEFAULT uuidv7(),
+    user_id   UUID             NOT NULL,
+    course_id UUID             NOT NULL,
+    uuid      UUID             NOT NULL DEFAULT gen_random_uuid(),
+    issued_at TIMESTAMPTZ      DEFAULT now(),
+
+    CONSTRAINT uq_certificates_user_course UNIQUE (user_id, course_id),
+    CONSTRAINT uq_certificates_uuid        UNIQUE (uuid),
+
+    CONSTRAINT fk_certificates_user_id
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_certificates_course_id
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE RESTRICT
+);
+
 
 -- GOOSE DOWN ==================================================
 
@@ -629,6 +657,7 @@ DROP TRIGGER IF EXISTS update_chapters_updated_at               ON chapters;
 DROP TRIGGER IF EXISTS update_courses_updated_at                ON courses;
 DROP TRIGGER IF EXISTS update_users_updated_at                  ON users;
 
+DROP TABLE IF EXISTS certificates;
 DROP TABLE IF EXISTS course_reviews;
 DROP TABLE IF EXISTS user_lesson_progress;
 DROP TABLE IF EXISTS bundle_courses;

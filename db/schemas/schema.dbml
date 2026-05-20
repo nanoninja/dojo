@@ -284,6 +284,7 @@ Table course_enrollments {
   user_id          uuid              [ref: > users.id, note: "not null - cascade delete"]
   course_id        uuid              [ref: > courses.id, note: "not null - cascade delete"]
   status           enrollment_status [default: "active", note: "not null"]
+  source           enrollment_source [default: "free", note: "not null"]
   progress_percent decimal(5,2)      [default: 0.00, note: "not null"]
   last_accessed_at timestamptz       [null]
   enrolled_at      timestamptz       [default: `now()`, note: "not null"]
@@ -344,6 +345,35 @@ Table user_lesson_progress {
   }
 }
 
+Table course_reviews {
+  id         uuid        [pk, default: `uuidv7()`]
+  user_id    uuid        [ref: > users.id,   note: "not null — restrict delete"]
+  course_id  uuid        [ref: > courses.id, note: "not null — restrict delete"]
+  rating     smallint    [note: "not null — 1 to 5"]
+  comment    text        [null]
+  created_at timestamptz [default: `now()`, note: "not null"]
+  updated_at timestamptz [null]
+
+  indexes {
+    (user_id, course_id) [unique, name: "uq_cr_user_course"]
+    course_id            [name: "idx_cr_course_id"]
+    user_id              [name: "idx_cr_user_id"]
+  }
+}
+
+Table certificates {
+  id        uuid [pk, default: `uuidv7()`]
+  user_id   uuid [ref: > users.id, note: "not null - restrict delete"]
+  course_id uuid [ref: > courses.id, note: "not null - restrict delete"]
+  uuid      uuid [unique, note: "not null - public identifier for /verify"]
+  issued_at timestamptz [default: `now()`, note: "not null"]
+
+  indexes {
+    (user_id, course_id) [unique, name: "uq_certificates_user_course"]
+    uui                  [unique, name: "uq_certificates_uuid"]
+  }
+}
+
 // ================================================================================
 // ENUMS
 // ================================================================================
@@ -401,4 +431,11 @@ Enum enrollment_status {
   completed [note: "user has completed the course"]
   expired   [note: "enrollment has passed its expiry date"]
   refunded  [note: "enrollment was refunded"]
+}
+
+Enum enrollment_source {
+  free         [note: "enrolled without payment"]
+  purchase     [note: "one-time purchase"]
+  subscription [note: "active subscription"]
+  manual       [note: "manually granted by admin"]
 }

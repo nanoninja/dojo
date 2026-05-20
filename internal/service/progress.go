@@ -5,16 +5,10 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/platform/database"
 	"github.com/nanoninja/dojo/internal/store"
-)
-
-var (
-	// ErrProgressNotFound is returned when no progress record exists for a user/lesson pair.
-	ErrProgressNotFound = errors.New("lesson progress not found")
 )
 
 // LessonProgressService handles lesson progress tracking and course completion updates.

@@ -5,19 +5,10 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/platform/database"
 	"github.com/nanoninja/dojo/internal/store"
-)
-
-var (
-	// ErrBundleNotFound is returned when a bundle lookup yields no result.
-	ErrBundleNotFound = errors.New("bundle not found")
-
-	// ErrBundleSlugTaken is returned when creating or updating a bundle with an already-used slug.
-	ErrBundleSlugTaken = errors.New("bundle slug already taken")
 )
 
 // BundleService handles bundle management and course assignments.

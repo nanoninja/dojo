@@ -45,6 +45,18 @@ var (
 	// ErrCourseSlugTaken is returned when creating or updating a course with an already-used slug.
 	ErrCourseSlugTaken = errors.New("course slug already taken")
 
+	// ErrBundleNotFound is returned when a bundle lookup yields no result.
+	ErrBundleNotFound = errors.New("bundle not found")
+
+	// ErrBundleSlugTaken is returned when creating or updating a bundle with an already-used slug.
+	ErrBundleSlugTaken = errors.New("bundle slug already taken")
+
+	// ErrEnrollmentNotFound is returned when an enrollment lookup yields no result.
+	ErrEnrollmentNotFound = errors.New("enrollment not found")
+
+	// ErrAlreadyEnrolled is returned when a user attempts to enroll in a course they are already enrolled in.
+	ErrAlreadyEnrolled = errors.New("user already enrolled in this course")
+
 	// ErrCategoryNotFound is returned when a category lookup yields no result.
 	ErrCategoryNotFound = errors.New("category not found")
 
@@ -66,6 +78,12 @@ var (
 	// ErrLessonResourceNotFound is returned when a lesson resource lookup yields no result.
 	ErrLessonResourceNotFound = errors.New("lesson resource not found")
 
+	// ErrProgressNotFound is returned when no progress record exists for a user/lesson pair.
+	ErrProgressNotFound = errors.New("lesson progress not found")
+
 	// ErrReviewNotFound is returned when a review lookup yields no result.
 	ErrReviewNotFound = errors.New("review not found")
+
+	// ErrCertificateNotFound is returned when a certificate lookup yields no result.
+	ErrCertificateNotFound = errors.New("certificate not found")
 )

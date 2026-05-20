@@ -28,17 +28,18 @@ import (
 
 // Handlers groups all HTTP handlers.
 type Handlers struct {
-	Auth       *handler.AuthHandler
-	User       *handler.UserHandler
-	Course     *handler.CourseHandler
-	Review     *handler.ReviewHandler
-	Category   *handler.CategoryHandler
-	Tag        *handler.TagHandler
-	Chapter    *handler.ChapterHandler
-	Lesson     *handler.LessonHandler
-	Enrollment *handler.EnrollmentHandler
-	Bundle     *handler.BundleHandler
-	Progress   *handler.ProgressHandler
+	Auth        *handler.AuthHandler
+	User        *handler.UserHandler
+	Course      *handler.CourseHandler
+	Review      *handler.ReviewHandler
+	Category    *handler.CategoryHandler
+	Tag         *handler.TagHandler
+	Chapter     *handler.ChapterHandler
+	Lesson      *handler.LessonHandler
+	Enrollment  *handler.EnrollmentHandler
+	Bundle      *handler.BundleHandler
+	Progress    *handler.ProgressHandler
+	Certificate *handler.CertificateHandler
 }
 
 // New builds and returns the main HTTP router with all middleware and routes configured.
@@ -143,6 +144,7 @@ func New(
 
 		r.Get("/courses/{course_id}/reviews", httputil.Handle(handlers.Review.List, logger))
 		r.Get("/courses/{course_id}/reviews/{id}", httputil.Handle(handlers.Review.GetByID, logger))
+		r.Get("/certificates/verify/{uuid}", httputil.Handle(handlers.Certificate.Verify, logger))
 
 		// Protected routes
 		r.Group(func(r chi.Router) {
@@ -208,6 +210,10 @@ func New(
 				// Bundles — read
 				r.Get("/bundles", httputil.Handle(handlers.Bundle.List, logger))
 				r.Get("/bundles/{id}", httputil.Handle(handlers.Bundle.GetByID, logger))
+
+				// Certificates
+				r.Get("/certificates", httputil.Handle(handlers.Certificate.ListByUser, logger))
+				r.Get("/certificates/{id}", httputil.Handle(handlers.Certificate.GetByID, logger))
 
 				// Instructor+ — gestion des cours, chapitres, leçons
 				r.Group(func(r chi.Router) {

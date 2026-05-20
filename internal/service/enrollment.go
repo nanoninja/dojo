@@ -5,17 +5,10 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/store"
 )
-
-// ErrEnrollmentNotFound is returned when a course enrollment cannot be found.
-var ErrEnrollmentNotFound = errors.New("enrollment not found")
-
-// ErrAlreadyEnrolled is returned when a user is already enrolled in a course.
-var ErrAlreadyEnrolled = errors.New("user already enrolled in this course")
 
 // EnrollmentService defines business operations for course enrollments.
 type EnrollmentService interface {
