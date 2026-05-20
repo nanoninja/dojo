@@ -18,6 +18,7 @@ func newTestEnrollment(userID, courseID string) *model.CourseEnrollment {
 		UserID:   userID,
 		CourseID: courseID,
 		Status:   model.EnrollmentStatusActive,
+		Source:   model.EnrollmentSourceFree,
 	}
 }
 

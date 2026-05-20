@@ -156,7 +156,7 @@ k8s-delete:
 # ==============================================================================
 
 swagger:
-	$(GOBIN)/swag init -g main.go -d ./cmd/api,./internal/handler,./internal/model,./internal/service,./internal/fault --output docs/swagger --parseInternal
+	$(GOBIN)/swag init -g main.go -d ./cmd/api,./internal/handler,./internal/model,./internal/service,./internal/fault --output docs/swagger --parseInternal --parseDependency
 
 test:
 	docker compose -f $(DOCKER_DIR)/compose.test.yaml up -d --wait db-test

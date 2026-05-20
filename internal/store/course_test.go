@@ -28,9 +28,11 @@ func newTestCourse(instructorID string) *model.Course {
 
 func setupInstructor(t testing.TB, db *database.DB) string {
 	t.Helper()
+
 	u := newTestUser()
 	u.Email = "course-instructor@example.com"
 	us := store.NewUserStore(db, testutil.NewTestCipher(t))
+
 	assert.NoError(t, us.Create(context.Background(), u), "setup: Create() instructor")
 	return u.ID
 }

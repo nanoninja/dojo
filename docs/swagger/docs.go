@@ -61,7 +61,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.bundlePageResponse"
+                            "$ref": "#/definitions/httputil.PageResponse-model_Bundle"
                         }
                     },
                     "400": {
@@ -823,7 +823,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.coursePageResponse"
+                            "$ref": "#/definitions/httputil.PageResponse-model_Course"
                         }
                     },
                     "400": {
@@ -988,7 +988,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.reviewPageResponse"
+                            "$ref": "#/definitions/httputil.PageResponse-model_Review"
                         }
                     },
                     "400": {
@@ -1537,7 +1537,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.enrollmentPageResponse"
+                            "$ref": "#/definitions/httputil.PageResponse-model_CourseEnrollment"
                         }
                     },
                     "400": {
@@ -3844,11 +3844,25 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "course_id",
+                "source",
                 "user_id"
             ],
             "properties": {
                 "course_id": {
                     "type": "string"
+                },
+                "source": {
+                    "enum": [
+                        "free",
+                        "purchase",
+                        "subscription",
+                        "manual"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.EnrollmentSource"
+                        }
+                    ]
                 },
                 "user_id": {
                     "type": "string"
@@ -4756,17 +4770,75 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.bundlePageResponse": {
-            "type": "object"
+        "httputil.PageMeta": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
         },
-        "handler.coursePageResponse": {
-            "type": "object"
+        "httputil.PageResponse-model_Bundle": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Bundle"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/httputil.PageMeta"
+                }
+            }
         },
-        "handler.enrollmentPageResponse": {
-            "type": "object"
+        "httputil.PageResponse-model_Course": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Course"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/httputil.PageMeta"
+                }
+            }
         },
-        "handler.reviewPageResponse": {
-            "type": "object"
+        "httputil.PageResponse-model_CourseEnrollment": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.CourseEnrollment"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/httputil.PageMeta"
+                }
+            }
+        },
+        "httputil.PageResponse-model_Review": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Review"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/httputil.PageMeta"
+                }
+            }
         },
         "model.Bundle": {
             "type": "object",
@@ -5047,6 +5119,9 @@ const docTemplate = `{
                 "progress_percent": {
                     "type": "number"
                 },
+                "source": {
+                    "$ref": "#/definitions/model.EnrollmentSource"
+                },
                 "status": {
                     "$ref": "#/definitions/model.EnrollmentStatus"
                 },
@@ -5068,6 +5143,21 @@ const docTemplate = `{
                 "CourseLevelIntermediate",
                 "CourseLevelAdvanced",
                 "CourseLevelExpert"
+            ]
+        },
+        "model.EnrollmentSource": {
+            "type": "string",
+            "enum": [
+                "free",
+                "purchase",
+                "subscription",
+                "manual"
+            ],
+            "x-enum-varnames": [
+                "EnrollmentSourceFree",
+                "EnrollmentSourcePurchase",
+                "EnrollmentSourceSubscription",
+                "EnrollmentSourceManual"
             ]
         },
         "model.EnrollmentStatus": {

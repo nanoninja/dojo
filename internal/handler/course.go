@@ -28,11 +28,6 @@ func NewCourseHandler(course service.CourseService) *CourseHandler {
 // List
 // ============================================================================
 
-// coursePageResponse is used only for Swagger documentation.
-//
-//nolint:unused
-type coursePageResponse = httputil.PageResponse[model.Course]
-
 // List handles GET /api/v1/courses
 //
 // @Summary   List courses with optional filters
@@ -49,7 +44,7 @@ type coursePageResponse = httputil.PageResponse[model.Course]
 // @Param     sort           query    string  false  "Sort order"  Enums(asc,desc)
 // @Param     page           query    int     false  "Page number"    default(1)
 // @Param     limit          query    int     false  "Items per page" default(20)
-// @Success   200  {object}  coursePageResponse
+// @Success   200  {object}  httputil.PageResponse[model.Course]
 // @Failure   400  {object}  fault.ErrorResponse
 // @Failure   500  {object}  fault.ErrorResponse
 // @Router    /api/v1/courses [get]

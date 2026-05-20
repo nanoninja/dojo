@@ -313,10 +313,19 @@ definitions:
     properties:
       course_id:
         type: string
+      source:
+        allOf:
+        - $ref: '#/definitions/model.EnrollmentSource'
+        enum:
+        - free
+        - purchase
+        - subscription
+        - manual
       user_id:
         type: string
     required:
     - course_id
+    - source
     - user_id
     type: object
   handler.HealthResponse:
@@ -958,13 +967,50 @@ definitions:
     - code
     - user_id
     type: object
-  handler.bundlePageResponse:
+  httputil.PageMeta:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
     type: object
-  handler.coursePageResponse:
+  httputil.PageResponse-model_Bundle:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Bundle'
+        type: array
+      meta:
+        $ref: '#/definitions/httputil.PageMeta'
     type: object
-  handler.enrollmentPageResponse:
+  httputil.PageResponse-model_Course:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Course'
+        type: array
+      meta:
+        $ref: '#/definitions/httputil.PageMeta'
     type: object
-  handler.reviewPageResponse:
+  httputil.PageResponse-model_CourseEnrollment:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.CourseEnrollment'
+        type: array
+      meta:
+        $ref: '#/definitions/httputil.PageMeta'
+    type: object
+  httputil.PageResponse-model_Review:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Review'
+        type: array
+      meta:
+        $ref: '#/definitions/httputil.PageMeta'
     type: object
   model.Bundle:
     properties:
@@ -1154,6 +1200,8 @@ definitions:
         type: string
       progress_percent:
         type: number
+      source:
+        $ref: '#/definitions/model.EnrollmentSource'
       status:
         $ref: '#/definitions/model.EnrollmentStatus'
       user_id:
@@ -1171,6 +1219,18 @@ definitions:
     - CourseLevelIntermediate
     - CourseLevelAdvanced
     - CourseLevelExpert
+  model.EnrollmentSource:
+    enum:
+    - free
+    - purchase
+    - subscription
+    - manual
+    type: string
+    x-enum-varnames:
+    - EnrollmentSourceFree
+    - EnrollmentSourcePurchase
+    - EnrollmentSourceSubscription
+    - EnrollmentSourceManual
   model.EnrollmentStatus:
     enum:
     - active
@@ -1432,7 +1492,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.bundlePageResponse'
+            $ref: '#/definitions/httputil.PageResponse-model_Bundle'
         "400":
           description: Bad Request
           schema:
@@ -1913,7 +1973,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.coursePageResponse'
+            $ref: '#/definitions/httputil.PageResponse-model_Course'
         "400":
           description: Bad Request
           schema:
@@ -2018,7 +2078,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.reviewPageResponse'
+            $ref: '#/definitions/httputil.PageResponse-model_Review'
         "400":
           description: Bad Request
           schema:
@@ -2368,7 +2428,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.enrollmentPageResponse'
+            $ref: '#/definitions/httputil.PageResponse-model_CourseEnrollment'
         "400":
           description: Bad Request
           schema:

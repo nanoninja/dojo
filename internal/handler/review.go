@@ -16,9 +16,6 @@ import (
 	"github.com/nanoninja/dojo/internal/store"
 )
 
-//nolint:unused
-type reviewPageResponse = httputil.PageResponse[model.Review]
-
 // ReviewHandler handles HTTP requests for course review endpoints.
 type ReviewHandler struct {
 	review service.ReviewService
@@ -43,7 +40,7 @@ func NewReviewHandler(review service.ReviewService) *ReviewHandler {
 // @Param     sort       query  string  false  "Sort order"    Enums(asc,desc)
 // @Param     page       query  int     false  "Page number"   default(1)
 // @Param     limit      query  int     false  "Items per page" default(20)
-// @Success   200  {object}  reviewPageResponse
+// @Success   200  {object}  httputil.PageResponse[model.Review]
 // @Failure   400  {object}  fault.ErrorResponse
 // @Failure   500  {object}  fault.ErrorResponse
 // @Router    /api/v1/courses/{course_id}/reviews [get]

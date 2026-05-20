@@ -28,11 +28,6 @@ func NewBundleHandler(bundle service.BundleService) *BundleHandler {
 // List
 // ============================================================================
 
-// bundlePageResponse is used only for Swagger documentation.
-//
-//nolint:unused
-type bundlePageResponse = httputil.PageResponse[model.Bundle]
-
 // List handles GET /api/v1/bundles
 //
 // @Summary  List bundles with optional filters
@@ -43,7 +38,7 @@ type bundlePageResponse = httputil.PageResponse[model.Bundle]
 // @Param    is_published   query    bool    false  "Filter by published state"
 // @Param    page           query    int     false  "Page number"    default(1)
 // @Param    limit          query    int     false  "Items per page" default(20)
-// @Success  200  {object}  bundlePageResponse
+// @Success  200  {object}  httputil.PageResponse[model.Bundle]
 // @Failure  400  {object}  fault.ErrorResponse
 // @Failure  500  {object}  fault.ErrorResponse
 // @Router   /api/v1/bundles [get]

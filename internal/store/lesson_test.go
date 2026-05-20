@@ -24,6 +24,7 @@ func setupChapter(t testing.TB, db *database.DB, courseID string) string {
 		Slug:      "introduction",
 		SortOrder: 1,
 	}
+
 	assert.NoError(t, s.Create(context.Background(), c), "setup: Create() chapter")
 	return c.ID
 }
