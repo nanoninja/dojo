@@ -34,6 +34,8 @@ func toFault(err error) error {
 
 	case errors.Is(err, service.ErrCourseNotFound):
 		return fault.NotFound("course", err)
+	case errors.Is(err, service.ErrReviewNotFound):
+		return fault.NotFound("reviews", err)
 	case errors.Is(err, service.ErrCategoryNotFound):
 		return fault.NotFound("category", err)
 	case errors.Is(err, service.ErrTagNotFound):

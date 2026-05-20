@@ -78,46 +78,47 @@ func TestEnrollmentHandler_List(t *testing.T) {
 		},
 	}}
 
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/enrollments", nil)
-	serve(newEnrollmentHandler(s).List, rec, req)
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/enrollments", nil)
 
-	require.Equal(t, http.StatusOK, rec.Code)
+	serve(newEnrollmentHandler(s).List, w, r)
+
+	require.Equal(t, http.StatusOK, w.Code)
 
 	var body httputil.PageResponse[model.CourseEnrollment]
-	decodeJSON(t, rec, &body)
+	decodeJSON(t, w, &body)
 	assert.Len(t, body.Data, 1)
 	assert.Equal(t, 1, body.Meta.Total)
 }
 
 func TestEnrollmentHandler_List_InvalidUserID(t *testing.T) {
 	s := &mockEnrollmentService{}
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/enrollment?user_id=bad-uuid", nil)
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/enrollment?user_id=bad-uuid", nil)
 
-	serve(newEnrollmentHandler(s).List, rec, req)
+	serve(newEnrollmentHandler(s).List, w, r)
 
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func TestEnrollmentHandler_List_InvalidCourseID(t *testing.T) {
 	s := &mockEnrollmentService{}
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/enrollments?course_id=bad-uuid", nil)
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/enrollments?course_id=bad-uuid", nil)
 
-	serve(newEnrollmentHandler(s).List, rec, req)
+	serve(newEnrollmentHandler(s).List, w, r)
 
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func TestEnrollmentHandler_List_InvalidStatus(t *testing.T) {
 	s := &mockEnrollmentService{}
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/enrollments?status=unknown", nil)
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/enrollments?status=unknown", nil)
 
-	serve(newEnrollmentHandler(s).List, rec, req)
+	serve(newEnrollmentHandler(s).List, w, r)
 
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func TestEnrollmentHandler_GetByID_Found(t *testing.T) {
@@ -126,125 +127,125 @@ func TestEnrollmentHandler_GetByID_Found(t *testing.T) {
 		Status: model.EnrollmentStatusActive,
 	}}
 
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/enrollments/"+testEnrollmentID, nil)
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/enrollments/"+testEnrollmentID, nil)
 
-	serve(newEnrollmentHandler(s).GetByID, rec, withChiParam(req, "id", testEnrollmentID))
+	serve(newEnrollmentHandler(s).GetByID, w, withChiParam(r, "id", testEnrollmentID))
 
-	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
 }
 
 func TestEnrollmentHandler_GetByID_NotFound(t *testing.T) {
 	s := &mockEnrollmentService{getErr: service.ErrEnrollmentNotFound}
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/enrollments/"+testEnrollmentID, nil)
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/enrollments/"+testEnrollmentID, nil)
 
-	serve(newEnrollmentHandler(s).GetByID, rec, withChiParam(req, "id", testEnrollmentID))
+	serve(newEnrollmentHandler(s).GetByID, w, withChiParam(r, "id", testEnrollmentID))
 
-	assert.Equal(t, http.StatusNotFound, rec.Code)
+	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
 func TestEnrollmentHandler_GetByID_InvalidUUID(t *testing.T) {
 	s := &mockEnrollmentService{}
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/enrollments/bad", nil)
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/enrollments/bad", nil)
 
-	serve(newEnrollmentHandler(s).GetByID, rec, req)
+	serve(newEnrollmentHandler(s).GetByID, w, r)
 
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func TestEnrollmentHandler_Enroll(t *testing.T) {
 	s := &mockEnrollmentService{}
-	rec := httptest.NewRecorder()
-	req := newJSONRequest("POST", "/enrollments", map[string]any{
+	w := httptest.NewRecorder()
+	r := newJSONRequest("POST", "/enrollments", map[string]any{
 		"user_id":   testUserID,
 		"course_id": testCourseIDForEnrollment,
 	})
 
-	serve(newEnrollmentHandler(s).Enroll, rec, req)
-	require.Equal(t, http.StatusCreated, rec.Code)
+	serve(newEnrollmentHandler(s).Enroll, w, r)
+	require.Equal(t, http.StatusCreated, w.Code)
 
 	var body map[string]any
-	decodeJSON(t, rec, &body)
+	decodeJSON(t, w, &body)
 	assert.Equal(t, string(model.EnrollmentStatusActive), body["status"].(string))
 }
 
 func TestEnrollmentHandler_Enroll_InvalidBody(t *testing.T) {
 	s := &mockEnrollmentService{}
-	rec := httptest.NewRecorder()
-	req := newJSONRequest("POST", "/enrollments", map[string]any{"user_id": "bad"})
+	w := httptest.NewRecorder()
+	r := newJSONRequest("POST", "/enrollments", map[string]any{"user_id": "bad"})
 
-	serve(newEnrollmentHandler(s).Enroll, rec, req)
+	serve(newEnrollmentHandler(s).Enroll, w, r)
 
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func TestEnrollmentHandler_Enroll_AlreadyEnrolled(t *testing.T) {
 	s := &mockEnrollmentService{enrollErr: service.ErrAlreadyEnrolled}
-	rec := httptest.NewRecorder()
-	req := newJSONRequest("POST", "/enrollments", map[string]any{
+	w := httptest.NewRecorder()
+	r := newJSONRequest("POST", "/enrollments", map[string]any{
 		"user_id":   testUserID,
 		"course_id": testCourseIDForEnrollment,
 	})
 
-	serve(newEnrollmentHandler(s).Enroll, rec, req)
+	serve(newEnrollmentHandler(s).Enroll, w, r)
 
-	assert.Equal(t, http.StatusConflict, rec.Code)
+	assert.Equal(t, http.StatusConflict, w.Code)
 }
 
 func TestEnrollmentHandler_UpdateStatus(t *testing.T) {
 	s := &mockEnrollmentService{}
-	rec := httptest.NewRecorder()
-	req := newJSONRequest("PATCH", "/enrollments/"+testEnrollmentID+"/status", map[string]any{
+	w := httptest.NewRecorder()
+	r := newJSONRequest("PATCH", "/enrollments/"+testEnrollmentID+"/status", map[string]any{
 		"status": "completed",
 	})
 
-	serve(newEnrollmentHandler(s).UpdateStatus, rec, withChiParam(req, "id", testEnrollmentID))
+	serve(newEnrollmentHandler(s).UpdateStatus, w, withChiParam(r, "id", testEnrollmentID))
 
-	assert.Equal(t, http.StatusNoContent, rec.Code)
+	assert.Equal(t, http.StatusNoContent, w.Code)
 }
 
 func TestEnrollmentHandler_UpdateStatus_InvalidBody(t *testing.T) {
 	s := &mockEnrollmentService{}
-	rec := httptest.NewRecorder()
-	req := newJSONRequest("PATCH", "/enrollments/"+testEnrollmentID+"/status", map[string]any{
+	w := httptest.NewRecorder()
+	r := newJSONRequest("PATCH", "/enrollments/"+testEnrollmentID+"/status", map[string]any{
 		"status": "invalid",
 	})
 
-	serve(newEnrollmentHandler(s).UpdateStatus, rec, withChiParam(req, "id", testEnrollmentID))
+	serve(newEnrollmentHandler(s).UpdateStatus, w, withChiParam(r, "id", testEnrollmentID))
 
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func TestEnrollmentHandler_UpdateStatus_NotFound(t *testing.T) {
 	s := &mockEnrollmentService{updateErr: service.ErrEnrollmentNotFound}
-	rec := httptest.NewRecorder()
-	req := newJSONRequest("PATCH", "/enrollments/"+testEnrollmentID+"/status", map[string]any{
+	w := httptest.NewRecorder()
+	r := newJSONRequest("PATCH", "/enrollments/"+testEnrollmentID+"/status", map[string]any{
 		"status": "completed",
 	})
 
-	serve(newEnrollmentHandler(s).UpdateStatus, rec, withChiParam(req, "id", testEnrollmentID))
+	serve(newEnrollmentHandler(s).UpdateStatus, w, withChiParam(r, "id", testEnrollmentID))
 
-	assert.Equal(t, http.StatusNotFound, rec.Code)
+	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
 func TestEnrollmentHandler_Delete(t *testing.T) {
 	s := &mockEnrollmentService{}
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("DELETE", "/enrollments/"+testEnrollmentID, nil)
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("DELETE", "/enrollments/"+testEnrollmentID, nil)
 
-	serve(newEnrollmentHandler(s).Delete, rec, withChiParam(req, "id", testEnrollmentID))
+	serve(newEnrollmentHandler(s).Delete, w, withChiParam(r, "id", testEnrollmentID))
 
-	assert.Equal(t, http.StatusNoContent, rec.Code)
+	assert.Equal(t, http.StatusNoContent, w.Code)
 }
 
 func TestEnrollmentHandler_Delete_InvalidUUID(t *testing.T) {
 	s := &mockEnrollmentService{}
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("DELETE", "/enrollments/bad", nil)
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("DELETE", "/enrollments/bad", nil)
 
-	serve(newEnrollmentHandler(s).Delete, rec, withChiParam(req, "id", "bad"))
+	serve(newEnrollmentHandler(s).Delete, w, withChiParam(r, "id", "bad"))
 
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }

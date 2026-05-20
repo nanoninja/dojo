@@ -31,6 +31,7 @@ type Handlers struct {
 	Auth       *handler.AuthHandler
 	User       *handler.UserHandler
 	Course     *handler.CourseHandler
+	Review     *handler.ReviewHandler
 	Category   *handler.CategoryHandler
 	Tag        *handler.TagHandler
 	Chapter    *handler.ChapterHandler
@@ -140,6 +141,9 @@ func New(
 			r.Post("/auth/token/refresh", httputil.Handle(handlers.Auth.RefreshToken, logger))
 		})
 
+		r.Get("/courses/{course_id}/reviews", httputil.Handle(handlers.Review.List, logger))
+		r.Get("/courses/{course_id}/reviews/{id}", httputil.Handle(handlers.Review.GetByID, logger))
+
 		// Protected routes
 		r.Group(func(r chi.Router) {
 			r.Use(mw.AuthenticateWithTransport(
@@ -214,6 +218,10 @@ func New(
 					r.Delete("/courses/{id}", httputil.Handle(handlers.Course.Delete, logger))
 					r.Put("/courses/{id}/categories", httputil.Handle(handlers.Course.SetCategories, logger))
 					r.Put("/courses/{id}/tags", httputil.Handle(handlers.Course.SetTags, logger))
+
+					r.Post("/courses/{course_id}/reviews", httputil.Handle(handlers.Review.Create, logger))
+					r.Put("/courses/{course_id}/reviews/{id}", httputil.Handle(handlers.Review.Update, logger))
+					r.Delete("/courses/{course_id}/reviews/{id}", httputil.Handle(handlers.Review.Delete, logger))
 
 					r.Post("/chapters", httputil.Handle(handlers.Chapter.Create, logger))
 					r.Put("/chapters/{id}", httputil.Handle(handlers.Chapter.Update, logger))

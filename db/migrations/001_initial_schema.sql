@@ -564,6 +564,30 @@ CREATE TABLE user_lesson_progress (
 
 CREATE INDEX idx_ulp_user_id ON user_lesson_progress (user_id);
 
+CREATE TABLE course_reviews (
+    id         UUID        PRIMARY KEY NOT NULL DEFAULT uuidv7(),
+    user_id    UUID        NOT NULL,
+    course_id  UUID        NOT NULL,
+    rating     SMALLINT    NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    comment    TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NULL,
+
+    CONSTRAINT uq_cr_user_course UNIQUE (user_id, course_id),
+    CONSTRAINT fk_cr_user_id
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_cr_course_id
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_cr_course_id ON course_reviews (course_id);
+CREATE INDEX idx_cr_user_id   ON course_reviews (user_id);
+
+CREATE TRIGGER update_course_reviews_updated_at
+    BEFORE UPDATE ON course_reviews
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
 -- GOOSE DOWN ==================================================
 
 -- +goose Down
@@ -583,7 +607,10 @@ DROP INDEX IF EXISTS idx_ce_user_id;
 DROP INDEX IF EXISTS idx_bundles_is_published;
 DROP INDEX IF EXISTS idx_bundles_instructor_id;
 DROP INDEX IF EXISTS idx_ulp_user_id;
+DROP INDEX IF EXISTS idx_cr_course_id;
+DROP INDEX IF EXISTS idx_cr_user_id;
 
+DROP TRIGGER IF EXISTS update_course_reviews_updated_at         ON course_reviews;
 DROP TRIGGER IF EXISTS sync_category_course_count_on_assignment ON courses_categories;
 DROP TRIGGER IF EXISTS sync_chapter_duration_on_lesson          ON lessons;
 DROP TRIGGER IF EXISTS sync_course_duration_on_chapter          ON chapters;
@@ -594,6 +621,7 @@ DROP TRIGGER IF EXISTS update_chapters_updated_at               ON chapters;
 DROP TRIGGER IF EXISTS update_courses_updated_at                ON courses;
 DROP TRIGGER IF EXISTS update_users_updated_at                  ON users;
 
+DROP TABLE IF EXISTS course_reviews;
 DROP TABLE IF EXISTS user_lesson_progress;
 DROP TABLE IF EXISTS bundle_courses;
 DROP TABLE IF EXISTS bundles;

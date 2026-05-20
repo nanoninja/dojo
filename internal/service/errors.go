@@ -65,4 +65,7 @@ var (
 
 	// ErrLessonResourceNotFound is returned when a lesson resource lookup yields no result.
 	ErrLessonResourceNotFound = errors.New("lesson resource not found")
+
+	// ErrReviewNotFound is returned when a review lookup yields no result.
+	ErrReviewNotFound = errors.New("review not found")
 )

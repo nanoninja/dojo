@@ -282,6 +282,19 @@ definitions:
     - slug
     - title
     type: object
+  handler.CreateReviewRequest:
+    properties:
+      comment:
+        maxLength: 500
+        minLength: 5
+        type: string
+      rating:
+        maximum: 5
+        minimum: 1
+        type: integer
+    required:
+    - rating
+    type: object
   handler.CreateTagRequest:
     properties:
       name:
@@ -880,6 +893,19 @@ definitions:
     - file_url
     - title
     type: object
+  handler.UpdateReviewRequest:
+    properties:
+      comment:
+        maxLength: 500
+        minLength: 5
+        type: string
+      rating:
+        maximum: 5
+        minimum: 1
+        type: integer
+    required:
+    - rating
+    type: object
   handler.UpdateStatusRequest:
     properties:
       status:
@@ -937,6 +963,8 @@ definitions:
   handler.coursePageResponse:
     type: object
   handler.enrollmentPageResponse:
+    type: object
+  handler.reviewPageResponse:
     type: object
   model.Bundle:
     properties:
@@ -1238,6 +1266,23 @@ definitions:
     - LoginStatusFailedLocked
     - LoginStatusFailedNotFound
     - LoginStatusFailedUnverified
+  model.Review:
+    properties:
+      comment:
+        type: string
+      course_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      rating:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
   model.Role:
     enum:
     - 10
@@ -1942,6 +1987,199 @@ paths:
       summary: List chapters for a course
       tags:
       - chapters
+  /api/v1/courses/{course_id}/reviews:
+    get:
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Sort order
+        enum:
+        - asc
+        - desc
+        in: query
+        name: sort
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.reviewPageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List reviews for a course
+      tags:
+      - reviews
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Review payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateReviewRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Review'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a review for a course
+      tags:
+      - reviews
+  /api/v1/courses/{course_id}/reviews/{id}:
+    delete:
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Review ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "404":
+          description: review not found
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a review
+      tags:
+      - reviews
+    get:
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Review ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Review'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "404":
+          description: review not found
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a review by ID
+      tags:
+      - reviews
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Review ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Review payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateReviewRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Review'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "404":
+          description: review not found
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a review
+      tags:
+      - reviews
   /api/v1/courses/{id}:
     delete:
       parameters:
