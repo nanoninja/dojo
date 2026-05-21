@@ -54,15 +54,32 @@ CREATE TYPE content_type AS ENUM (
 CREATE TYPE enrollment_status AS ENUM (
     'active',
     'completed',
-    'expired'
+    'expired',
     'refunded'
 );
 
 CREATE TYPE enrollment_source AS ENUM (
     'free',
     'purchase',
-    'subscription'
+    'subscription',
     'manual'
+);
+
+CREATE TYPE consent_type AS ENUM (
+    'terms_of_service',
+    'privacy_policy',
+    'cookie_analytics',
+    'cookie_marketing',
+    'cookie_preferences',
+    'cookie_third_party'
+);
+
+CREATE TYPE consent_source AS ENUM (
+    'registration',
+    'banner',
+    'settings',
+    'checkout',
+    'update_notification'
 );
 
 -- FUNCTIONS ===================================================
@@ -195,6 +212,9 @@ CREATE TRIGGER update_users_updated_at
 
 
 -- VERIFICATION TOKENS =========================================
+-- Single-use tokens for email verification, password reset, and OTP flows.
+-- A token is consumed once (used_at) and expires after a short TTL.
+-- Three flows share this table, distinguished by the `type` column.
 
 CREATE TABLE verification_tokens (
     id         UUID                    NOT NULL DEFAULT uuidv7() PRIMARY KEY,
@@ -219,6 +239,8 @@ CREATE INDEX idx_vts_expiry ON verification_tokens (expires_at);
 
 
 -- REFRESH TOKENS ==============================================
+-- Rotating JWT refresh tokens — the raw token is never stored, only its SHA-256 hash.
+-- On each refresh, the old token is revoked (revoked_at) and a new pair is issued.
 
 CREATE TABLE refresh_tokens (
     id         UUID         NOT NULL DEFAULT uuidv7() PRIMARY KEY,
@@ -234,6 +256,10 @@ CREATE TABLE refresh_tokens (
 
 
 -- LOGIN AUDIT LOGS ============================================
+-- Append-only log of every login attempt (success or failure).
+-- user_id is nullable: failed attempts on unknown emails are still recorded.
+-- email and ip_address are encrypted at rest (AES-256-GCM).
+-- Rows are never updated; kept for security audit and brute-force analysis.
 
 CREATE TABLE login_audit_logs (
     id         UUID         NOT NULL DEFAULT uuidv7(),
@@ -253,7 +279,35 @@ CREATE INDEX idx_lal_user_id    ON login_audit_logs (user_id) WHERE user_id IS N
 CREATE INDEX idx_lal_created_at ON login_audit_logs (created_at);
 
 
+-- USER CONSENTS ===============================================
+-- Append-only GDPR/CNIL consent log — one row per user action (opt-in or opt-out).
+-- Never updated: each change appends a new row to preserve the full audit trail.
+-- ip_address is encrypted at rest (AES-256-GCM) as it is personal data under GDPR.
+-- ON DELETE RESTRICT: consent records must be retained even if the user account is deleted.
+
+CREATE TABLE user_consents (
+    id          UUID           NOT NULL PRIMARY KEY DEFAULT uuidv7(),
+    user_id     UUID           NOT NULL,
+    type        consent_type   NOT NULL,
+    version     VARCHAR(20)    NOT NULL,
+    is_accepted BOOLEAN NOT    NULL,
+    ip_address  VARCHAR(128)   NULL,
+    user_agent  TEXT           NOT NULL,
+    source      consent_source NOT NULL,
+    created_at  TIMESTAMPTZ    NOT NULL DEFAULT now(),
+
+    CONSTRAINT fk_user_consents_user_id
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_uc_user_id        ON user_consents (user_id);
+CREATE INDEX idx_uc_user_type_date ON user_consents (user_id, type, created_at);
+
+
 -- CATALOG & CONTENT ===========================================
+-- Courses, chapters, lessons, resources, categories, and tags.
+-- duration_minutes on lessons, chapters, and courses is kept in sync by triggers.
+-- course_count on categories is kept in sync by a trigger on courses_categories.
 
 CREATE TABLE courses (
     -- Identity
@@ -472,6 +526,9 @@ CREATE TABLE courses_tags (
 
 
 -- ENROLLMENTS =================================================
+-- Tracks which users are enrolled in which courses.
+-- progress_percent is updated automatically when lesson progress is saved.
+-- source indicates how the enrollment was created (free, purchase, subscription, manual).
 
 CREATE TABLE course_enrollments (
     id               UUID              PRIMARY KEY NOT NULL DEFAULT uuidv7(),
@@ -499,6 +556,8 @@ CREATE INDEX idx_ce_status    ON course_enrollments (status);
 
 
 -- BUNDLES =====================================================
+-- A bundle groups several courses sold or offered together.
+-- bundle_courses is the junction table with an explicit sort_order.
 
 CREATE TABLE bundles (
     -- Identity
@@ -560,6 +619,9 @@ CREATE TABLE bundle_courses (
 
 
 -- USER LESSON PROGRESS ========================================
+-- Tracks per-user, per-lesson completion and watch time.
+-- Saving progress triggers a recalculation of progress_percent on course_enrollments.
+-- If the course reaches 100% and has certificate_enabled, a certificate is issued.
 
 CREATE TABLE user_lesson_progress (
     user_id         UUID        NOT NULL,
@@ -579,6 +641,9 @@ CREATE INDEX idx_ulp_user_id ON user_lesson_progress (user_id);
 
 
 -- COURSE REVIEWS ==============================================
+-- One review per user per course (enforced by unique constraint).
+-- Saving or deleting a review triggers recalculation of rating_average
+-- and rating_count on the courses table via the service layer (WithTx).
 
 CREATE TABLE course_reviews (
     id         UUID        PRIMARY KEY NOT NULL DEFAULT uuidv7(),
@@ -605,7 +670,11 @@ CREATE TRIGGER update_course_reviews_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 
--- CERTIFICATES== ==============================================
+-- CERTIFICATES ================================================
+-- Issued automatically when a user completes a course (progress_percent = 100)
+-- and the course has certificate_enabled = true.
+-- uuid is a public identifier used for external verification (/certificates/verify/{uuid}).
+-- One certificate per user per course — idempotent via ON CONFLICT DO NOTHING.
 
 CREATE TABLE certificates (
     id        UUID PRIMARY KEY NOT NULL DEFAULT uuidv7(),
@@ -627,25 +696,8 @@ CREATE TABLE certificates (
 -- GOOSE DOWN ==================================================
 
 -- +goose Down
-DROP INDEX IF EXISTS idx_lal_created_at;
-DROP INDEX IF EXISTS idx_lal_user_id;
-DROP INDEX IF EXISTS idx_vts_expiry;
-DROP INDEX IF EXISTS idx_vts_lookup;
-DROP INDEX IF EXISTS idx_users_created_at;
-DROP INDEX IF EXISTS idx_users_status;
-DROP INDEX IF EXISTS idx_courses_instructor_id;
-DROP INDEX IF EXISTS idx_courses_is_published;
-DROP INDEX IF EXISTS idx_courses_level;
-DROP INDEX IF EXISTS idx_lessons_chapter_id;
-DROP INDEX IF EXISTS idx_ce_status;
-DROP INDEX IF EXISTS idx_ce_course_id;
-DROP INDEX IF EXISTS idx_ce_user_id;
-DROP INDEX IF EXISTS idx_bundles_is_published;
-DROP INDEX IF EXISTS idx_bundles_instructor_id;
-DROP INDEX IF EXISTS idx_ulp_user_id;
-DROP INDEX IF EXISTS idx_cr_course_id;
-DROP INDEX IF EXISTS idx_cr_user_id;
 
+-- Triggers — must be dropped before tables and functions they reference
 DROP TRIGGER IF EXISTS update_course_reviews_updated_at         ON course_reviews;
 DROP TRIGGER IF EXISTS sync_category_course_count_on_assignment ON courses_categories;
 DROP TRIGGER IF EXISTS sync_chapter_duration_on_lesson          ON lessons;
@@ -657,6 +709,29 @@ DROP TRIGGER IF EXISTS update_chapters_updated_at               ON chapters;
 DROP TRIGGER IF EXISTS update_courses_updated_at                ON courses;
 DROP TRIGGER IF EXISTS update_users_updated_at                  ON users;
 
+-- Indexes — dropped after triggers, before tables
+DROP INDEX IF EXISTS idx_cr_course_id;
+DROP INDEX IF EXISTS idx_cr_user_id;
+DROP INDEX IF EXISTS idx_ulp_user_id;
+DROP INDEX IF EXISTS idx_bundles_is_published;
+DROP INDEX IF EXISTS idx_bundles_instructor_id;
+DROP INDEX IF EXISTS idx_ce_user_id;
+DROP INDEX IF EXISTS idx_ce_course_id;
+DROP INDEX IF EXISTS idx_ce_status;
+DROP INDEX IF EXISTS idx_lessons_chapter_id;
+DROP INDEX IF EXISTS idx_courses_level;
+DROP INDEX IF EXISTS idx_courses_is_published;
+DROP INDEX IF EXISTS idx_courses_instructor_id;
+DROP INDEX IF EXISTS idx_users_created_at;
+DROP INDEX IF EXISTS idx_users_status;
+DROP INDEX IF EXISTS idx_vts_expiry;
+DROP INDEX IF EXISTS idx_vts_lookup;
+DROP INDEX IF EXISTS idx_lal_created_at;
+DROP INDEX IF EXISTS idx_lal_user_id;
+DROP INDEX IF EXISTS idx_uc_user_type_date;
+DROP INDEX IF EXISTS idx_uc_user_id;
+
+-- Tables — child tables first, then parent tables (reverse FK dependency order)
 DROP TABLE IF EXISTS certificates;
 DROP TABLE IF EXISTS course_reviews;
 DROP TABLE IF EXISTS user_lesson_progress;
@@ -665,27 +740,32 @@ DROP TABLE IF EXISTS bundles;
 DROP TABLE IF EXISTS course_enrollments;
 DROP TABLE IF EXISTS courses_tags;
 DROP TABLE IF EXISTS courses_categories;
-DROP TABLE IF EXISTS login_audit_logs;
-DROP TABLE IF EXISTS refresh_tokens;
-DROP TABLE IF EXISTS verification_tokens;
 DROP TABLE IF EXISTS lesson_resources;
 DROP TABLE IF EXISTS lessons;
 DROP TABLE IF EXISTS chapters;
 DROP TABLE IF EXISTS courses;
 DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS tags;
+DROP TABLE IF EXISTS user_consents;
+DROP TABLE IF EXISTS login_audit_logs;
+DROP TABLE IF EXISTS refresh_tokens;
+DROP TABLE IF EXISTS verification_tokens;
 DROP TABLE IF EXISTS users;
 
+-- Functions — dropped after triggers that reference them
 DROP FUNCTION IF EXISTS sync_category_course_count;
 DROP FUNCTION IF EXISTS sync_course_duration;
 DROP FUNCTION IF EXISTS sync_chapter_duration;
 DROP FUNCTION IF EXISTS update_updated_at_column;
 
+-- Types — dropped last, after all tables that reference them
+DROP TYPE IF EXISTS consent_source;
+DROP TYPE IF EXISTS consent_type;
+DROP TYPE IF EXISTS enrollment_source;
+DROP TYPE IF EXISTS enrollment_status;
+DROP TYPE IF EXISTS content_type;
+DROP TYPE IF EXISTS course_level;
+DROP TYPE IF EXISTS login_status;
 DROP TYPE IF EXISTS verification_token_type;
 DROP TYPE IF EXISTS user_role;
 DROP TYPE IF EXISTS user_status;
-DROP TYPE IF EXISTS login_status;
-DROP TYPE IF EXISTS course_level;
-DROP TYPE IF EXISTS content_type;
-DROP TYPE IF EXISTS enrollment_status;
-DROP TYPE IF EXISTS enrollment_source;

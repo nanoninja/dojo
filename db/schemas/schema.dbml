@@ -361,6 +361,23 @@ Table course_reviews {
   }
 }
 
+Table user_consents {
+  id          uuid           [pk, default: `uuidv7()`]
+  user_id     uuid           [ref: > users.id, note: "not null — restrict delete — consent records are retained even after account deletion"]
+  type        consent_type   [note: "not null"]
+  version     varchar(20)    [null, note: "required for terms_of_service and privacy_policy; null for cookies"]
+  is_accepted boolean        [note: "not null — true = opt-in, false = opt-out/revocation"]
+  ip_address  varchar(128)   [null, note: "encrypted at rest (AES-256-GCM) — personal data under GDPR"]
+  user_agent  text           [note: "not null"]
+  source      consent_source [note: "not null"]
+  created_at  timestamptz    [default: `now()`, note: "not null — append-only, never updated"]
+
+  indexes {
+    user_id              [name: "idx_uc_user_id"]
+    (user_id, type, created_at) [name: "idx_uc_user_type_date"]
+  }
+}
+
 Table certificates {
   id        uuid [pk, default: `uuidv7()`]
   user_id   uuid [ref: > users.id, note: "not null - restrict delete"]
@@ -438,4 +455,21 @@ Enum enrollment_source {
   purchase     [note: "one-time purchase"]
   subscription [note: "active subscription"]
   manual       [note: "manually granted by admin"]
+}
+
+Enum consent_type {
+  terms_of_service  [note: "general terms of service — version required"]
+  privacy_policy    [note: "privacy policy — version required"]
+  cookie_analytics  [note: "first-party analytics cookies"]
+  cookie_marketing  [note: "retargeting and advertising cookies"]
+  cookie_preferences [note: "UI preference and personalisation cookies"]
+  cookie_social     [note: "third-party social widgets and pixels"]
+}
+
+Enum consent_source {
+  registration        [note: "collected during account registration"]
+  banner              [note: "collected via the cookie consent banner"]
+  settings            [note: "changed from the account settings page"]
+  checkout            [note: "collected before payment confirmation"]
+  update_notification [note: "re-accepted following a document update"]
 }
