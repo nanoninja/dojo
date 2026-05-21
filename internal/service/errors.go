@@ -86,4 +86,7 @@ var (
 
 	// ErrCertificateNotFound is returned when a certificate lookup yields no result.
 	ErrCertificateNotFound = errors.New("certificate not found")
+
+	// ErrConsentNotFound is returned when a consent lookup yields no result.
+	ErrConsentNotFound = errors.New("consent not found")
 )

@@ -59,9 +59,11 @@ func toFault(err error) error {
 
 	case errors.Is(err, service.ErrProgressNotFound):
 		return fault.NotFound("lesson progress", err)
-
 	case errors.Is(err, service.ErrCertificateNotFound):
 		return fault.NotFound("certificate", err)
+
+	case errors.Is(err, service.ErrConsentNotFound):
+		return fault.NotFound("consent", err)
 
 	default:
 		return fault.Internal(err)
