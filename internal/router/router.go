@@ -147,7 +147,8 @@ func New(
 		r.Get("/courses/{course_id}/reviews/{id}", httputil.Handle(handlers.Review.GetByID, logger))
 		r.Get("/certificates/verify/{uuid}", httputil.Handle(handlers.Certificate.Verify, logger))
 
-		// Protected routes
+		// ── Authenticated ─────────────────────────────────────────────────────────────
+
 		r.Group(func(r chi.Router) {
 			r.Use(mw.AuthenticateWithTransport(
 				cfg.JWT.Secret,
@@ -161,110 +162,141 @@ func New(
 			r.Route("/api/v1", func(r chi.Router) {
 
 				// Users
-				r.Get("/users/me", httputil.Handle(handlers.User.Me, logger))
-				r.Get("/users/me/login-history", httputil.Handle(handlers.User.LoginHistory, logger))
-				r.Put("/users/{id}/profile", httputil.Handle(handlers.User.UpdateProfile, logger))
-				r.Put("/users/{id}/password", httputil.Handle(handlers.User.ChangePassword, logger))
+				r.Route("/users", func(r chi.Router) {
+					r.Get("/me", httputil.Handle(handlers.User.Me, logger))
+					r.Get("/me/login-history", httputil.Handle(handlers.User.LoginHistory, logger))
+					r.Put("/{id}/profile", httputil.Handle(handlers.User.UpdateProfile, logger))
+					r.Put("/{id}/password", httputil.Handle(handlers.User.ChangePassword, logger))
 
-				r.Group(func(r chi.Router) {
-					r.Use(mw.RequireRole(model.RoleAdmin))
-
-					r.Get("/users", httputil.Handle(handlers.User.List, logger))
-					r.Get("/users/{id}", httputil.Handle(handlers.User.GetByID, logger))
-					r.Delete("/users/{id}", httputil.Handle(handlers.User.Delete, logger))
+					r.Group(func(r chi.Router) {
+						r.Use(mw.RequireRole(model.RoleAdmin))
+						r.Get("/", httputil.Handle(handlers.User.List, logger))
+						r.Get("/{id}", httputil.Handle(handlers.User.GetByID, logger))
+						r.Delete("/{id}", httputil.Handle(handlers.User.Delete, logger))
+					})
 				})
 
-				// Courses — read
-				r.Get("/courses", httputil.Handle(handlers.Course.List, logger))
-				r.Get("/courses/{id}", httputil.Handle(handlers.Course.GetByID, logger))
-				r.Get("/courses/{course_id}/chapters", httputil.Handle(handlers.Chapter.List, logger))
+				// Courses & Reviews
+				r.Route("/courses", func(r chi.Router) {
+					r.Get("/", httputil.Handle(handlers.Course.List, logger))
+					r.Get("/{id}", httputil.Handle(handlers.Course.GetByID, logger))
+					r.Get("/{course_id}/chapters", httputil.Handle(handlers.Chapter.List, logger))
 
-				// Categories — read
-				r.Get("/categories", httputil.Handle(handlers.Category.List, logger))
-				r.Get("/categories/{id}", httputil.Handle(handlers.Category.GetByID, logger))
+					r.Group(func(r chi.Router) {
+						r.Use(mw.RequireRole(model.RoleInstructor))
 
-				// Tags — read
-				r.Get("/tags", httputil.Handle(handlers.Tag.List, logger))
-				r.Get("/tags/slug/{slug}", httputil.Handle(handlers.Tag.GetBySlug, logger))
-				r.Get("/tags/{id}", httputil.Handle(handlers.Tag.GetByID, logger))
+						r.Post("/", httputil.Handle(handlers.Course.Create, logger))
+						r.Put("/{id}", httputil.Handle(handlers.Course.Update, logger))
+						r.Delete("/{id}", httputil.Handle(handlers.Course.Delete, logger))
+						r.Put("/{id}/categories", httputil.Handle(handlers.Course.SetCategories, logger))
+						r.Put("/{id}/tags", httputil.Handle(handlers.Course.SetTags, logger))
+						r.Post("/{course_id}/reviews", httputil.Handle(handlers.Review.Create, logger))
+						r.Put("/{course_id}/reviews/{id}", httputil.Handle(handlers.Review.Update, logger))
+						r.Delete("/{course_id}/reviews/{id}", httputil.Handle(handlers.Review.Delete, logger))
+					})
+				})
 
-				// Chapters — read
-				r.Get("/chapters/{id}", httputil.Handle(handlers.Chapter.GetByID, logger))
-				r.Get("/chapters/{chapter_id}/lessons", httputil.Handle(handlers.Lesson.List, logger))
+				// Categories
+				r.Route("/categories", func(r chi.Router) {
+					r.Get("/", httputil.Handle(handlers.Category.List, logger))
+					r.Get("/{id}", httputil.Handle(handlers.Category.GetByID, logger))
 
-				// Lessons — read
-				r.Get("/lessons/{id}", httputil.Handle(handlers.Lesson.GetByID, logger))
-				r.Get("/lessons/{id}/resources", httputil.Handle(handlers.Lesson.ListResources, logger))
+					r.Group(func(r chi.Router) {
+						r.Use(mw.RequireRole(model.RoleAdmin))
+
+						r.Post("/", httputil.Handle(handlers.Category.Create, logger))
+						r.Put("/{id}", httputil.Handle(handlers.Category.Update, logger))
+						r.Delete("/{id}", httputil.Handle(handlers.Category.Delete, logger))
+					})
+				})
+
+				// Tags
+				r.Route("/tags", func(r chi.Router) {
+					r.Get("/", httputil.Handle(handlers.Tag.List, logger))
+					r.Get("/slug/{slug}", httputil.Handle(handlers.Tag.GetBySlug, logger))
+					r.Get("/{id}", httputil.Handle(handlers.Tag.GetByID, logger))
+
+					r.Group(func(r chi.Router) {
+						r.Use(mw.RequireRole(model.RoleAdmin))
+
+						r.Post("/", httputil.Handle(handlers.Tag.Create, logger))
+						r.Put("/{id}", httputil.Handle(handlers.Tag.Update, logger))
+						r.Delete("/{id}", httputil.Handle(handlers.Tag.Delete, logger))
+					})
+				})
+
+				// Chapters
+				r.Route("/chapters", func(r chi.Router) {
+					r.Get("/{id}", httputil.Handle(handlers.Chapter.GetByID, logger))
+					r.Get("/{chapter_id}/lessons", httputil.Handle(handlers.Lesson.List, logger))
+
+					r.Group(func(r chi.Router) {
+						r.Use(mw.RequireRole(model.RoleInstructor))
+						r.Post("/", httputil.Handle(handlers.Chapter.Create, logger))
+						r.Put("/{id}", httputil.Handle(handlers.Chapter.Update, logger))
+						r.Delete("/{id}", httputil.Handle(handlers.Chapter.Delete, logger))
+					})
+				})
+
+				// Lessons
+				r.Route("/lessons", func(r chi.Router) {
+					r.Get("/{id}", httputil.Handle(handlers.Lesson.GetByID, logger))
+					r.Get("/{id}/resources", httputil.Handle(handlers.Lesson.ListResources, logger))
+
+					r.Group(func(r chi.Router) {
+						r.Use(mw.RequireRole(model.RoleInstructor))
+
+						r.Post("/", httputil.Handle(handlers.Lesson.Create, logger))
+						r.Put("/{id}", httputil.Handle(handlers.Lesson.Update, logger))
+						r.Delete("/{id}", httputil.Handle(handlers.Lesson.Delete, logger))
+						r.Post("/{id}/resources", httputil.Handle(handlers.Lesson.AddResource, logger))
+						r.Put("/resources/{id}", httputil.Handle(handlers.Lesson.UpdateResource, logger))
+						r.Delete("/resources/{id}", httputil.Handle(handlers.Lesson.RemoveResource, logger))
+					})
+				})
+
+				// Bundles
+				r.Route("/bundles", func(r chi.Router) {
+					r.Get("/", httputil.Handle(handlers.Bundle.List, logger))
+					r.Get("/{id}", httputil.Handle(handlers.Bundle.GetByID, logger))
+
+					r.Group(func(r chi.Router) {
+						r.Use(mw.RequireRole(model.RoleInstructor))
+
+						r.Post("/", httputil.Handle(handlers.Bundle.Create, logger))
+						r.Put("/{id}", httputil.Handle(handlers.Bundle.Update, logger))
+						r.Put("/{id}/courses", httputil.Handle(handlers.Bundle.SetCourses, logger))
+						r.Delete("/{id}", httputil.Handle(handlers.Bundle.Delete, logger))
+					})
+				})
 
 				// Enrollments
-				r.Get("/enrollments", httputil.Handle(handlers.Enrollment.List, logger))
-				r.Get("/enrollments/{id}", httputil.Handle(handlers.Enrollment.GetByID, logger))
-				r.Post("/enrollments", httputil.Handle(handlers.Enrollment.Enroll, logger))
-				r.Patch("/enrollments/{id}/status", httputil.Handle(handlers.Enrollment.UpdateStatus, logger))
-				r.Delete("/enrollments/{id}", httputil.Handle(handlers.Enrollment.Delete, logger))
+				r.Route("/enrollments", func(r chi.Router) {
+					r.Get("/", httputil.Handle(handlers.Enrollment.List, logger))
+					r.Get("/{id}", httputil.Handle(handlers.Enrollment.GetByID, logger))
+					r.Post("/", httputil.Handle(handlers.Enrollment.Enroll, logger))
+					r.Patch("/{id}/status", httputil.Handle(handlers.Enrollment.UpdateStatus, logger))
+					r.Delete("/{id}", httputil.Handle(handlers.Enrollment.Delete, logger))
+				})
 
 				// Progress
-				r.Get("/progress/{user_id}/lessons/{lesson_id}", httputil.Handle(handlers.Progress.Get, logger))
-				r.Get("/progress/{user_id}/courses/course_id", httputil.Handle(handlers.Progress.ListByCourse, logger))
-				r.Post("/progress", httputil.Handle(handlers.Progress.Save, logger))
-
-				// Bundles — read
-				r.Get("/bundles", httputil.Handle(handlers.Bundle.List, logger))
-				r.Get("/bundles/{id}", httputil.Handle(handlers.Bundle.GetByID, logger))
+				r.Route("/progress", func(r chi.Router) {
+					r.Get("/{user_id}/lessons/{lesson_id}", httputil.Handle(handlers.Progress.Get, logger))
+					r.Get("/{user_id}/courses/{course_id}", httputil.Handle(handlers.Progress.ListByCourse, logger))
+					r.Post("/", httputil.Handle(handlers.Progress.Save, logger))
+				})
 
 				// Certificates
-				r.Get("/certificates", httputil.Handle(handlers.Certificate.ListByUser, logger))
-				r.Get("/certificates/{id}", httputil.Handle(handlers.Certificate.GetByID, logger))
+				r.Route("/certificates", func(r chi.Router) {
+					r.Get("/", httputil.Handle(handlers.Certificate.ListByUser, logger))
+					r.Get("/{id}", httputil.Handle(handlers.Certificate.GetByID, logger))
+				})
 
 				// Consents
-				r.Route("/consent", func(r chi.Router) {
+				r.Route("/consents", func(r chi.Router) {
 					r.Get("/", httputil.Handle(handlers.Consent.ListByUser, logger))
 					r.Post("/", httputil.Handle(handlers.Consent.Create, logger))
 					r.Get("/{id}", httputil.Handle(handlers.Consent.GetByID, logger))
-				})
-
-				// Instructor+ — gestion des cours, chapitres, leçons
-				r.Group(func(r chi.Router) {
-					r.Use(mw.RequireRole(model.RoleInstructor))
-
-					r.Post("/courses", httputil.Handle(handlers.Course.Create, logger))
-					r.Put("/courses/{id}", httputil.Handle(handlers.Course.Update, logger))
-					r.Delete("/courses/{id}", httputil.Handle(handlers.Course.Delete, logger))
-					r.Put("/courses/{id}/categories", httputil.Handle(handlers.Course.SetCategories, logger))
-					r.Put("/courses/{id}/tags", httputil.Handle(handlers.Course.SetTags, logger))
-
-					r.Post("/courses/{course_id}/reviews", httputil.Handle(handlers.Review.Create, logger))
-					r.Put("/courses/{course_id}/reviews/{id}", httputil.Handle(handlers.Review.Update, logger))
-					r.Delete("/courses/{course_id}/reviews/{id}", httputil.Handle(handlers.Review.Delete, logger))
-
-					r.Post("/chapters", httputil.Handle(handlers.Chapter.Create, logger))
-					r.Put("/chapters/{id}", httputil.Handle(handlers.Chapter.Update, logger))
-					r.Delete("/chapters/{id}", httputil.Handle(handlers.Chapter.Delete, logger))
-
-					r.Post("/lessons", httputil.Handle(handlers.Lesson.Create, logger))
-					r.Put("/lessons/{id}", httputil.Handle(handlers.Lesson.Update, logger))
-					r.Delete("/lessons/{id}", httputil.Handle(handlers.Lesson.Delete, logger))
-					r.Post("/lessons/{id}/resources", httputil.Handle(handlers.Lesson.AddResource, logger))
-					r.Put("/lessons/resources/{id}", httputil.Handle(handlers.Lesson.UpdateResource, logger))
-					r.Delete("/lessons/resources/{id}", httputil.Handle(handlers.Lesson.RemoveResource, logger))
-
-					r.Post("/bundles", httputil.Handle(handlers.Bundle.Create, logger))
-					r.Put("/bundles/{id}", httputil.Handle(handlers.Bundle.Update, logger))
-					r.Put("/bundles/{id}/courses", httputil.Handle(handlers.Bundle.SetCourses, logger))
-					r.Delete("/bundles/{id}", httputil.Handle(handlers.Bundle.Delete, logger))
-				})
-
-				// Admin — gestion des catégories et tags
-				r.Group(func(r chi.Router) {
-					r.Use(mw.RequireRole(model.RoleAdmin))
-
-					r.Post("/categories", httputil.Handle(handlers.Category.Create, logger))
-					r.Put("/categories/{id}", httputil.Handle(handlers.Category.Update, logger))
-					r.Delete("/categories/{id}", httputil.Handle(handlers.Category.Delete, logger))
-
-					r.Post("/tags", httputil.Handle(handlers.Tag.Create, logger))
-					r.Put("/tags/{id}", httputil.Handle(handlers.Tag.Update, logger))
-					r.Delete("/tags/{id}", httputil.Handle(handlers.Tag.Delete, logger))
 				})
 			})
 		})

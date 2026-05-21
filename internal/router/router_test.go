@@ -155,7 +155,7 @@ func TestRouter_RegistersExpectedRoutes(t *testing.T) {
 		"POST /auth/logout":                  false,
 		"GET /api/v1/users/me":               false,
 		"GET /api/v1/users/me/login-history": false,
-		"GET /api/v1/users":                  false,
+		"GET /api/v1/users/":                 false,
 		"GET /api/v1/users/{id}":             false,
 		"DELETE /api/v1/users/{id}":          false,
 		"PUT /api/v1/users/{id}/profile":     false,

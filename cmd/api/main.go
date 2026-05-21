@@ -51,38 +51,44 @@ func main() {
 }
 
 func run(logger *slog.Logger) error {
-	// Config
+	// ==========================================================================
+	// Infrastructure
+	// ==========================================================================
+
 	cfg, err := config.Load()
 	if err != nil {
 		return err
 	}
 	cfg.App.Version = version
 
-	// Database
 	db, err := database.Open(cfg.Database)
 	if err != nil {
 		return err
 	}
 	defer db.Close() //nolint:errcheck
 
-	// Cache
 	redis, err := cache.Open(cfg.Redis)
 	if err != nil {
 		return err
 	}
 	defer redis.Close() //nolint:errcheck
 
-	// Cipher
 	cipher, err := security.NewAESCipher(cfg.App.EncryptionKey)
 	if err != nil {
 		return fmt.Errorf("cipher: %w", err)
 	}
 
+	// ==========================================================================
 	// Stores
+	// ==========================================================================
+
+	// Auth
 	userStore := store.NewUserStore(db, cipher)
 	authStore := store.NewAuthStore(db)
 	refreshTokenStore := store.NewRefreshTokenStore(db)
 	loginAuditStore := store.NewLoginAuditStore(db, cipher)
+
+	// Catalog
 	courseStore := store.NewCourseStore(db)
 	coursesCategoriesStore := store.NewCoursesCategoriesStore(db)
 	coursesTagsStore := store.NewCoursesTagsStore(db)
@@ -91,34 +97,23 @@ func run(logger *slog.Logger) error {
 	chapterStore := store.NewChapterStore(db)
 	lessonStore := store.NewLessonStore(db)
 	lessonResourceStore := store.NewLessonResourceStore(db)
+
+	// Enrollments & Progress
 	enrollmentStore := store.NewEnrollmentStore(db)
 	progressStore := store.NewLessonProgressStore(db)
+
+	// Business
 	bundleStore := store.NewBundleStore(db)
 	bundleCourseStore := store.NewBundleCourseStore(db)
 	reviewStore := store.NewReviewStore(db)
 	certificateStore := store.NewCertificateStore(db)
 	consentStore := store.NewConsentStore(db, cipher)
 
-	// Course domain - services
-	courseService := service.NewCourseService(db, courseStore, coursesCategoriesStore, coursesTagsStore)
-	categoryService := service.NewCategoryService(categoryStore)
-	tagService := service.NewTagService(tagStore)
-	chapterService := service.NewChapterService(chapterStore)
-	lessonService := service.NewLessonService(lessonStore, lessonResourceStore)
-	enrollmentService := service.NewEnrollmentService(enrollmentStore)
-	progressService := service.NewLessonProgressService(db, progressStore, enrollmentStore, courseStore)
-	bundleService := service.NewBundleService(db, bundleStore, bundleCourseStore)
-	reviewService := service.NewReviewService(db, reviewStore)
-	certificateService := service.NewCertificateService(certificateStore)
-	consentService := service.NewConsentService(consentStore)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Background jobs
-	runAuditPurge(ctx, cfg.AuditPurge, loginAuditStore, db, logger)
-
+	// ==========================================================================
 	// Services
+	// ==========================================================================
+
+	// Auth mailer
 	baseAuthMailer := service.NewAuthMailer(mailer.NewSMTP(mailer.SMTPConfig{
 		Host:     cfg.SMTP.Host,
 		Port:     cfg.SMTP.Port,
@@ -134,6 +129,7 @@ func run(logger *slog.Logger) error {
 		RetryBaseDelay: time.Duration(cfg.MailDispatch.RetryBaseDelay) * time.Millisecond,
 	})
 
+	// Auth
 	userService := service.NewUserService(userStore, loginAuditStore)
 	authService := service.NewAuthService(userStore, authStore, refreshTokenStore,
 		loginAuditStore,
@@ -142,26 +138,65 @@ func run(logger *slog.Logger) error {
 		logger,
 	)
 
+	// Catalog
+	courseService := service.NewCourseService(db, courseStore, coursesCategoriesStore, coursesTagsStore)
+	categoryService := service.NewCategoryService(categoryStore)
+	tagService := service.NewTagService(tagStore)
+	chapterService := service.NewChapterService(chapterStore)
+	lessonService := service.NewLessonService(lessonStore, lessonResourceStore)
+
+	// Enrollments & Progress
+	enrollmentService := service.NewEnrollmentService(enrollmentStore)
+	progressService := service.NewLessonProgressService(db, progressStore, enrollmentStore, courseStore)
+
+	// Business
+	bundleService := service.NewBundleService(db, bundleStore, bundleCourseStore)
+	reviewService := service.NewReviewService(db, reviewStore)
+	certificateService := service.NewCertificateService(certificateStore)
+	consentService := service.NewConsentService(consentStore)
+
+	// ==========================================================================
+	// Background jobs
+	// ==========================================================================
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	runAuditPurge(ctx, cfg.AuditPurge, loginAuditStore, db, logger)
+
+	// ==========================================================================
+	// Handlers
+	// ==========================================================================
+
 	var wg sync.WaitGroup
 
-	// Handlers
 	handlers := &router.Handlers{
-		Auth:        handler.NewAuthHandler(authService, userService, cfg.AuthTransport, cfg.JWT, logger, &wg),
-		User:        handler.NewUserHandler(userService),
-		Course:      handler.NewCourseHandler(courseService),
-		Category:    handler.NewCategoryHandler(categoryService),
-		Tag:         handler.NewTagHandler(tagService),
-		Chapter:     handler.NewChapterHandler(chapterService),
-		Lesson:      handler.NewLessonHandler(lessonService),
-		Enrollment:  handler.NewEnrollmentHandler(enrollmentService),
-		Progress:    handler.NewProgressHandler(progressService),
+		// Auth
+		Auth: handler.NewAuthHandler(authService, userService, cfg.AuthTransport, cfg.JWT, logger, &wg),
+		User: handler.NewUserHandler(userService),
+
+		// Catalog
+		Course:   handler.NewCourseHandler(courseService),
+		Category: handler.NewCategoryHandler(categoryService),
+		Tag:      handler.NewTagHandler(tagService),
+		Chapter:  handler.NewChapterHandler(chapterService),
+		Lesson:   handler.NewLessonHandler(lessonService),
+
+		// Enrollments & Progress
+		Enrollment: handler.NewEnrollmentHandler(enrollmentService),
+		Progress:   handler.NewProgressHandler(progressService),
+
+		// Business
 		Bundle:      handler.NewBundleHandler(bundleService),
 		Review:      handler.NewReviewHandler(reviewService),
 		Certificate: handler.NewCertificateHandler(certificateService),
 		Consent:     handler.NewConsentHandler(consentService),
 	}
 
+	// ==========================================================================
 	// Server
+	// ==========================================================================
+
 	srv := http.Server{
 		Addr:         cfg.App.Host + ":" + cfg.App.Port,
 		Handler:      router.New(handlers, cfg, logger, db, redis),
