@@ -15,7 +15,7 @@ import (
 	"github.com/nanoninja/dojo/internal/service"
 )
 
-// ConsentHandler handles HTTP requests for GPRD consent records.
+// ConsentHandler handles HTTP requests for GDPR consent records.
 type ConsentHandler struct {
 	consent service.ConsentService
 }
