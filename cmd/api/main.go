@@ -97,6 +97,7 @@ func run(logger *slog.Logger) error {
 	bundleCourseStore := store.NewBundleCourseStore(db)
 	reviewStore := store.NewReviewStore(db)
 	certificateStore := store.NewCertificateStore(db)
+	consentStore := store.NewConsentStore(db, cipher)
 
 	// Course domain - services
 	courseService := service.NewCourseService(db, courseStore, coursesCategoriesStore, coursesTagsStore)
@@ -109,6 +110,7 @@ func run(logger *slog.Logger) error {
 	bundleService := service.NewBundleService(db, bundleStore, bundleCourseStore)
 	reviewService := service.NewReviewService(db, reviewStore)
 	certificateService := service.NewCertificateService(certificateStore)
+	consentService := service.NewConsentService(consentStore)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -156,6 +158,7 @@ func run(logger *slog.Logger) error {
 		Bundle:      handler.NewBundleHandler(bundleService),
 		Review:      handler.NewReviewHandler(reviewService),
 		Certificate: handler.NewCertificateHandler(certificateService),
+		Consent:     handler.NewConsentHandler(consentService),
 	}
 
 	// Server

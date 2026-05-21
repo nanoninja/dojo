@@ -1114,6 +1114,27 @@ definitions:
       updated_at:
         type: string
     type: object
+  model.Consent:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      ip_address:
+        type: string
+      is_accepted:
+        type: boolean
+      source:
+        type: string
+      type:
+        type: string
+      user_agent:
+        type: string
+      user_id:
+        type: string
+      version:
+        type: string
+    type: object
   model.ContentType:
     enum:
     - video
@@ -2017,6 +2038,96 @@ paths:
       summary: Update a chapter
       tags:
       - chapters
+  /api/v1/consents:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Consent'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List consent records for the authenticated user
+      tags:
+      - consents
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Consent payload
+        in: body
+        name: consent
+        required: true
+        schema:
+          $ref: '#/definitions/model.Consent'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Consent'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Record a new consent action
+      tags:
+      - consents
+  /api/v1/consents/{id}:
+    get:
+      parameters:
+      - description: Consent ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Consent'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "404":
+          description: consent not found
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a consent record by ID
+      tags:
+      - consents
   /api/v1/courses:
     get:
       parameters:

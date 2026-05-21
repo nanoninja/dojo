@@ -40,6 +40,7 @@ type Handlers struct {
 	Bundle      *handler.BundleHandler
 	Progress    *handler.ProgressHandler
 	Certificate *handler.CertificateHandler
+	Consent     *handler.ConsentHandler
 }
 
 // New builds and returns the main HTTP router with all middleware and routes configured.
@@ -214,6 +215,13 @@ func New(
 				// Certificates
 				r.Get("/certificates", httputil.Handle(handlers.Certificate.ListByUser, logger))
 				r.Get("/certificates/{id}", httputil.Handle(handlers.Certificate.GetByID, logger))
+
+				// Consents
+				r.Route("/consent", func(r chi.Router) {
+					r.Get("/", httputil.Handle(handlers.Consent.ListByUser, logger))
+					r.Post("/", httputil.Handle(handlers.Consent.Create, logger))
+					r.Get("/{id}", httputil.Handle(handlers.Consent.GetByID, logger))
+				})
 
 				// Instructor+ — gestion des cours, chapitres, leçons
 				r.Group(func(r chi.Router) {
