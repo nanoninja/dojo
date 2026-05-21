@@ -283,6 +283,7 @@ Table course_enrollments {
   id               uuid              [pk, default: `uuidv7()`]
   user_id          uuid              [ref: > users.id, note: "not null - cascade delete"]
   course_id        uuid              [ref: > courses.id, note: "not null - cascade delete"]
+  purchase_id      uuid              [ref: > purchases.id, null]
   status           enrollment_status [default: "active", note: "not null"]
   source           enrollment_source [default: "free", note: "not null"]
   progress_percent decimal(5,2)      [default: 0.00, note: "not null"]
@@ -379,15 +380,51 @@ Table user_consents {
 }
 
 Table certificates {
-  id        uuid [pk, default: `uuidv7()`]
-  user_id   uuid [ref: > users.id, note: "not null - restrict delete"]
-  course_id uuid [ref: > courses.id, note: "not null - restrict delete"]
-  uuid      uuid [unique, note: "not null - public identifier for /verify"]
+  id        uuid        [pk, default: `uuidv7()`]
+  user_id   uuid        [ref: > users.id, note: "not null - restrict delete"]
+  course_id uuid        [ref: > courses.id, note: "not null - restrict delete"]
+  uuid      uuid        [unique, note: "not null - public identifier for /verify"]
   issued_at timestamptz [default: `now()`, note: "not null"]
 
   indexes {
     (user_id, course_id) [unique, name: "uq_certificates_user_course"]
     uui                  [unique, name: "uq_certificates_uuid"]
+  }
+}
+
+// ================================================================================
+// BUSINESS
+// ================================================================================
+
+Table subscription {
+  id           uuid                [pk, default: `uuidv7()`]
+  user_id      uuid                [ref: > users.id, note: "not null"]
+  plan         subscription_plan   [note: "not null"]
+  status       subscription_status [note: "not null", default: 'active']
+  started_at   timestamptz         [note: "not null", default: `now()`]
+  expires_at   timestamptz         [note: "not null"]
+  cancelled_at timestamptz         [null]
+
+  indexes {
+    user_id                       [name: "idx_sub_user_id"]
+    (user_id, status, expires_at) [name: "idx_sub_user_status"]
+  }
+}
+
+Table purchases {
+  id           uuid            [pk, default: `uuidv7()`]
+  user_id      uuid            [ref: > users.id, note: "not null"]
+  type         purchase_type   [note: "not null"]
+  item_id      uuid            [note: "not null"]
+  status       purchase_status [note: "not null"]
+  amount_cents bigint          [note: "not null"]
+  currency     varchar(3)      [note: "not null", default: 'EUR']
+  refunded_at  timestamptz     [null]
+  created_at   timestamptz     [not null, default: `now()`]
+
+  indexes {
+    user_id         [name: "idx_pur_user_id"]
+    (type, item_id) [name: "idx_pur_item"]
   }
 }
 
@@ -472,4 +509,25 @@ Enum consent_source {
   settings            [note: "changed from the account settings page"]
   checkout            [note: "collected before payment confirmation"]
   update_notification [note: "re-accepted following a document update"]
+}
+
+Enum subscription_plan {
+  monthly
+  annual
+}
+
+Enum subscription_status {
+  active
+  cancelled
+  expired
+}
+
+Enum purchase_type {
+  course
+  bundle
+}
+
+Enum purchase_status {
+  completed
+  refunded
 }
