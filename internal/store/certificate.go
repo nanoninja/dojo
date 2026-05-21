@@ -84,11 +84,15 @@ func (s *certificateStore) ListByUser(ctx context.Context, userID string) ([]mod
 }
 
 func (s *certificateStore) Create(ctx context.Context, c *model.Certificate) error {
-	return s.db.GetContext(ctx, c, `
+	err := s.db.GetContext(ctx, c, `
 		INSERT INTO certificates (user_id, course_id) VALUES ($1, $2)
 		ON CONFLICT (user_id, course_id) DO NOTHING
-		RETURING id, user_id, course_id, uuid, issued_at`,
+		RETURNING id, user_id, course_id, uuid, issued_at`,
 		c.UserID,
 		c.CourseID,
 	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	}
+	return err
 }
