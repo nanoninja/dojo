@@ -20,7 +20,8 @@ type LessonProgressService interface {
 	ListByCourse(ctx context.Context, userID, courseID string) ([]model.LessonProgress, error)
 
 	// Save records progress for a lesson and atomically recalculates the
-	// enrollment progress_percent for the given course.
+	// enrollment progress_percent for the given course. If the course reaches
+	// 100% and has certificate_enabled, a certificate is issued.
 	Save(ctx context.Context, p *model.LessonProgress, courseID string) error
 }
 
@@ -28,6 +29,7 @@ type lessonProgressService struct {
 	db          database.TxRunner
 	progress    store.LessonProgressStore
 	enrollments store.EnrollmentStore
+	courses     store.CourseStore
 }
 
 // NewLessonProgressService creates a LessonProgressService backed by the given stores.
@@ -35,11 +37,13 @@ func NewLessonProgressService(
 	db database.TxRunner,
 	progress store.LessonProgressStore,
 	enrollments store.EnrollmentStore,
+	courses store.CourseStore,
 ) LessonProgressService {
 	return &lessonProgressService{
 		db:          db,
 		progress:    progress,
 		enrollments: enrollments,
+		courses:     courses,
 	}
 }
 
@@ -59,6 +63,13 @@ func (s *lessonProgressService) ListByCourse(ctx context.Context, userID, course
 }
 
 func (s *lessonProgressService) Save(ctx context.Context, p *model.LessonProgress, courseID string) error {
+	course, err := s.courses.FindByID(ctx, courseID)
+	if err != nil {
+		return err
+	}
+	if course == nil {
+		return ErrCourseNotFound
+	}
 	return s.db.WithTx(ctx, func(q database.Querier) error {
 		ps := store.NewLessonProgressStore(q)
 		if err := ps.Save(ctx, p); err != nil {
@@ -69,6 +80,16 @@ func (s *lessonProgressService) Save(ctx context.Context, p *model.LessonProgres
 			return err
 		}
 		es := store.NewEnrollmentStore(q)
-		return es.UpdateProgress(ctx, p.UserID, courseID, percent)
+		if err := es.UpdateProgress(ctx, p.UserID, courseID, percent); err != nil {
+			return err
+		}
+		if percent == 100 && course.CertificateEnabled {
+			cs := store.NewCertificateStore(q)
+			return cs.Create(ctx, &model.Certificate{
+				UserID:   p.UserID,
+				CourseID: courseID,
+			})
+		}
+		return nil
 	})
 }

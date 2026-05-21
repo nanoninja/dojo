@@ -11,6 +11,7 @@ import (
 	"github.com/nanoninja/assert"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
+	"github.com/nanoninja/dojo/internal/store"
 )
 
 // ============================================================================
@@ -60,6 +61,30 @@ func (s *fakeLessonProgressStore) Save(_ context.Context, p *model.LessonProgres
 }
 
 // ============================================================================
+// fakeCourseStoreForProgress
+// ============================================================================
+
+type fakeCourseStoreForProgress struct {
+	course *model.Course
+}
+
+func (s *fakeCourseStoreForProgress) FindByID(_ context.Context, _ string) (*model.Course, error) {
+	return s.course, nil
+}
+
+func (s *fakeCourseStoreForProgress) FindBySlug(_ context.Context, _ string) (*model.Course, error) {
+	return nil, nil
+}
+
+func (s *fakeCourseStoreForProgress) List(_ context.Context, _ store.CourseFilter) ([]model.Course, int, error) {
+	return nil, 0, nil
+}
+
+func (s *fakeCourseStoreForProgress) Create(_ context.Context, _ *model.Course) error { return nil }
+func (s *fakeCourseStoreForProgress) Update(_ context.Context, _ *model.Course) error { return nil }
+func (s *fakeCourseStoreForProgress) Delete(_ context.Context, _ string) error        { return nil }
+
+// ============================================================================
 // Tests
 // ============================================================================
 
@@ -69,14 +94,18 @@ const (
 	testProgressCourseID = "01966b0a-cccc-7abc-def0-000000000030"
 )
 
-func newProgressService(ps *fakeLessonProgressStore, es *fakeEnrollmentStore) service.LessonProgressService {
-	return service.NewLessonProgressService(&fakeTxRunner{}, ps, es)
+func newProgressService(ps *fakeLessonProgressStore, es *fakeEnrollmentStore, cs *fakeCourseStoreForProgress) service.LessonProgressService {
+	return service.NewLessonProgressService(&fakeTxRunner{}, ps, es, cs)
+}
+
+func defaultCourse() *model.Course {
+	return &model.Course{ID: testProgressCourseID, CertificateEnabled: false}
 }
 
 func TestLessonProgressService_Get(t *testing.T) {
 	ctx := context.Background()
 	ps := newFakeLessonProgressStore()
-	svc := newProgressService(ps, newFakeEnrollmentStore())
+	svc := newProgressService(ps, newFakeEnrollmentStore(), &fakeCourseStoreForProgress{course: defaultCourse()})
 
 	t.Run("not found", func(t *testing.T) {
 		_, err := svc.Get(ctx, testProgressUserID, testProgressLessonID)
@@ -101,7 +130,7 @@ func TestLessonProgressService_ListByCourse(t *testing.T) {
 		UserID:   testProgressUserID,
 		LessonID: testProgressLessonID,
 	}
-	svc := newProgressService(ps, newFakeEnrollmentStore())
+	svc := newProgressService(ps, newFakeEnrollmentStore(), &fakeCourseStoreForProgress{course: defaultCourse()})
 
 	records, err := svc.ListByCourse(ctx, testProgressUserID, testProgressCourseID)
 
@@ -113,7 +142,41 @@ func TestLessonProgressService_Save(t *testing.T) {
 	ctx := context.Background()
 	ps := newFakeLessonProgressStore()
 	ps.percent = 50.0
-	svc := newProgressService(ps, newFakeEnrollmentStore())
+	svc := newProgressService(ps, newFakeEnrollmentStore(), &fakeCourseStoreForProgress{course: defaultCourse()})
+
+	p := &model.LessonProgress{
+		UserID:         testProgressUserID,
+		LessonID:       testProgressLessonID,
+		IsCompleted:    true,
+		WatchedSeconds: 300,
+	}
+
+	assert.NoError(t, svc.Save(ctx, p, testProgressCourseID))
+}
+
+func TestLessonProgressService_Save_IssuesCertificateAt100(t *testing.T) {
+	ctx := context.Background()
+	ps := newFakeLessonProgressStore()
+	ps.percent = 100.0
+	course := &model.Course{ID: testProgressCourseID, CertificateEnabled: true}
+	svc := newProgressService(ps, newFakeEnrollmentStore(), &fakeCourseStoreForProgress{course: course})
+
+	p := &model.LessonProgress{
+		UserID:         testProgressUserID,
+		LessonID:       testProgressLessonID,
+		IsCompleted:    true,
+		WatchedSeconds: 300,
+	}
+
+	assert.NoError(t, svc.Save(ctx, p, testProgressCourseID))
+}
+
+func TestLessonProgressService_Save_NoCertificateWhenDisabled(t *testing.T) {
+	ctx := context.Background()
+	ps := newFakeLessonProgressStore()
+	ps.percent = 100.0
+	course := &model.Course{ID: testProgressCourseID, CertificateEnabled: false}
+	svc := newProgressService(ps, newFakeEnrollmentStore(), &fakeCourseStoreForProgress{course: course})
 
 	p := &model.LessonProgress{
 		UserID:         testProgressUserID,

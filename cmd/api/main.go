@@ -105,7 +105,7 @@ func run(logger *slog.Logger) error {
 	chapterService := service.NewChapterService(chapterStore)
 	lessonService := service.NewLessonService(lessonStore, lessonResourceStore)
 	enrollmentService := service.NewEnrollmentService(enrollmentStore)
-	progressService := service.NewLessonProgressService(db, progressStore, enrollmentStore)
+	progressService := service.NewLessonProgressService(db, progressStore, enrollmentStore, courseStore)
 	bundleService := service.NewBundleService(db, bundleStore, bundleCourseStore)
 	reviewService := service.NewReviewService(db, reviewStore)
 	certificateService := service.NewCertificateService(certificateStore)
