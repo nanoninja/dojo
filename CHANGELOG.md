@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] - 2026-05-22
+
+### Added
+
+- Business layer: migration `002_business_schema.sql` (subscriptions, purchases, purchase_id on enrollments)
+- Subscriptions: store, service, handler, routes and tests
+- Purchases: store, service, handler, routes and tests — course and bundle purchases with atomic enrollment creation via `WithTx`
+- Refund: marks purchase as refunded and cancels associated enrollments atomically
+- `EnrollmentStore.CancelByPurchase` — bulk status update by purchase ID
+- `purchase_id` nullable FK on `course_enrollments` linking billing to access
+
+---
+
 ## [0.3.0] - 2026-05-14
 
 ### Added
