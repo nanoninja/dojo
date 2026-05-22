@@ -108,6 +108,8 @@ func run(logger *slog.Logger) error {
 	reviewStore := store.NewReviewStore(db)
 	certificateStore := store.NewCertificateStore(db)
 	consentStore := store.NewConsentStore(db, cipher)
+	subscriptionStore := store.NewSubscriptionStore(db)
+	purchaseStore := store.NewPurchaseStore(db)
 
 	// ==========================================================================
 	// Services
@@ -154,6 +156,8 @@ func run(logger *slog.Logger) error {
 	reviewService := service.NewReviewService(db, reviewStore)
 	certificateService := service.NewCertificateService(certificateStore)
 	consentService := service.NewConsentService(consentStore)
+	subscriptionService := service.NewSubscriptionService(subscriptionStore)
+	purchaseService := service.NewPurchaseService(db, purchaseStore, enrollmentStore, bundleCourseStore)
 
 	// ==========================================================================
 	// Background jobs
@@ -187,10 +191,12 @@ func run(logger *slog.Logger) error {
 		Progress:   handler.NewProgressHandler(progressService),
 
 		// Business
-		Bundle:      handler.NewBundleHandler(bundleService),
-		Review:      handler.NewReviewHandler(reviewService),
-		Certificate: handler.NewCertificateHandler(certificateService),
-		Consent:     handler.NewConsentHandler(consentService),
+		Bundle:        handler.NewBundleHandler(bundleService),
+		Review:        handler.NewReviewHandler(reviewService),
+		Certificate:   handler.NewCertificateHandler(certificateService),
+		Consent:       handler.NewConsentHandler(consentService),
+		Subscriptions: handler.NewSubscriptionHandler(subscriptionService),
+		Purchase:      handler.NewPurchaseHandler(purchaseService),
 	}
 
 	// ==========================================================================

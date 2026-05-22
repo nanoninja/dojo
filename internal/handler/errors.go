@@ -65,6 +65,11 @@ func toFault(err error) error {
 	case errors.Is(err, service.ErrConsentNotFound):
 		return fault.NotFound("consent", err)
 
+	case errors.Is(err, service.ErrSubscriptionNotFound):
+		return fault.NotFound("subscription", err)
+	case errors.Is(err, service.ErrPurchaseNotFound):
+		return fault.NotFound("purchase", err)
+
 	default:
 		return fault.Internal(err)
 	}

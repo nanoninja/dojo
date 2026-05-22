@@ -28,19 +28,21 @@ import (
 
 // Handlers groups all HTTP handlers.
 type Handlers struct {
-	Auth        *handler.AuthHandler
-	User        *handler.UserHandler
-	Course      *handler.CourseHandler
-	Review      *handler.ReviewHandler
-	Category    *handler.CategoryHandler
-	Tag         *handler.TagHandler
-	Chapter     *handler.ChapterHandler
-	Lesson      *handler.LessonHandler
-	Enrollment  *handler.EnrollmentHandler
-	Bundle      *handler.BundleHandler
-	Progress    *handler.ProgressHandler
-	Certificate *handler.CertificateHandler
-	Consent     *handler.ConsentHandler
+	Auth          *handler.AuthHandler
+	User          *handler.UserHandler
+	Course        *handler.CourseHandler
+	Review        *handler.ReviewHandler
+	Category      *handler.CategoryHandler
+	Tag           *handler.TagHandler
+	Chapter       *handler.ChapterHandler
+	Lesson        *handler.LessonHandler
+	Enrollment    *handler.EnrollmentHandler
+	Bundle        *handler.BundleHandler
+	Progress      *handler.ProgressHandler
+	Certificate   *handler.CertificateHandler
+	Consent       *handler.ConsentHandler
+	Subscriptions *handler.SubscriptionHandler
+	Purchase      *handler.PurchaseHandler
 }
 
 // New builds and returns the main HTTP router with all middleware and routes configured.
@@ -297,6 +299,23 @@ func New(
 					r.Get("/", httputil.Handle(handlers.Consent.ListByUser, logger))
 					r.Post("/", httputil.Handle(handlers.Consent.Create, logger))
 					r.Get("/{id}", httputil.Handle(handlers.Consent.GetByID, logger))
+				})
+
+				// Subscriptions
+				r.Route("/subscriptions", func(r chi.Router) {
+					r.Get("/", httputil.Handle(handlers.Subscriptions.List, logger))
+					r.Get("/active", httputil.Handle(handlers.Subscriptions.GetActive, logger))
+					r.Post("/", httputil.Handle(handlers.Subscriptions.Subscribe, logger))
+					r.Delete("/{id}", httputil.Handle(handlers.Subscriptions.Cancel, logger))
+				})
+
+				// Purchases
+				r.Route("/purchases", func(r chi.Router) {
+					r.Get("/", httputil.Handle(handlers.Purchase.List, logger))
+					r.Get("/{id}", httputil.Handle(handlers.Purchase.GetByID, logger))
+					r.Post("/courses", httputil.Handle(handlers.Purchase.BuyCourse, logger))
+					r.Post("/bundles", httputil.Handle(handlers.Purchase.BuyBundle, logger))
+					r.Post("/{id}/refund", httputil.Handle(handlers.Purchase.Refund, logger))
 				})
 			})
 		})
