@@ -166,11 +166,11 @@ func TestRouter_RegistersExpectedRoutes(t *testing.T) {
 		"POST /api/v1/subscriptions/":       false,
 		"DELETE /api/v1/subscriptions/{id}": false,
 
-		"GET /api/v1/purchases/":              false,
-		"GET /api/v1/purchases/{id}":          false,
-		"POST /api/v1/purchases/courses":      false,
-		"POST /api/v1/purchases/bundles":      false,
-		"POST /api/v1/purchases/{id}/refund":  false,
+		"GET /api/v1/purchases/":             false,
+		"GET /api/v1/purchases/{id}":         false,
+		"POST /api/v1/purchases/courses":     false,
+		"POST /api/v1/purchases/bundles":     false,
+		"POST /api/v1/purchases/{id}/refund": false,
 	}
 
 	err := chi.Walk(
