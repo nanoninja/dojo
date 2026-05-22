@@ -32,6 +32,7 @@ type CourseEnrollment struct {
 	ID              string           `db:"id"                json:"id"`
 	UserID          string           `db:"user_id"           json:"user_id"`
 	CourseID        string           `db:"course_id"         json:"course_id"`
+	PurchaseID      *string          `db:"purchase_id"       json:"purchase_id"`
 	Status          EnrollmentStatus `db:"status"            json:"status"`
 	Source          EnrollmentSource `db:"source"            json:"source"`
 	ProgressPercent float64          `db:"progress_percent"  json:"progress_percent"`

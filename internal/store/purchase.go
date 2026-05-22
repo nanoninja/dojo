@@ -60,6 +60,7 @@ func (s *purchaseStore) ListByUser(ctx context.Context, userID string) ([]model.
 		FROM purchases
 		WHERE user_id = $1
 		ORDER BY created_at DESC`,
+		userID,
 	)
 	if err != nil {
 		return nil, err
@@ -69,10 +70,8 @@ func (s *purchaseStore) ListByUser(ctx context.Context, userID string) ([]model.
 
 func (s *purchaseStore) Create(ctx context.Context, p *model.Purchase) error {
 	return s.db.GetContext(ctx, p, `
-		INSERT INTO purchases (
-			user_id, type, item_id, status, amount_cents,
-			currency, refunded_at, created_at
-		) VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO purchases (user_id, type, item_id, status, amount_cents, currency)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id, user_id, type, item_id, status, amount_cents, currency, refunded_at, created_at`,
 		p.UserID,
 		p.Type,

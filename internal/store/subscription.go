@@ -43,7 +43,7 @@ func (s *subscriptionStore) FindActiveByUser(ctx context.Context, userID string)
 		FROM subscriptions
 		WHERE user_id = $1
 			AND status = 'active'
-			AND expires > 'now()'
+			AND expires_at > now()
 		ORDER BY expires_at DESC
 		LIMIT 1`,
 		userID,
@@ -54,7 +54,7 @@ func (s *subscriptionStore) FindActiveByUser(ctx context.Context, userID string)
 		}
 		return nil, err
 	}
-	return &sub, err
+	return &sub, nil
 }
 
 func (s *subscriptionStore) ListByUser(ctx context.Context, userID string) ([]model.Subscription, error) {
