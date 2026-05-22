@@ -161,7 +161,7 @@ swagger:
 test:
 	docker compose -f $(DOCKER_DIR)/compose.test.yaml up -d --wait db-test
 	go test -count=1 -v ./...
-	docker compose -f $(DOCKER_DIR)/compose.test.yaml down
+	docker compose -f $(DOCKER_DIR)/compose.test.yaml down -v
 
 coverage:
 	@set -e; \

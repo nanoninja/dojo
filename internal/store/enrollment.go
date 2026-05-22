@@ -43,6 +43,9 @@ type EnrollmentStore interface {
 
 	// Delete removes an enrollment permanently.
 	Delete(ctx context.Context, id string) error
+
+	// CancelByPurchase marks all enrollments linked to a purchase as refunded.
+	CancelByPurchase(ctx context.Context, purchaseID string) error
 }
 
 type enrollmentStore struct {
@@ -133,13 +136,15 @@ func (s *enrollmentStore) Create(ctx context.Context, e *model.CourseEnrollment)
         INSERT INTO course_enrollments (
             user_id,
             course_id,
+			purchase_id,
             status,
             source,
             expires_at
-        ) VALUES ($1, $2, $3, $4, $5)
+        ) VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id`,
 		e.UserID,
 		e.CourseID,
+		e.PurchaseID,
 		e.Status,
 		e.Source,
 		e.ExpiresAt,
@@ -181,5 +186,16 @@ func (s *enrollmentStore) UpdateProgress(ctx context.Context, userID, courseID s
 
 func (s *enrollmentStore) Delete(ctx context.Context, id string) error {
 	_, err := s.db.ExecContext(ctx, `DELETE FROM course_enrollments WHERE id = $1`, id)
+	return err
+}
+
+func (s *enrollmentStore) CancelByPurchase(ctx context.Context, purchaseID string) error {
+	_, err := s.db.ExecContext(ctx, `
+		UPDATE course_enrollments
+		SET status = $1
+		WHERE purchase_id = $2`,
+		model.EnrollmentStatusRefunded,
+		purchaseID,
+	)
 	return err
 }

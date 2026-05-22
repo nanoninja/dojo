@@ -102,6 +102,15 @@ func (f *fakeEnrollmentStore) Delete(_ context.Context, id string) error {
 	return nil
 }
 
+func (f *fakeEnrollmentStore) CancelByPurchase(_ context.Context, purchaseID string) error {
+	for _, e := range f.enrollments {
+		if e.PurchaseID != nil && *e.PurchaseID == purchaseID {
+			e.Status = model.EnrollmentStatusRefunded
+		}
+	}
+	return nil
+}
+
 func newEnrollmentService(enrollments store.EnrollmentStore) service.EnrollmentService {
 	return service.NewEnrollmentService(enrollments)
 }

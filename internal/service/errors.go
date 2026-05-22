@@ -89,4 +89,10 @@ var (
 
 	// ErrConsentNotFound is returned when a consent lookup yields no result.
 	ErrConsentNotFound = errors.New("consent not found")
+
+	// ErrSubscriptionNotFound is returned when a subscription lookup yields no result.
+	ErrSubscriptionNotFound = errors.New("subscription not found")
+
+	// ErrPurchaseNotFound is returned when a purchase lookup yields no result.
+	ErrPurchaseNotFound = errors.New("purchase not found")
 )
