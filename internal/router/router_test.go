@@ -65,11 +65,15 @@ func newTestRouter(mode string) http.Handler {
 		&sync.WaitGroup{},
 	)
 	user := handler.NewUserHandler(noopUserService{})
+	course := handler.NewCourseHandler(noopCourseService{}, noopOwnershipChecker{})
+	bundle := handler.NewBundleHandler(noopBundleService{}, noopOwnershipChecker{})
 
 	return router.New(
 		&router.Handlers{
-			Auth: auth,
-			User: user,
+			Auth:   auth,
+			User:   user,
+			Course: course,
+			Bundle: bundle,
 		},
 		newTestConfig(mode),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
@@ -131,6 +135,39 @@ func (noopUserService) Delete(context.Context, string) error { return nil }
 func (noopUserService) LoginHistory(context.Context, string, int) ([]model.LoginAuditLog, error) {
 	return nil, nil
 }
+
+type noopOwnershipChecker struct{}
+
+func (noopOwnershipChecker) Check(context.Context, string, string) error { return nil }
+
+type noopCourseService struct{}
+
+func (noopCourseService) List(context.Context, store.CourseFilter) ([]model.Course, int, error) {
+	return nil, 0, nil
+}
+func (noopCourseService) GetByID(context.Context, string) (*model.Course, error)   { return nil, nil }
+func (noopCourseService) GetBySlug(context.Context, string) (*model.Course, error) { return nil, nil }
+func (noopCourseService) Create(context.Context, *model.Course, []string, string, []string) error {
+	return nil
+}
+func (noopCourseService) Update(context.Context, *model.Course) error { return nil }
+func (noopCourseService) SetCategories(context.Context, string, []string, string) error {
+	return nil
+}
+func (noopCourseService) SetTags(context.Context, string, []string) error { return nil }
+func (noopCourseService) Delete(context.Context, string) error            { return nil }
+
+type noopBundleService struct{}
+
+func (noopBundleService) List(context.Context, store.BundleFilter) ([]model.Bundle, int, error) {
+	return nil, 0, nil
+}
+func (noopBundleService) GetByID(context.Context, string) (*model.Bundle, error)   { return nil, nil }
+func (noopBundleService) GetBySlug(context.Context, string) (*model.Bundle, error) { return nil, nil }
+func (noopBundleService) Create(context.Context, *model.Bundle, []string) error    { return nil }
+func (noopBundleService) Update(context.Context, *model.Bundle) error              { return nil }
+func (noopBundleService) SetCourses(context.Context, string, []string) error       { return nil }
+func (noopBundleService) Delete(context.Context, string) error                     { return nil }
 
 func TestRouter_RegistersExpectedRoutes(t *testing.T) {
 	h := newTestRouter("bearer")

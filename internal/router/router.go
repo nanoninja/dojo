@@ -180,6 +180,8 @@ func New(
 
 				// Courses & Reviews
 				r.Route("/courses", func(r chi.Router) {
+					r.Use(newRateLimiter(60, time.Minute))
+
 					r.Get("/", httputil.Handle(handlers.Course.List, logger))
 					r.Get("/{id}", httputil.Handle(handlers.Course.GetByID, logger))
 					r.Get("/{course_id}/chapters", httputil.Handle(handlers.Chapter.List, logger))
@@ -259,6 +261,8 @@ func New(
 
 				// Bundles
 				r.Route("/bundles", func(r chi.Router) {
+					r.Use(newRateLimiter(60, time.Minute))
+
 					r.Get("/", httputil.Handle(handlers.Bundle.List, logger))
 					r.Get("/{id}", httputil.Handle(handlers.Bundle.GetByID, logger))
 
