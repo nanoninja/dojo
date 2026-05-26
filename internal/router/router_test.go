@@ -140,32 +140,118 @@ func TestRouter_RegistersExpectedRoutes(t *testing.T) {
 
 	// Keep this list in sync with internal/router/router.go.
 	expected := map[string]bool{
-		"GET /swagger/*":                     false,
-		"GET /health":                        false,
-		"GET /livez":                         false,
-		"GET /readyz":                        false,
-		"GET /metrics":                       false,
-		"POST /auth/register":                false,
-		"POST /auth/password/reset":          false,
-		"POST /auth/password/new":            false,
-		"POST /auth/login":                   false,
-		"POST /auth/otp/verify":              false,
-		"POST /auth/verify":                  false,
-		"POST /auth/token/refresh":           false,
-		"POST /auth/logout":                  false,
+		// Infrastructure
+		"GET /swagger/*": false,
+		"GET /health":    false,
+		"GET /livez":     false,
+		"GET /readyz":    false,
+		"GET /metrics":   false,
+
+		// Auth
+		"POST /auth/register":       false,
+		"POST /auth/password/reset": false,
+		"POST /auth/password/new":   false,
+		"POST /auth/login":          false,
+		"POST /auth/verify":         false,
+		"POST /auth/verify/resend":  false,
+		"POST /auth/otp/verify":     false,
+		"POST /auth/otp/resend":     false,
+		"POST /auth/token/refresh":  false,
+		"POST /auth/logout":         false,
+
+		// Users
 		"GET /api/v1/users/me":               false,
 		"GET /api/v1/users/me/login-history": false,
+		"PUT /api/v1/users/{id}/profile":     false,
+		"PUT /api/v1/users/{id}/password":    false,
 		"GET /api/v1/users/":                 false,
 		"GET /api/v1/users/{id}":             false,
 		"DELETE /api/v1/users/{id}":          false,
-		"PUT /api/v1/users/{id}/profile":     false,
-		"PUT /api/v1/users/{id}/password":    false,
 
+		// Courses
+		"GET /api/v1/courses/":                            false,
+		"GET /api/v1/courses/{id}":                        false,
+		"GET /api/v1/courses/{course_id}/chapters":        false,
+		"POST /api/v1/courses/":                           false,
+		"PUT /api/v1/courses/{id}":                        false,
+		"DELETE /api/v1/courses/{id}":                     false,
+		"PUT /api/v1/courses/{id}/categories":             false,
+		"PUT /api/v1/courses/{id}/tags":                   false,
+		"GET /courses/{course_id}/reviews":                false,
+		"GET /courses/{course_id}/reviews/{id}":           false,
+		"POST /api/v1/courses/{course_id}/reviews":        false,
+		"PUT /api/v1/courses/{course_id}/reviews/{id}":    false,
+		"DELETE /api/v1/courses/{course_id}/reviews/{id}": false,
+
+		// Categories
+		"GET /api/v1/categories/":        false,
+		"GET /api/v1/categories/{id}":    false,
+		"POST /api/v1/categories/":       false,
+		"PUT /api/v1/categories/{id}":    false,
+		"DELETE /api/v1/categories/{id}": false,
+
+		// Tags
+		"GET /api/v1/tags/":            false,
+		"GET /api/v1/tags/slug/{slug}": false,
+		"GET /api/v1/tags/{id}":        false,
+		"POST /api/v1/tags/":           false,
+		"PUT /api/v1/tags/{id}":        false,
+		"DELETE /api/v1/tags/{id}":     false,
+
+		// Chapters
+		"GET /api/v1/chapters/{id}":                 false,
+		"GET /api/v1/chapters/{chapter_id}/lessons": false,
+		"POST /api/v1/chapters/":                    false,
+		"PUT /api/v1/chapters/{id}":                 false,
+		"DELETE /api/v1/chapters/{id}":              false,
+
+		// Lessons
+		"GET /api/v1/lessons/{id}":              false,
+		"GET /api/v1/lessons/{id}/resources":    false,
+		"POST /api/v1/lessons/":                 false,
+		"PUT /api/v1/lessons/{id}":              false,
+		"DELETE /api/v1/lessons/{id}":           false,
+		"POST /api/v1/lessons/{id}/resources":   false,
+		"PUT /api/v1/lessons/resources/{id}":    false,
+		"DELETE /api/v1/lessons/resources/{id}": false,
+
+		// Bundles
+		"GET /api/v1/bundles/":             false,
+		"GET /api/v1/bundles/{id}":         false,
+		"POST /api/v1/bundles/":            false,
+		"PUT /api/v1/bundles/{id}":         false,
+		"PUT /api/v1/bundles/{id}/courses": false,
+		"DELETE /api/v1/bundles/{id}":      false,
+
+		// Enrollments
+		"GET /api/v1/enrollments/":              false,
+		"GET /api/v1/enrollments/{id}":          false,
+		"POST /api/v1/enrollments/":             false,
+		"PATCH /api/v1/enrollments/{id}/status": false,
+		"DELETE /api/v1/enrollments/{id}":       false,
+
+		// Progress
+		"GET /api/v1/progress/{user_id}/lessons/{lesson_id}": false,
+		"GET /api/v1/progress/{user_id}/courses/{course_id}": false,
+		"POST /api/v1/progress/":                             false,
+
+		// Certificates
+		"GET /certificates/verify/{uuid}": false,
+		"GET /api/v1/certificates/":       false,
+		"GET /api/v1/certificates/{id}":   false,
+
+		// Consents
+		"GET /api/v1/consents/":     false,
+		"POST /api/v1/consents/":    false,
+		"GET /api/v1/consents/{id}": false,
+
+		// Subscriptions
 		"GET /api/v1/subscriptions/":        false,
 		"GET /api/v1/subscriptions/active":  false,
 		"POST /api/v1/subscriptions/":       false,
 		"DELETE /api/v1/subscriptions/{id}": false,
 
+		// Purchases
 		"GET /api/v1/purchases/":             false,
 		"GET /api/v1/purchases/{id}":         false,
 		"POST /api/v1/purchases/courses":     false,
