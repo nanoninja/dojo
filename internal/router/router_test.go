@@ -346,6 +346,34 @@ func TestRouter_RateLimit_Login_Returns429(t *testing.T) {
 	require.True(t, got429, "expected at least one 429 Too Many Requests on /auth/login")
 }
 
+func TestRouter_RateLimit_CatalogList_Returns429(t *testing.T) {
+	r := newTestRouter("bearer")
+	token := signTestJWT(t, testRouterUserID, "user")
+
+	for _, path := range []string{"/api/v1/courses", "/api/v1/bundles"} {
+		t.Run(path, func(t *testing.T) {
+			var got429 bool
+
+			// catalog list endpoints are limited to 60 requests/min by IP in router.go
+			for range 65 {
+				w := httptest.NewRecorder()
+				req := httptest.NewRequest(http.MethodGet, path, nil)
+				req.Header.Set("Authorization", "Bearer "+token)
+				req.RemoteAddr = "1.2.3.4:12345"
+
+				r.ServeHTTP(w, req)
+
+				if w.Code == http.StatusTooManyRequests {
+					got429 = true
+					break
+				}
+			}
+
+			require.Truef(t, got429, "expected at least one 429 Too Many Requests on %s", path)
+		})
+	}
+}
+
 func signTestJWT(t *testing.T, sub, role string) string {
 	t.Helper()
 

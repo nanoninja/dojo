@@ -48,6 +48,7 @@ func NewCourseHandler(course service.CourseService, ownership service.OwnershipC
 // @Param     limit          query    int     false  "Items per page" default(20)
 // @Success   200  {object}  httputil.PageResponse[model.Course]
 // @Failure   400  {object}  fault.ErrorResponse
+// @Failure   429  {object}  fault.ErrorResponse  "rate limit exceeded"
 // @Failure   500  {object}  fault.ErrorResponse
 // @Router    /api/v1/courses [get]
 func (h *CourseHandler) List(w http.ResponseWriter, r *http.Request) error {

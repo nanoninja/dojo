@@ -42,6 +42,7 @@ func NewBundleHandler(bundle service.BundleService, ownership service.OwnershipC
 // @Param    limit          query    int     false  "Items per page" default(20)
 // @Success  200  {object}  httputil.PageResponse[model.Bundle]
 // @Failure  400  {object}  fault.ErrorResponse
+// @Failure  429  {object}  fault.ErrorResponse  "rate limit exceeded"
 // @Failure  500  {object}  fault.ErrorResponse
 // @Router   /api/v1/bundles [get]
 func (h *BundleHandler) List(w http.ResponseWriter, r *http.Request) error {

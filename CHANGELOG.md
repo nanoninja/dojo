@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] - 2026-05-26
+
+### Added
+
+- Ownership checks on instructor mutations — `OwnershipChecker` interface with per-domain constructors (course, chapter, lesson, bundle); returns 404 on mismatch to avoid resource enumeration
+- Rate limiting on catalog list endpoints — 60 req/min per IP on `GET /courses` and `GET /bundles` using existing Redis backend (`httprate-redis`)
+- Swagger `@Failure 429` annotation on `Course.List` and `Bundle.List`
+
+---
+
 ## [0.4.0] - 2026-05-22
 
 ### Added
