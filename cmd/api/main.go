@@ -180,18 +180,18 @@ func run(logger *slog.Logger) error {
 		User: handler.NewUserHandler(userService),
 
 		// Catalog
-		Course:   handler.NewCourseHandler(courseService),
+		Course:   handler.NewCourseHandler(courseService, service.NewCourseOwnership(db)),
 		Category: handler.NewCategoryHandler(categoryService),
 		Tag:      handler.NewTagHandler(tagService),
-		Chapter:  handler.NewChapterHandler(chapterService),
-		Lesson:   handler.NewLessonHandler(lessonService),
+		Chapter:  handler.NewChapterHandler(chapterService, service.NewChapterOwnership(db), service.NewCourseOwnership(db)),
+		Lesson:   handler.NewLessonHandler(lessonService, service.NewLessonOwnership(db), service.NewChapterOwnership(db)),
 
 		// Enrollments & Progress
 		Enrollment: handler.NewEnrollmentHandler(enrollmentService),
 		Progress:   handler.NewProgressHandler(progressService),
 
 		// Business
-		Bundle:        handler.NewBundleHandler(bundleService),
+		Bundle:        handler.NewBundleHandler(bundleService, service.NewBundleOwnership(db)),
 		Review:        handler.NewReviewHandler(reviewService),
 		Certificate:   handler.NewCertificateHandler(certificateService),
 		Consent:       handler.NewConsentHandler(consentService),
