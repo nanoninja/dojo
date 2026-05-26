@@ -71,7 +71,7 @@ const (
 )
 
 func newBundleHandler(s *mockBundleService) *handler.BundleHandler {
-	return handler.NewBundleHandler(s)
+	return handler.NewBundleHandler(s, noopOwnershipChecker{})
 }
 
 func testBundle() *model.Bundle {

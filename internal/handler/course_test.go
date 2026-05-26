@@ -69,7 +69,7 @@ func (m *mockCourseService) Delete(_ context.Context, _ string) error {
 const testCourseID = "01966b0a-ffff-7abc-def0-000000000006"
 
 func newCourseHandler(cs *mockCourseService) *handler.CourseHandler {
-	return handler.NewCourseHandler(cs)
+	return handler.NewCourseHandler(cs, noopOwnershipChecker{})
 }
 
 func TestCourseHandler_List(t *testing.T) {

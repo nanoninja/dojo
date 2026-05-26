@@ -83,7 +83,7 @@ const (
 )
 
 func newLessonHandler(ls *mockLessonService) *handler.LessonHandler {
-	return handler.NewLessonHandler(ls)
+	return handler.NewLessonHandler(ls, noopOwnershipChecker{}, noopOwnershipChecker{})
 }
 
 // ============================================================================
@@ -273,7 +273,7 @@ func TestLessonHandler_UpdateResource_NotFound(t *testing.T) {
 }
 
 func TestLessonHandler_RemoveResource(t *testing.T) {
-	ms := &mockLessonService{}
+	ms := &mockLessonService{resource: &model.LessonResource{ID: testResourceID, LessonID: testLessonID}}
 	w := httptest.NewRecorder()
 	r := withChiParam(httptest.NewRequest("DELETE", "/lessons/resources/"+testResourceID, nil), "id", testResourceID)
 	serve(newLessonHandler(ms).RemoveResource, w, r)

@@ -57,7 +57,7 @@ func (m *mockChapterService) Delete(_ context.Context, _ string) error {
 const testChapterID = "01966b0a-cccc-7abc-def0-000000000003"
 
 func newChapterHandler(cs *mockChapterService) *handler.ChapterHandler {
-	return handler.NewChapterHandler(cs)
+	return handler.NewChapterHandler(cs, noopOwnershipChecker{}, noopOwnershipChecker{})
 }
 
 func TestChapterHandler_List(t *testing.T) {

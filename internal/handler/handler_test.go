@@ -160,3 +160,13 @@ func (m *mockUserService) Delete(_ context.Context, _ string) error {
 func (m *mockUserService) LoginHistory(_ context.Context, _ string, _ int) ([]model.LoginAuditLog, error) {
 	return m.loginHistory, m.loginHistoryErr
 }
+
+// ============================================================================
+// noopOwnershipChecker
+// ============================================================================
+
+// noopOwnershipChecker always grants ownership. Used in handler tests that do
+// not exercise ownership logic — the ownership service has its own unit tests.
+type noopOwnershipChecker struct{}
+
+func (noopOwnershipChecker) Check(_ context.Context, _, _ string) error { return nil }

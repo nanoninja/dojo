@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/nanoninja/dojo/internal/fault"
 	"github.com/nanoninja/dojo/internal/httputil"
+	"github.com/nanoninja/dojo/internal/middleware"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
 	"github.com/nanoninja/dojo/internal/store"
@@ -16,12 +17,13 @@ import (
 
 // BundleHandler handles HTTP requests for bundles.
 type BundleHandler struct {
-	bundle service.BundleService
+	bundle    service.BundleService
+	ownership service.OwnershipChecker
 }
 
 // NewBundleHandler returns a new BundleHandler.
-func NewBundleHandler(bundle service.BundleService) *BundleHandler {
-	return &BundleHandler{bundle: bundle}
+func NewBundleHandler(bundle service.BundleService, ownership service.OwnershipChecker) *BundleHandler {
+	return &BundleHandler{bundle: bundle, ownership: ownership}
 }
 
 // ============================================================================
@@ -191,6 +193,10 @@ func (h *BundleHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid bundle id", nil)
 	}
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
+		return err
+	}
 	b, err := h.bundle.GetByID(r.Context(), id)
 	if err != nil {
 		return toFault(err)
@@ -242,6 +248,10 @@ func (h *BundleHandler) SetCourses(w http.ResponseWriter, r *http.Request) error
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid bundle id", nil)
 	}
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
+		return err
+	}
 	var req SetCoursesRequest
 	if err := httputil.Bind(r, &req); err != nil {
 		return err
@@ -271,6 +281,10 @@ func (h *BundleHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid bundle id", nil)
+	}
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
+		return err
 	}
 	if err := h.bundle.Delete(r.Context(), id); err != nil {
 		return toFault(err)

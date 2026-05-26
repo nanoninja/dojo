@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/nanoninja/dojo/internal/fault"
 	"github.com/nanoninja/dojo/internal/httputil"
+	"github.com/nanoninja/dojo/internal/middleware"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
 	"github.com/nanoninja/dojo/internal/store"
@@ -16,12 +17,13 @@ import (
 
 // CourseHandler handles HTTP requests for course endpoints.
 type CourseHandler struct {
-	course service.CourseService
+	course    service.CourseService
+	ownership service.OwnershipChecker
 }
 
 // NewCourseHandler creates a new CourseHandler with the given course service.
-func NewCourseHandler(course service.CourseService) *CourseHandler {
-	return &CourseHandler{course: course}
+func NewCourseHandler(course service.CourseService, ownership service.OwnershipChecker) *CourseHandler {
+	return &CourseHandler{course: course, ownership: ownership}
 }
 
 // ============================================================================
@@ -131,10 +133,12 @@ func (h *CourseHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid course id", nil)
 	}
+
 	c, err := h.course.GetByID(r.Context(), id)
 	if err != nil {
 		return toFault(err)
 	}
+
 	return httputil.OK(w, c)
 }
 
@@ -281,6 +285,13 @@ func (h *CourseHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		return toFault(err)
 	}
 
+	// Ownership check - return 404 to avoid leaking existence
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
+		// return fault.NotFound("course", nil)
+		return err
+	}
+
 	c.Slug = req.Slug
 	c.Title = req.Title
 	c.Subtitle = req.Subtitle
@@ -343,6 +354,10 @@ func (h *CourseHandler) SetCategories(w http.ResponseWriter, r *http.Request) er
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid course id", nil)
 	}
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
+		return err
+	}
 	if err := h.course.SetCategories(r.Context(), id, req.CategoryIDs, req.PrimaryCategoryID); err != nil {
 		return toFault(err)
 	}
@@ -381,6 +396,10 @@ func (h *CourseHandler) SetTags(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid course id", nil)
 	}
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
+		return err
+	}
 	if err := h.course.SetTags(r.Context(), id, req.TagIDs); err != nil {
 		return toFault(err)
 	}
@@ -407,6 +426,10 @@ func (h *CourseHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid course id", nil)
+	}
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
+		return err
 	}
 	if err := h.course.Delete(r.Context(), id); err != nil {
 		return toFault(err)

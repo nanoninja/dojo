@@ -9,18 +9,25 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/nanoninja/dojo/internal/fault"
 	"github.com/nanoninja/dojo/internal/httputil"
+	"github.com/nanoninja/dojo/internal/middleware"
 	"github.com/nanoninja/dojo/internal/model"
 	"github.com/nanoninja/dojo/internal/service"
 )
 
 // LessonHandler handles HTTP requests for lesson and lesson resource endpoints.
 type LessonHandler struct {
-	lesson service.LessonService
+	lesson    service.LessonService
+	ownership service.OwnershipChecker // checks lesson → chapter → course ownership via JOIN
+	chapters  service.OwnershipChecker // checks chapter → course ownership (used in Create)
 }
 
-// NewLessonHandler creates a new LessonHandler with the given lesson service.
-func NewLessonHandler(lesson service.LessonService) *LessonHandler {
-	return &LessonHandler{lesson: lesson}
+// NewLessonHandler creates a new LessonHandler with the given services.
+func NewLessonHandler(
+	lesson service.LessonService,
+	ownership service.OwnershipChecker,
+	chapters service.OwnershipChecker,
+) *LessonHandler {
+	return &LessonHandler{lesson: lesson, ownership: ownership, chapters: chapters}
 }
 
 // ============================================================================
@@ -112,6 +119,10 @@ func (h *LessonHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	if err := httputil.Bind(r, &req); err != nil {
 		return err
 	}
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.chapters.Check(r.Context(), req.ChapterID, userID); err != nil {
+		return err
+	}
 	l := &model.Lesson{
 		ChapterID:       req.ChapterID,
 		Title:           req.Title,
@@ -169,6 +180,10 @@ func (h *LessonHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid lesson id", nil)
 	}
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
+		return err
+	}
 	l, err := h.lesson.GetByID(r.Context(), id)
 	if err != nil {
 		return toFault(err)
@@ -207,6 +222,10 @@ func (h *LessonHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid lesson id", nil)
+	}
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
+		return err
 	}
 	if err := h.lesson.Delete(r.Context(), id); err != nil {
 		return toFault(err)
@@ -276,6 +295,10 @@ func (h *LessonHandler) AddResource(w http.ResponseWriter, r *http.Request) erro
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid lesson id", nil)
 	}
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
+		return err
+	}
 	var req AddResourceRequest
 	if err := httputil.Bind(r, &req); err != nil {
 		return err
@@ -333,11 +356,15 @@ func (h *LessonHandler) UpdateResource(w http.ResponseWriter, r *http.Request) e
 	}
 	id := chi.URLParam(r, "id")
 	if !httputil.ValidateUUID(id) {
-		return fault.BadRequest("invalid lesson id", nil)
+		return fault.BadRequest("invalid resource id", nil)
 	}
 	res, err := h.lesson.GetResourceByID(r.Context(), id)
 	if err != nil {
 		return toFault(err)
+	}
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.ownership.Check(r.Context(), res.LessonID, userID); err != nil {
+		return err
 	}
 	res.Title = req.Title
 	res.Description = req.Description
@@ -371,7 +398,15 @@ func (h *LessonHandler) UpdateResource(w http.ResponseWriter, r *http.Request) e
 func (h *LessonHandler) RemoveResource(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 	if !httputil.ValidateUUID(id) {
-		return fault.BadRequest("invalid lesson id", nil)
+		return fault.BadRequest("invalid resource id", nil)
+	}
+	res, err := h.lesson.GetResourceByID(r.Context(), id)
+	if err != nil {
+		return toFault(err)
+	}
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.ownership.Check(r.Context(), res.LessonID, userID); err != nil {
+		return err
 	}
 	if err := h.lesson.RemoveResource(r.Context(), id); err != nil {
 		return toFault(err)
