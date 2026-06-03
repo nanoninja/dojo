@@ -213,7 +213,7 @@ func TestBundleHandler_Update(t *testing.T) {
 		"is_published": true,
 	})
 
-	serve(newBundleHandler(s).Update, rec, withChiParam(req, "id", testBundleID))
+	serve(newBundleHandler(s).Update, rec, withUserID(t, withChiParam(req, "id", testBundleID), testUserID))
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 }
@@ -227,7 +227,7 @@ func TestBundleHandler_Update_NotFound(t *testing.T) {
 		"currency": "EUR",
 	})
 
-	serve(newBundleHandler(s).Update, rec, withChiParam(req, "id", testBundleID))
+	serve(newBundleHandler(s).Update, rec, withUserID(t, withChiParam(req, "id", testBundleID), testUserID))
 
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 }
@@ -253,7 +253,7 @@ func TestBundleHandler_SetCourses(t *testing.T) {
 		"course_ids": []string{testCourseIDForBundle, testCourseIDForBundle2},
 	})
 
-	serve(newBundleHandler(s).SetCourses, rec, withChiParam(req, "id", testBundleID))
+	serve(newBundleHandler(s).SetCourses, rec, withUserID(t, withChiParam(req, "id", testBundleID), testUserID))
 
 	assert.Equal(t, http.StatusNoContent, rec.Code)
 }
@@ -265,7 +265,7 @@ func TestBundleHandler_SetCourses_InvalidBody(t *testing.T) {
 		"course_ids": []string{"bad-uuid"},
 	})
 
-	serve(newBundleHandler(s).SetCourses, rec, withChiParam(req, "id", testBundleID))
+	serve(newBundleHandler(s).SetCourses, rec, withUserID(t, withChiParam(req, "id", testBundleID), testUserID))
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
@@ -291,7 +291,7 @@ func TestBundleHandler_Delete(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("DELETE", "/bundles/"+testBundleID, nil)
 
-	serve(newBundleHandler(s).Delete, rec, withChiParam(req, "id", testBundleID))
+	serve(newBundleHandler(s).Delete, rec, withUserID(t, withChiParam(req, "id", testBundleID), testUserID))
 
 	assert.Equal(t, http.StatusNoContent, rec.Code)
 }
@@ -311,7 +311,7 @@ func TestBundleHandler_Delete_NotFound(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("DELETE", "/bundles/"+testBundleID, nil)
 
-	serve(newBundleHandler(s).Delete, rec, withChiParam(req, "id", testBundleID))
+	serve(newBundleHandler(s).Delete, rec, withUserID(t, withChiParam(req, "id", testBundleID), testUserID))
 
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 }

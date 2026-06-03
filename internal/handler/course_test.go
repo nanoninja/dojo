@@ -174,6 +174,7 @@ func TestCourseHandler_Update(t *testing.T) {
 		"language":     "en",
 		"currency":     "USD",
 	}), "id", testCourseID)
+	r = withUserID(t, r, testUserID)
 	serve(newCourseHandler(ms).Update, w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -190,6 +191,7 @@ func TestCourseHandler_Update_NotFound(t *testing.T) {
 		"language":     "en",
 		"currency":     "USD",
 	}), "id", testCourseID)
+	r = withUserID(t, r, testUserID)
 	serve(newCourseHandler(ms).Update, w, r)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
@@ -202,6 +204,7 @@ func TestCourseHandler_SetCategories(t *testing.T) {
 		"category_ids":        []string{testCategoryID},
 		"primary_category_id": testCategoryID,
 	}), "id", testCourseID)
+	r = withUserID(t, r, testUserID)
 	serve(newCourseHandler(ms).SetCategories, w, r)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
@@ -224,6 +227,7 @@ func TestCourseHandler_SetTags(t *testing.T) {
 	r := withChiParam(newJSONRequest("PUT", "/courses/"+testCourseID+"/tags", map[string]any{
 		"tag_ids": []string{testTagID},
 	}), "id", testCourseID)
+	r = withUserID(t, r, testUserID)
 	serve(newCourseHandler(ms).SetTags, w, r)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
@@ -233,6 +237,7 @@ func TestCourseHandler_Delete(t *testing.T) {
 	ms := &mockCourseService{}
 	w := httptest.NewRecorder()
 	r := withChiParam(httptest.NewRequest("DELETE", "/courses/"+testCourseID, nil), "id", testCourseID)
+	r = withUserID(t, r, testUserID)
 	serve(newCourseHandler(ms).Delete, w, r)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)

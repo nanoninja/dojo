@@ -4,7 +4,6 @@
 package handler
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -36,12 +35,13 @@ func NewSubscriptionHandler(subscription service.SubscriptionService) *Subscript
 // @Produce  json
 // @Security BearerAuth
 // @Success  200  {object}  model.Subscription
+// @Failure  401  {object}  fault.ErrorResponse  "missing or invalid token"
 // @Failure  404  {object}  fault.ErrorResponse  "no active subscription"
 // @Router   /api/v1/subscriptions/active [get]
 func (h *SubscriptionHandler) GetActive(w http.ResponseWriter, r *http.Request) error {
-	userID := middleware.UserIDFromContext(r.Context())
-	if userID == "" {
-		return fault.Unauthorized(errors.New("missing user id"))
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
 	}
 	sub, err := h.subscription.GetActive(r.Context(), userID)
 	if err != nil {
@@ -61,12 +61,13 @@ func (h *SubscriptionHandler) GetActive(w http.ResponseWriter, r *http.Request) 
 // @Produce  json
 // @Security BearerAuth
 // @Success  200  {object}  []model.Subscription
+// @Failure  401  {object}  fault.ErrorResponse  "missing or invalid token"
 // @Failure  500  {object}  fault.ErrorResponse
 // @Router   /api/v1/subscriptions [get]
 func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) error {
-	userID := middleware.UserIDFromContext(r.Context())
-	if userID == "" {
-		return fault.Unauthorized(errors.New("missing user id"))
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
 	}
 	subs, err := h.subscription.ListByUser(r.Context(), userID)
 	if err != nil {
@@ -94,11 +95,12 @@ type SubscribeRequest struct {
 // @Param    body  body      SubscribeRequest  true  "Subscription payload"
 // @Success  201   {object}  model.Subscription
 // @Failure  400   {object}  fault.ErrorResponse  "invalid request body"
+// @Failure  401   {object}  fault.ErrorResponse  "missing or invalid token"
 // @Router   /api/v1/subscriptions [post]
 func (h *SubscriptionHandler) Subscribe(w http.ResponseWriter, r *http.Request) error {
-	userID := middleware.UserIDFromContext(r.Context())
-	if userID == "" {
-		return fault.Unauthorized(errors.New("missing user id"))
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
 	}
 	var req SubscribeRequest
 	if err := httputil.Bind(r, &req); err != nil {

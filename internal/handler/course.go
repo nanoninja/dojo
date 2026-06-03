@@ -194,7 +194,6 @@ func (h *CourseHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	if err := httputil.Bind(r, &req); err != nil {
 		return err
 	}
-
 	c := &model.Course{
 		InstructorID:       req.InstructorID,
 		Slug:               req.Slug,
@@ -219,11 +218,9 @@ func (h *CourseHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		CertificateEnabled: req.CertificateEnabled,
 		SortOrder:          req.SortOrder,
 	}
-
 	if err := h.course.Create(r.Context(), c, req.CategoryIDs, req.PrimaryCategoryID, req.TagIDs); err != nil {
 		return toFault(err)
 	}
-
 	return httputil.Created(w, c)
 }
 
@@ -287,7 +284,10 @@ func (h *CourseHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// Ownership check - return 404 to avoid leaking existence
-	userID := middleware.UserIDFromContext(r.Context())
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
 		// return fault.NotFound("course", nil)
 		return err
@@ -355,7 +355,10 @@ func (h *CourseHandler) SetCategories(w http.ResponseWriter, r *http.Request) er
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid course id", nil)
 	}
-	userID := middleware.UserIDFromContext(r.Context())
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
 		return err
 	}
@@ -397,7 +400,10 @@ func (h *CourseHandler) SetTags(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid course id", nil)
 	}
-	userID := middleware.UserIDFromContext(r.Context())
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
 		return err
 	}
@@ -428,7 +434,10 @@ func (h *CourseHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid course id", nil)
 	}
-	userID := middleware.UserIDFromContext(r.Context())
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
 		return err
 	}

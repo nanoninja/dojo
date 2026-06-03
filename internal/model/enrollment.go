@@ -13,6 +13,7 @@ const (
 	EnrollmentStatusActive    EnrollmentStatus = "active"
 	EnrollmentStatusCompleted EnrollmentStatus = "completed"
 	EnrollmentStatusExpired   EnrollmentStatus = "expired"
+	EnrollmentStatusCancelled EnrollmentStatus = "cancelled"
 	EnrollmentStatusRefunded  EnrollmentStatus = "refunded"
 )
 

@@ -57,7 +57,7 @@ func (m *mockChapterService) Delete(_ context.Context, _ string) error {
 const testChapterID = "01966b0a-cccc-7abc-def0-000000000003"
 
 func newChapterHandler(cs *mockChapterService) *handler.ChapterHandler {
-	return handler.NewChapterHandler(cs, noopOwnershipChecker{}, noopOwnershipChecker{})
+	return handler.NewChapterHandler(cs, noopOwnershipChecker{}, noopOwnershipChecker{}, noopAccessChecker{})
 }
 
 func TestChapterHandler_List(t *testing.T) {
@@ -66,6 +66,7 @@ func TestChapterHandler_List(t *testing.T) {
 	}}
 	w := httptest.NewRecorder()
 	r := withChiParam(httptest.NewRequest("GET", "/courses/"+testUserID+"/chapters", nil), "course_id", testUserID)
+	r = withUserID(t, r, testUserID)
 	serve(newChapterHandler(ms).List, w, r)
 
 	require.Equal(t, http.StatusOK, w.Code)
@@ -87,6 +88,7 @@ func TestChapterHandler_GetByID_Found(t *testing.T) {
 	ms := &mockChapterService{chapter: &model.Chapter{ID: testChapterID, Title: "Introduction", Slug: "introduction"}}
 	w := httptest.NewRecorder()
 	r := withChiParam(httptest.NewRequest("GET", "/chapters/"+testChapterID, nil), "id", testChapterID)
+	r = withUserID(t, r, testUserID)
 	serve(newChapterHandler(ms).GetByID, w, r)
 
 	require.Equal(t, http.StatusOK, w.Code)
@@ -118,6 +120,7 @@ func TestChapterHandler_Create(t *testing.T) {
 		"title":     "Introduction",
 		"slug":      "introduction",
 	})
+	r = withUserID(t, r, testUserID)
 	serve(newChapterHandler(ms).Create, w, r)
 
 	require.Equal(t, http.StatusCreated, w.Code)
@@ -142,6 +145,7 @@ func TestChapterHandler_Update(t *testing.T) {
 		"title": "Introduction Updated",
 		"slug":  "introduction-updated",
 	}), "id", testChapterID)
+	r = withUserID(t, r, testUserID)
 	serve(newChapterHandler(ms).Update, w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -154,6 +158,7 @@ func TestChapterHandler_Update_NotFound(t *testing.T) {
 		"title": "Introduction",
 		"slug":  "introduction",
 	}), "id", testChapterID)
+	r = withUserID(t, r, testUserID)
 	serve(newChapterHandler(ms).Update, w, r)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
@@ -163,6 +168,7 @@ func TestChapterHandler_Delete(t *testing.T) {
 	ms := &mockChapterService{}
 	w := httptest.NewRecorder()
 	r := withChiParam(httptest.NewRequest("DELETE", "/chapters/"+testChapterID, nil), "id", testChapterID)
+	r = withUserID(t, r, testUserID)
 	serve(newChapterHandler(ms).Delete, w, r)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)

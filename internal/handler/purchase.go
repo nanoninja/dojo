@@ -4,7 +4,6 @@
 package handler
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -65,9 +64,9 @@ func (h *PurchaseHandler) GetByID(w http.ResponseWriter, r *http.Request) error 
 // @Failure  500  {object}  fault.ErrorResponse
 // @Router   /api/v1/purchases [get]
 func (h *PurchaseHandler) List(w http.ResponseWriter, r *http.Request) error {
-	userID := middleware.UserIDFromContext(r.Context())
-	if userID == "" {
-		return fault.Unauthorized(errors.New("missing user id"))
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
 	}
 	purchases, err := h.purchase.ListByUser(r.Context(), userID)
 	if err != nil {
@@ -99,9 +98,9 @@ type BuyCourseRequest struct {
 // @Failure  400   {object}  fault.ErrorResponse  "invalid request body"
 // @Router   /api/v1/purchases/courses [post]
 func (h *PurchaseHandler) BuyCourse(w http.ResponseWriter, r *http.Request) error {
-	userID := middleware.UserIDFromContext(r.Context())
-	if userID == "" {
-		return fault.Unauthorized(errors.New("missing user id"))
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
 	}
 	var req BuyCourseRequest
 	if err := httputil.Bind(r, &req); err != nil {
@@ -143,9 +142,9 @@ type BuyBundleRequest struct {
 // @Failure  400   {object}  fault.ErrorResponse  "invalid request body"
 // @Router   /api/v1/purchases/bundles [post]
 func (h *PurchaseHandler) BuyBundle(w http.ResponseWriter, r *http.Request) error {
-	userID := middleware.UserIDFromContext(r.Context())
-	if userID == "" {
-		return fault.Unauthorized(errors.New("missing user id"))
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
 	}
 	var req BuyBundleRequest
 	if err := httputil.Bind(r, &req); err != nil {

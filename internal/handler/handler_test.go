@@ -170,3 +170,26 @@ func (m *mockUserService) LoginHistory(_ context.Context, _ string, _ int) ([]mo
 type noopOwnershipChecker struct{}
 
 func (noopOwnershipChecker) Check(_ context.Context, _, _ string) error { return nil }
+
+// noopAccessChecker always grants access. Used in handler tests that do not
+// exercise access control logic — the access service has its own unit tests.
+type noopAccessChecker struct{}
+
+func (noopAccessChecker) CanAccess(_ context.Context, _, _ string) error { return nil }
+
+// noopChapterService returns a stub chapter with a known CourseID so that
+// lesson handler tests which resolve lesson → chapter → course do not fail.
+type noopChapterService struct{}
+
+func (noopChapterService) List(_ context.Context, _ string) ([]model.Chapter, error) {
+	return nil, nil
+}
+func (noopChapterService) GetByID(_ context.Context, _ string) (*model.Chapter, error) {
+	return &model.Chapter{CourseID: testCourseID}, nil
+}
+func (noopChapterService) GetBySlug(_ context.Context, _, _ string) (*model.Chapter, error) {
+	return nil, nil
+}
+func (noopChapterService) Create(_ context.Context, _ *model.Chapter) error { return nil }
+func (noopChapterService) Update(_ context.Context, _ *model.Chapter) error { return nil }
+func (noopChapterService) Delete(_ context.Context, _ string) error         { return nil }

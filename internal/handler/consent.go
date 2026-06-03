@@ -4,11 +4,9 @@
 package handler
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/nanoninja/dojo/internal/fault"
 	"github.com/nanoninja/dojo/internal/httputil"
 	"github.com/nanoninja/dojo/internal/middleware"
 	"github.com/nanoninja/dojo/internal/model"
@@ -36,9 +34,9 @@ func NewConsentHandler(consent service.ConsentService) *ConsentHandler {
 // @Failure   500  {object}  fault.ErrorResponse
 // @Router    /api/v1/consents [get]
 func (h *ConsentHandler) ListByUser(w http.ResponseWriter, r *http.Request) error {
-	userID := middleware.UserIDFromContext(r.Context())
-	if userID == "" {
-		return fault.Unauthorized(errors.New("missing user id"))
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
 	}
 	consents, err := h.consent.ListByUser(r.Context(), userID)
 	if err != nil {
@@ -60,9 +58,9 @@ func (h *ConsentHandler) ListByUser(w http.ResponseWriter, r *http.Request) erro
 // @Failure   500  {object}  fault.ErrorResponse
 // @Router    /api/v1/consents/{id} [get]
 func (h *ConsentHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
-	userID := middleware.UserIDFromContext(r.Context())
-	if userID == "" {
-		return fault.Unauthorized(errors.New("missing user id"))
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
 	}
 	id := chi.URLParam(r, "id")
 	c, err := h.consent.GetByID(r.Context(), id)
@@ -89,19 +87,17 @@ func (h *ConsentHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 // @Failure   500  {object}  fault.ErrorResponse
 // @Router    /api/v1/consents [post]
 func (h *ConsentHandler) Create(w http.ResponseWriter, r *http.Request) error {
-	userID := middleware.UserIDFromContext(r.Context())
-	if userID == "" {
-		return fault.Unauthorized(errors.New("missing user id"))
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
 	}
 	var c model.Consent
 	if err := httputil.Bind(r, &c); err != nil {
 		return err
 	}
 	c.UserID = userID
-
 	if err := h.consent.Create(r.Context(), &c); err != nil {
 		return err
 	}
-
 	return httputil.Created(w, c)
 }

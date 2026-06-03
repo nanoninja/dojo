@@ -4,7 +4,6 @@
 package handler
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -69,7 +68,6 @@ func (h *ReviewHandler) List(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return toFault(err)
 	}
-
 	return httputil.OKPaginated(w, reviews, page, limit, total)
 }
 
@@ -130,28 +128,23 @@ func (h *ReviewHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(courseID) {
 		return fault.BadRequest("invalid course id", nil)
 	}
-
-	userID := middleware.UserIDFromContext(r.Context())
-	if userID == "" {
-		return fault.Unauthorized(errors.New("missing user i"))
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
 	}
-
 	var req CreateReviewRequest
 	if err := httputil.Bind(r, &req); err != nil {
 		return err
 	}
-
 	review := &model.Review{
 		UserID:   userID,
 		CourseID: courseID,
 		Rating:   req.Rating,
 		Comment:  req.Comment,
 	}
-
 	if err := h.review.Create(r.Context(), review); err != nil {
 		return toFault(err)
 	}
-
 	return httputil.Created(w, review)
 }
 
@@ -185,23 +178,18 @@ func (h *ReviewHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	if err := httputil.Bind(r, &req); err != nil {
 		return err
 	}
-
 	id := chi.URLParam(r, "id")
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid review id", nil)
 	}
-
 	review, err := h.review.GetByID(r.Context(), id)
 	if err != nil {
 		return toFault(err)
 	}
-
 	review.Comment = req.Comment
-
 	if err := h.review.Update(r.Context(), review); err != nil {
 		return toFault(err)
 	}
-
 	return httputil.OK(w, review)
 }
 

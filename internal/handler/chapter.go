@@ -19,6 +19,7 @@ type ChapterHandler struct {
 	chapter   service.ChapterService
 	ownership service.OwnershipChecker // checks chapter → course ownership via JOIN
 	courses   service.OwnershipChecker // checks course ownership directly (used in Create)
+	access    service.AccessService
 }
 
 // NewChapterHandler creates a new ChapterHandler with the given services.
@@ -26,8 +27,14 @@ func NewChapterHandler(
 	chapter service.ChapterService,
 	ownership service.OwnershipChecker,
 	courses service.OwnershipChecker,
+	access service.AccessService,
 ) *ChapterHandler {
-	return &ChapterHandler{chapter: chapter, ownership: ownership, courses: courses}
+	return &ChapterHandler{
+		chapter:   chapter,
+		ownership: ownership,
+		courses:   courses,
+		access:    access,
+	}
 }
 
 // ============================================================================
@@ -50,12 +57,17 @@ func (h *ChapterHandler) List(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(courseID) {
 		return fault.BadRequest("invalid course id", nil)
 	}
-
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
+	if err := h.access.CanAccess(r.Context(), userID, courseID); err != nil {
+		return err
+	}
 	chapters, err := h.chapter.List(r.Context(), courseID)
 	if err != nil {
 		return toFault(err)
 	}
-
 	return httputil.OK(w, chapters)
 }
 
@@ -79,13 +91,18 @@ func (h *ChapterHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid chapter id", nil)
 	}
-
-	chapter, err := h.chapter.GetByID(r.Context(), id)
+	c, err := h.chapter.GetByID(r.Context(), id)
 	if err != nil {
 		return toFault(err)
 	}
-
-	return httputil.OK(w, chapter)
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
+	if err := h.access.CanAccess(r.Context(), userID, c.CourseID); err != nil {
+		return err
+	}
+	return httputil.OK(w, c)
 }
 
 // ============================================================================
@@ -121,7 +138,10 @@ func (h *ChapterHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	if err := httputil.Bind(r, &req); err != nil {
 		return err
 	}
-	userID := middleware.UserIDFromContext(r.Context())
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	if err := h.courses.Check(r.Context(), req.CourseID, userID); err != nil {
 		return err
 	}
@@ -135,11 +155,9 @@ func (h *ChapterHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		IsPublished:     req.IsPublished,
 		DurationMinutes: req.DurationMinutes,
 	}
-
 	if err := h.chapter.Create(r.Context(), c); err != nil {
 		return toFault(err)
 	}
-
 	return httputil.Created(w, c)
 }
 
@@ -180,7 +198,10 @@ func (h *ChapterHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid chapter id", nil)
 	}
-	userID := middleware.UserIDFromContext(r.Context())
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
 		return err
 	}
@@ -222,7 +243,10 @@ func (h *ChapterHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid chapter id", nil)
 	}
-	userID := middleware.UserIDFromContext(r.Context())
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
 		return err
 	}

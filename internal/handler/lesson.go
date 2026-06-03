@@ -17,17 +17,27 @@ import (
 // LessonHandler handles HTTP requests for lesson and lesson resource endpoints.
 type LessonHandler struct {
 	lesson    service.LessonService
+	chapters  service.ChapterService
 	ownership service.OwnershipChecker // checks lesson → chapter → course ownership via JOIN
-	chapters  service.OwnershipChecker // checks chapter → course ownership (used in Create)
+	chOwner   service.OwnershipChecker // checks chapter → course ownership (used in Create)
+	access    service.AccessService
 }
 
 // NewLessonHandler creates a new LessonHandler with the given services.
 func NewLessonHandler(
 	lesson service.LessonService,
+	chapters service.ChapterService,
 	ownership service.OwnershipChecker,
-	chapters service.OwnershipChecker,
+	chOwner service.OwnershipChecker,
+	access service.AccessService,
 ) *LessonHandler {
-	return &LessonHandler{lesson: lesson, ownership: ownership, chapters: chapters}
+	return &LessonHandler{
+		lesson:    lesson,
+		chapters:  chapters,
+		ownership: ownership,
+		chOwner:   chOwner,
+		access:    access,
+	}
 }
 
 // ============================================================================
@@ -49,6 +59,17 @@ func (h *LessonHandler) List(w http.ResponseWriter, r *http.Request) error {
 	chapterID := chi.URLParam(r, "chapter_id")
 	if !httputil.ValidateUUID(chapterID) {
 		return fault.BadRequest("invalid chapter id", nil)
+	}
+	ch, err := h.chapters.GetByID(r.Context(), chapterID)
+	if err != nil {
+		return err
+	}
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
+	if err := h.access.CanAccess(r.Context(), userID, ch.CourseID); err != nil {
+		return err
 	}
 	lessons, err := h.lesson.List(r.Context(), chapterID)
 	if err != nil {
@@ -77,11 +98,22 @@ func (h *LessonHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid lesson id", nil)
 	}
-	lesson, err := h.lesson.GetByID(r.Context(), id)
+	l, err := h.lesson.GetByID(r.Context(), id)
 	if err != nil {
 		return toFault(err)
 	}
-	return httputil.OK(w, lesson)
+	ch, err := h.chapters.GetByID(r.Context(), l.ChapterID)
+	if err != nil {
+		return err
+	}
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
+	if err := h.access.CanAccess(r.Context(), userID, ch.CourseID); err != nil {
+		return err
+	}
+	return httputil.OK(w, l)
 }
 
 // ============================================================================
@@ -119,8 +151,11 @@ func (h *LessonHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	if err := httputil.Bind(r, &req); err != nil {
 		return err
 	}
-	userID := middleware.UserIDFromContext(r.Context())
-	if err := h.chapters.Check(r.Context(), req.ChapterID, userID); err != nil {
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
+	if err := h.chOwner.Check(r.Context(), req.ChapterID, userID); err != nil {
 		return err
 	}
 	l := &model.Lesson{
@@ -180,7 +215,10 @@ func (h *LessonHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid lesson id", nil)
 	}
-	userID := middleware.UserIDFromContext(r.Context())
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
 		return err
 	}
@@ -223,7 +261,10 @@ func (h *LessonHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid lesson id", nil)
 	}
-	userID := middleware.UserIDFromContext(r.Context())
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
 		return err
 	}
@@ -253,6 +294,21 @@ func (h *LessonHandler) ListResources(w http.ResponseWriter, r *http.Request) er
 	id := chi.URLParam(r, "id")
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid lesson id", nil)
+	}
+	l, err := h.lesson.GetByID(r.Context(), id)
+	if err != nil {
+		return toFault(err)
+	}
+	ch, err := h.chapters.GetByID(r.Context(), l.ChapterID)
+	if err != nil {
+		return toFault(err)
+	}
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
+	if err := h.access.CanAccess(r.Context(), userID, ch.CourseID); err != nil {
+		return err
 	}
 	resources, err := h.lesson.ListResources(r.Context(), id)
 	if err != nil {
@@ -295,7 +351,10 @@ func (h *LessonHandler) AddResource(w http.ResponseWriter, r *http.Request) erro
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid lesson id", nil)
 	}
-	userID := middleware.UserIDFromContext(r.Context())
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
 		return err
 	}
@@ -362,7 +421,10 @@ func (h *LessonHandler) UpdateResource(w http.ResponseWriter, r *http.Request) e
 	if err != nil {
 		return toFault(err)
 	}
-	userID := middleware.UserIDFromContext(r.Context())
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	if err := h.ownership.Check(r.Context(), res.LessonID, userID); err != nil {
 		return err
 	}
@@ -404,7 +466,10 @@ func (h *LessonHandler) RemoveResource(w http.ResponseWriter, r *http.Request) e
 	if err != nil {
 		return toFault(err)
 	}
-	userID := middleware.UserIDFromContext(r.Context())
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	if err := h.ownership.Check(r.Context(), res.LessonID, userID); err != nil {
 		return err
 	}

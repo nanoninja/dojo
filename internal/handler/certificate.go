@@ -4,7 +4,6 @@
 package handler
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -39,9 +38,9 @@ func NewCertificateHandler(certificate service.CertificateService) *CertificateH
 // @Failure   500  {object}  fault.ErrorResponse
 // @Router    /api/v1/certificates [get]
 func (h *CertificateHandler) ListByUser(w http.ResponseWriter, r *http.Request) error {
-	userID := middleware.UserIDFromContext(r.Context())
-	if userID == "" {
-		return fault.Unauthorized(errors.New("missing user id"))
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
 	}
 	certificates, err := h.certificate.ListByUser(r.Context(), userID)
 	if err != nil {
@@ -68,9 +67,9 @@ func (h *CertificateHandler) ListByUser(w http.ResponseWriter, r *http.Request) 
 // @Failure   500  {object}  fault.ErrorResponse
 // @Router    /api/v1/certificates/{id} [get]
 func (h *CertificateHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
-	userID := middleware.UserIDFromContext(r.Context())
-	if userID == "" {
-		return fault.Unauthorized(errors.New("missing user id"))
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
 	}
 	id := chi.URLParam(r, "id")
 	if !httputil.ValidateUUID(id) {

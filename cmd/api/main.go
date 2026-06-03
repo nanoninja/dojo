@@ -158,6 +158,7 @@ func run(logger *slog.Logger) error {
 	consentService := service.NewConsentService(consentStore)
 	subscriptionService := service.NewSubscriptionService(subscriptionStore)
 	purchaseService := service.NewPurchaseService(db, purchaseStore, enrollmentStore, bundleCourseStore)
+	accessService := service.NewAccessService(subscriptionStore, enrollmentStore)
 
 	// ==========================================================================
 	// Background jobs
@@ -183,8 +184,8 @@ func run(logger *slog.Logger) error {
 		Course:   handler.NewCourseHandler(courseService, service.NewCourseOwnership(db)),
 		Category: handler.NewCategoryHandler(categoryService),
 		Tag:      handler.NewTagHandler(tagService),
-		Chapter:  handler.NewChapterHandler(chapterService, service.NewChapterOwnership(db), service.NewCourseOwnership(db)),
-		Lesson:   handler.NewLessonHandler(lessonService, service.NewLessonOwnership(db), service.NewChapterOwnership(db)),
+		Chapter:  handler.NewChapterHandler(chapterService, service.NewChapterOwnership(db), service.NewCourseOwnership(db), accessService),
+		Lesson:   handler.NewLessonHandler(lessonService, chapterService, service.NewLessonOwnership(db), service.NewChapterOwnership(db), accessService),
 
 		// Enrollments & Progress
 		Enrollment: handler.NewEnrollmentHandler(enrollmentService),

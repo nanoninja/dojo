@@ -83,7 +83,7 @@ const (
 )
 
 func newLessonHandler(ls *mockLessonService) *handler.LessonHandler {
-	return handler.NewLessonHandler(ls, noopOwnershipChecker{}, noopOwnershipChecker{})
+	return handler.NewLessonHandler(ls, noopChapterService{}, noopOwnershipChecker{}, noopOwnershipChecker{}, noopAccessChecker{})
 }
 
 // ============================================================================
@@ -96,6 +96,7 @@ func TestLessonHandler_List(t *testing.T) {
 	}}
 	w := httptest.NewRecorder()
 	r := withChiParam(httptest.NewRequest("GET", "/chapters/"+testChapterID+"/lessons", nil), "chapter_id", testChapterID)
+	r = withUserID(t, r, testUserID)
 	serve(newLessonHandler(ms).List, w, r)
 
 	require.Equal(t, http.StatusOK, w.Code)
@@ -117,6 +118,7 @@ func TestLessonHandler_GetByID_Found(t *testing.T) {
 	ms := &mockLessonService{lesson: &model.Lesson{ID: testLessonID, Title: "Variables", Slug: "variables"}}
 	w := httptest.NewRecorder()
 	r := withChiParam(httptest.NewRequest("GET", "/lessons/"+testLessonID, nil), "id", testLessonID)
+	r = withUserID(t, r, testUserID)
 	serve(newLessonHandler(ms).GetByID, w, r)
 
 	require.Equal(t, http.StatusOK, w.Code)
@@ -149,6 +151,7 @@ func TestLessonHandler_Create(t *testing.T) {
 		"slug":         "variables",
 		"content_type": "video",
 	})
+	r = withUserID(t, r, testUserID)
 	serve(newLessonHandler(ms).Create, w, r)
 
 	require.Equal(t, http.StatusCreated, w.Code)
@@ -174,6 +177,7 @@ func TestLessonHandler_Update(t *testing.T) {
 		"slug":         "variables-types",
 		"content_type": "video",
 	}), "id", testLessonID)
+	r = withUserID(t, r, testUserID)
 	serve(newLessonHandler(ms).Update, w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -187,6 +191,7 @@ func TestLessonHandler_Update_NotFound(t *testing.T) {
 		"slug":         "variables",
 		"content_type": "video",
 	}), "id", testLessonID)
+	r = withUserID(t, r, testUserID)
 	serve(newLessonHandler(ms).Update, w, r)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
@@ -196,6 +201,7 @@ func TestLessonHandler_Delete(t *testing.T) {
 	ms := &mockLessonService{}
 	w := httptest.NewRecorder()
 	r := withChiParam(httptest.NewRequest("DELETE", "/lessons/"+testLessonID, nil), "id", testLessonID)
+	r = withUserID(t, r, testUserID)
 	serve(newLessonHandler(ms).Delete, w, r)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
@@ -206,11 +212,15 @@ func TestLessonHandler_Delete(t *testing.T) {
 // ============================================================================
 
 func TestLessonHandler_ListResources(t *testing.T) {
-	ms := &mockLessonService{resources: []model.LessonResource{
-		{ID: testResourceID, LessonID: testLessonID, Title: "Slides", FileURL: "https://example.com/s.pdf", FileName: "s.pdf"},
-	}}
+	ms := &mockLessonService{
+		lesson: &model.Lesson{ID: testLessonID, ChapterID: testChapterID},
+		resources: []model.LessonResource{
+			{ID: testResourceID, LessonID: testLessonID, Title: "Slides", FileURL: "https://example.com/s.pdf", FileName: "s.pdf"},
+		},
+	}
 	w := httptest.NewRecorder()
 	r := withChiParam(httptest.NewRequest("GET", "/lessons/"+testLessonID+"/resources", nil), "id", testLessonID)
+	r = withUserID(t, r, testUserID)
 	serve(newLessonHandler(ms).ListResources, w, r)
 
 	require.Equal(t, http.StatusOK, w.Code)
@@ -227,6 +237,7 @@ func TestLessonHandler_AddResource(t *testing.T) {
 		"file_url":  "https://example.com/slides.pdf",
 		"file_name": "slides.pdf",
 	}), "id", testLessonID)
+	r = withUserID(t, r, testUserID)
 	serve(newLessonHandler(ms).AddResource, w, r)
 
 	require.Equal(t, http.StatusCreated, w.Code)
@@ -239,6 +250,7 @@ func TestLessonHandler_AddResource_InvalidBody(t *testing.T) {
 	ms := &mockLessonService{}
 	w := httptest.NewRecorder()
 	r := withChiParam(newJSONRequest("POST", "/lessons/"+testLessonID+"/resources", map[string]any{}), "id", testLessonID)
+	r = withUserID(t, r, testUserID)
 	serve(newLessonHandler(ms).AddResource, w, r)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -254,6 +266,7 @@ func TestLessonHandler_UpdateResource(t *testing.T) {
 		"file_url":  "https://example.com/slides-v2.pdf",
 		"file_name": "slides-v2.pdf",
 	}), "id", testResourceID)
+	r = withUserID(t, r, testUserID)
 	serve(newLessonHandler(ms).UpdateResource, w, r)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -276,6 +289,7 @@ func TestLessonHandler_RemoveResource(t *testing.T) {
 	ms := &mockLessonService{resource: &model.LessonResource{ID: testResourceID, LessonID: testLessonID}}
 	w := httptest.NewRecorder()
 	r := withChiParam(httptest.NewRequest("DELETE", "/lessons/resources/"+testResourceID, nil), "id", testResourceID)
+	r = withUserID(t, r, testUserID)
 	serve(newLessonHandler(ms).RemoveResource, w, r)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)

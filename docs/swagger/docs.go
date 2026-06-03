@@ -70,6 +70,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/fault.ErrorResponse"
                         }
                     },
+                    "429": {
+                        "description": "rate limit exceeded",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -1114,6 +1120,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "rate limit exceeded",
                         "schema": {
                             "$ref": "#/definitions/fault.ErrorResponse"
                         }
@@ -2780,6 +2792,12 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -2827,6 +2845,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/fault.ErrorResponse"
                         }
+                    },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
                     }
                 }
             }
@@ -2850,6 +2874,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/model.Subscription"
+                        }
+                    },
+                    "401": {
+                        "description": "missing or invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
                         }
                     },
                     "404": {
@@ -5915,12 +5945,14 @@ const docTemplate = `{
                 "active",
                 "completed",
                 "expired",
+                "cancelled",
                 "refunded"
             ],
             "x-enum-varnames": [
                 "EnrollmentStatusActive",
                 "EnrollmentStatusCompleted",
                 "EnrollmentStatusExpired",
+                "EnrollmentStatusCancelled",
                 "EnrollmentStatusRefunded"
             ]
         },

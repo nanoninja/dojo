@@ -58,6 +58,7 @@ CREATE TYPE enrollment_status AS ENUM (
     'active',
     'completed',
     'expired',
+    'cancelled',
     'refunded'
 );
 

@@ -1311,12 +1311,14 @@ definitions:
     - active
     - completed
     - expired
+    - cancelled
     - refunded
     type: string
     x-enum-varnames:
     - EnrollmentStatusActive
     - EnrollmentStatusCompleted
     - EnrollmentStatusExpired
+    - EnrollmentStatusCancelled
     - EnrollmentStatusRefunded
   model.Lesson:
     properties:
@@ -1642,6 +1644,10 @@ paths:
             $ref: '#/definitions/httputil.PageResponse-model_Bundle'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "429":
+          description: rate limit exceeded
           schema:
             $ref: '#/definitions/fault.ErrorResponse'
         "500":
@@ -2303,6 +2309,10 @@ paths:
             $ref: '#/definitions/httputil.PageResponse-model_Course'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "429":
+          description: rate limit exceeded
           schema:
             $ref: '#/definitions/fault.ErrorResponse'
         "500":
@@ -3351,6 +3361,10 @@ paths:
             items:
               $ref: '#/definitions/model.Subscription'
             type: array
+        "401":
+          description: missing or invalid token
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -3379,6 +3393,10 @@ paths:
             $ref: '#/definitions/model.Subscription'
         "400":
           description: invalid request body
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "401":
+          description: missing or invalid token
           schema:
             $ref: '#/definitions/fault.ErrorResponse'
       security:
@@ -3419,6 +3437,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.Subscription'
+        "401":
+          description: missing or invalid token
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
         "404":
           description: no active subscription
           schema:

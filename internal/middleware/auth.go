@@ -5,6 +5,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -120,6 +121,16 @@ func RequireRole(minimum model.Role) func(http.Handler) http.Handler {
 func UserIDFromContext(ctx context.Context) string {
 	id, _ := ctx.Value(contextKeyUserID).(string)
 	return id
+}
+
+// RequireUserID returns the authenticated userID from the context, or a fault.Unauthorized
+// error if no userID is present. Use in handlers that require an authenticated user.
+func RequireUserID(ctx context.Context) (string, error) {
+	id := UserIDFromContext(ctx)
+	if id == "" {
+		return "", fault.Unauthorized(errors.New("missing user id"))
+	}
+	return id, nil
 }
 
 // RoleFromContext retrieves the authenticated user's role from the context.

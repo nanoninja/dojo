@@ -194,7 +194,10 @@ func (h *BundleHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid bundle id", nil)
 	}
-	userID := middleware.UserIDFromContext(r.Context())
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
 		return err
 	}
@@ -249,7 +252,10 @@ func (h *BundleHandler) SetCourses(w http.ResponseWriter, r *http.Request) error
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid bundle id", nil)
 	}
-	userID := middleware.UserIDFromContext(r.Context())
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
 		return err
 	}
@@ -283,7 +289,10 @@ func (h *BundleHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid bundle id", nil)
 	}
-	userID := middleware.UserIDFromContext(r.Context())
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	if err := h.ownership.Check(r.Context(), id, userID); err != nil {
 		return err
 	}

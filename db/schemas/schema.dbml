@@ -484,6 +484,7 @@ Enum enrollment_status {
   active    [note: "enrollment is active"]
   completed [note: "user has completed the course"]
   expired   [note: "enrollment has passed its expiry date"]
+  cancelled [note: "enrollment was cancelled by the user or an admin"]
   refunded  [note: "enrollment was refunded"]
 }
 

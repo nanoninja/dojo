@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.0] - 2026-06-03
+
+### Added
+
+- `AccessService.CanAccess(ctx, userID, courseID)` — grants access when user has an active subscription or an active enrollment on the course; returns `fault.Forbidden` otherwise
+- Access guard on `GET /chapters/{id}`, `GET /chapters/{chapter_id}/lessons`, `GET /lessons/{id}`, `GET /lessons/{id}/resources`
+- `EnrollmentStatusCancelled` — new enum value in SQL migration, Go model, and DBML schema
+- `middleware.RequireUserID` — centralized helper replacing inline `userID == ""` checks across all handlers
+
+### Changed
+
+- All instructor mutation handlers (bundle, course, chapter, lesson) migrated to `RequireUserID`
+- Subscription and certificate handlers migrated to `RequireUserID`
+- Swagger `@Failure 401` annotations added on subscription endpoints
+
+---
+
 ## [0.5.0] - 2026-05-26
 
 ### Added
