@@ -18,6 +18,7 @@ import (
 
 	"github.com/nanoninja/dojo/internal/config"
 	"github.com/nanoninja/dojo/internal/handler"
+	stripepay "github.com/nanoninja/dojo/internal/payment/stripe"
 	"github.com/nanoninja/dojo/internal/platform/cache"
 	"github.com/nanoninja/dojo/internal/platform/database"
 	"github.com/nanoninja/dojo/internal/platform/mailer"
@@ -157,7 +158,14 @@ func run(logger *slog.Logger) error {
 	certificateService := service.NewCertificateService(certificateStore)
 	consentService := service.NewConsentService(consentStore)
 	subscriptionService := service.NewSubscriptionService(subscriptionStore)
-	purchaseService := service.NewPurchaseService(db, purchaseStore, enrollmentStore, bundleCourseStore)
+	stripeClient := stripepay.New(stripepay.Config{
+		SecretKey:     cfg.Stripe.SecretKey,
+		WebhookSecret: cfg.Stripe.WebhookSecret,
+		SuccessURL:    cfg.Stripe.SuccessURL,
+		CancelURL:     cfg.Stripe.CancelURL,
+	})
+
+	purchaseService := service.NewPurchaseService(db, stripeClient, purchaseStore, enrollmentStore, bundleCourseStore)
 	accessService := service.NewAccessService(subscriptionStore, enrollmentStore)
 
 	// ==========================================================================
@@ -198,6 +206,7 @@ func run(logger *slog.Logger) error {
 		Consent:       handler.NewConsentHandler(consentService),
 		Subscriptions: handler.NewSubscriptionHandler(subscriptionService),
 		Purchase:      handler.NewPurchaseHandler(purchaseService),
+		Webhook:       handler.NewWebhookHandler(stripeClient, purchaseService),
 	}
 
 	// ==========================================================================

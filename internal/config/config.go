@@ -25,6 +25,7 @@ type Config struct {
 	MailDispatch  MailDispatch
 	AuthTransport AuthTransport
 	AuditPurge    AuditPurge
+	Stripe        Stripe
 }
 
 // App contains HTTP server settings.
@@ -136,6 +137,14 @@ type AuthTransport struct {
 	CookieSameSite    string // lax | strict | none
 }
 
+// Stripe contains Stripe payment provider settings.
+type Stripe struct {
+	SecretKey     string // Stripe secret API key (sk_live_... or sk_test_...).
+	WebhookSecret string // Webhook signing secret for signature validation (whsec_...).
+	SuccessURL    string // URL to redirect after successful payment.
+	CancelURL     string // URL to redirect after cancelled payment.
+}
+
 // Load reads configuration from environment variables.
 // In development, it automatically loads a .env file if present.
 // In production, the .env file is intentionally skipped — variables must be
@@ -231,6 +240,12 @@ func Load() (*Config, error) {
 			BatchSize:    p.int("AUDIT_PURGE_BATCH_SIZE", 100),
 			BatchPause:   p.duration("AUDIT_PURGE_BATCH_PAUSE_SECONDS", 300, time.Second),
 			ScheduleHour: p.int("AUDIT_PURGE_SCHEDULE_HOUR", 2),
+		},
+		Stripe: Stripe{
+			SecretKey:     os.Getenv("STRIPE_SECRET_KEY"),
+			WebhookSecret: os.Getenv("STRIPE_WEBHOOK_SECRET"),
+			SuccessURL:    os.Getenv("STRIPE_SUCCESS_URL"),
+			CancelURL:     os.Getenv("STRIPE_CANCEL_URL"),
 		},
 	}
 

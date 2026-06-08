@@ -4067,6 +4067,46 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/webhooks/stripe": {
+            "post": {
+                "consumes": [
+                    "application/octet-stream"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "webhooks"
+                ],
+                "summary": "Receive and process Stripe webhook events",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Stripe webhook signature",
+                        "name": "Stripe-Signature",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "invalid payload or signature",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fault.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -6084,6 +6124,9 @@ const docTemplate = `{
                 "amount_cents": {
                     "type": "integer"
                 },
+                "checkout_url": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -6094,6 +6137,15 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "item_id": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "provider_payment_id": {
+                    "type": "string"
+                },
+                "provider_session_id": {
                     "type": "string"
                 },
                 "refunded_at": {
@@ -6113,12 +6165,18 @@ const docTemplate = `{
         "model.PurchaseStatus": {
             "type": "string",
             "enum": [
+                "pending",
                 "completed",
-                "refunded"
+                "failed",
+                "refunded",
+                "disputed"
             ],
             "x-enum-varnames": [
+                "PurchaseStatusPending",
                 "PurchaseStatusCompleted",
-                "PurchaseStatusRefunded"
+                "PurchaseStatusFailed",
+                "PurchaseStatusRefunded",
+                "PurchaseStatusDisputed"
             ]
         },
         "model.PurchaseType": {

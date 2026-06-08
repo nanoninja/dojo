@@ -23,6 +23,9 @@ type PurchaseStore interface {
 	// Create inserts a new purchase.
 	Create(ctx context.Context, p *model.Purchase) error
 
+	// Update persists status and provider payment ID changes to an existing purchase.
+	Update(ctx context.Context, p *model.Purchase) error
+
 	// Refund marks a purchase as refunded.
 	Refund(ctx context.Context, id string) error
 }
@@ -80,6 +83,19 @@ func (s *purchaseStore) Create(ctx context.Context, p *model.Purchase) error {
 		p.AmountCents,
 		p.Currency,
 	)
+}
+
+func (s *purchaseStore) Update(ctx context.Context, p *model.Purchase) error {
+	_, err := s.db.ExecContext(ctx, `
+		UPDATE purchases
+		SET status = $1, provider_session_id = $2, provider_payment_id = $3
+		WHERE id = $4`,
+		p.Status,
+		p.ProviderSessionID,
+		p.ProviderPaymentID,
+		p.ID,
+	)
+	return err
 }
 
 func (s *purchaseStore) Refund(ctx context.Context, id string) error {

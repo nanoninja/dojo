@@ -1407,6 +1407,8 @@ definitions:
     properties:
       amount_cents:
         type: integer
+      checkout_url:
+        type: string
       created_at:
         type: string
       currency:
@@ -1414,6 +1416,12 @@ definitions:
       id:
         type: string
       item_id:
+        type: string
+      provider:
+        type: string
+      provider_payment_id:
+        type: string
+      provider_session_id:
         type: string
       refunded_at:
         type: string
@@ -1426,12 +1434,18 @@ definitions:
     type: object
   model.PurchaseStatus:
     enum:
+    - pending
     - completed
+    - failed
     - refunded
+    - disputed
     type: string
     x-enum-varnames:
+    - PurchaseStatusPending
     - PurchaseStatusCompleted
+    - PurchaseStatusFailed
     - PurchaseStatusRefunded
+    - PurchaseStatusDisputed
   model.PurchaseType:
     enum:
     - course
@@ -4177,6 +4191,32 @@ paths:
       summary: Check API readiness (dependencies reachable)
       tags:
       - system
+  /webhooks/stripe:
+    post:
+      consumes:
+      - application/octet-stream
+      parameters:
+      - description: Stripe webhook signature
+        in: header
+        name: Stripe-Signature
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: invalid payload or signature
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/fault.ErrorResponse'
+      summary: Receive and process Stripe webhook events
+      tags:
+      - webhooks
 securityDefinitions:
   BearerAuth:
     description: 'Format: Bearer {token}'

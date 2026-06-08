@@ -38,7 +38,6 @@ func (s *accessService) CanAccess(ctx context.Context, userID, courseID string) 
 	if sub != nil {
 		return nil
 	}
-
 	enroll, err := s.enrollments.FindByUserAndCourse(ctx, userID, courseID)
 	if err != nil {
 		return fault.Internal(err)
@@ -46,6 +45,5 @@ func (s *accessService) CanAccess(ctx context.Context, userID, courseID string) 
 	if enroll != nil && enroll.Status == model.EnrollmentStatusActive {
 		return nil
 	}
-
 	return fault.Forbidden(errors.New("no active subscription or enrollment"))
 }

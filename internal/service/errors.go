@@ -95,4 +95,7 @@ var (
 
 	// ErrPurchaseNotFound is returned when a purchase lookup yields no result.
 	ErrPurchaseNotFound = errors.New("purchase not found")
+
+	// ErrPurchaseAlreadyProcessed is returned when a webhook tries to confirm or cancel a non-pending purchase.
+	ErrPurchaseAlreadyProcessed = errors.New("purchase already processed")
 )

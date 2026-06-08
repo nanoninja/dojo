@@ -43,6 +43,7 @@ type Handlers struct {
 	Consent       *handler.ConsentHandler
 	Subscriptions *handler.SubscriptionHandler
 	Purchase      *handler.PurchaseHandler
+	Webhook       *handler.WebhookHandler
 }
 
 // New builds and returns the main HTTP router with all middleware and routes configured.
@@ -148,6 +149,9 @@ func New(
 		r.Get("/courses/{course_id}/reviews", httputil.Handle(handlers.Review.List, logger))
 		r.Get("/courses/{course_id}/reviews/{id}", httputil.Handle(handlers.Review.GetByID, logger))
 		r.Get("/certificates/verify/{uuid}", httputil.Handle(handlers.Certificate.Verify, logger))
+
+		// Stripe webhook — public, no auth, signature validated by handler
+		r.Post("/webhooks/stripe", httputil.Handle(handlers.Webhook.Stripe, logger))
 
 		// ── Authenticated ─────────────────────────────────────────────────────────────
 

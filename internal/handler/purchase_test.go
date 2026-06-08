@@ -47,6 +47,14 @@ func (m *mockPurchaseService) Refund(_ context.Context, _ string) error {
 	return m.err
 }
 
+func (m *mockPurchaseService) ConfirmPayment(_ context.Context, _, _ string) error {
+	return m.err
+}
+
+func (m *mockPurchaseService) CancelPending(_ context.Context, _ string) error {
+	return m.err
+}
+
 // ============================================================================
 // helpers
 // ============================================================================

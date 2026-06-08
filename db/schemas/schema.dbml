@@ -412,15 +412,18 @@ Table subscription {
 }
 
 Table purchases {
-  id           uuid            [pk, default: `uuidv7()`]
-  user_id      uuid            [ref: > users.id, note: "not null"]
-  type         purchase_type   [note: "not null"]
-  item_id      uuid            [note: "not null"]
-  status       purchase_status [note: "not null"]
-  amount_cents bigint          [note: "not null"]
-  currency     varchar(3)      [note: "not null", default: 'EUR']
-  refunded_at  timestamptz     [null]
-  created_at   timestamptz     [not null, default: `now()`]
+  id                  uuid            [pk, default: `uuidv7()`]
+  user_id             uuid            [ref: > users.id, note: "not null"]
+  type                purchase_type   [note: "not null"]
+  item_id             uuid            [note: "not null"]
+  status              purchase_status [note: "not null"]
+  amount_cents        bigint          [note: "not null"]
+  currency            varchar(3)      [note: "not null", default: 'EUR']
+  provider            varchar(20)     [note: "not null", default: 'manual']
+  provider_session_id varchar(255)    [null]
+  provider_payment_id varchar(255)    [null]
+  refunded_at         timestamptz     [null]
+  created_at          timestamptz     [not null, default: `now()`]
 
   indexes {
     user_id         [name: "idx_pur_user_id"]
@@ -529,6 +532,9 @@ Enum purchase_type {
 }
 
 Enum purchase_status {
+  pending
   completed
+  failed
   refunded
+  disputed
 }
