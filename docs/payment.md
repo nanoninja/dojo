@@ -18,7 +18,7 @@ internal/payment/
                   │                                 │
                   ▼                                 │ déjà traité
             ┌─────────┐    webhook confirmé    ┌───────────┐
-   achat ──►│ pending │──────────────────────►│ completed │──► refunded
+   achat ──►│ pending │───────────────────────►│ completed │──► refunded
             └─────────┘                        └───────────┘
                   │
                   │ paiement refusé / session expirée
