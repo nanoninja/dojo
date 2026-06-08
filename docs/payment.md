@@ -170,16 +170,23 @@ GET /api/v1/chapters/{id}  ou  GET /api/v1/lessons/{id}
 POST /api/v1/purchases/{id}/refund
          │
          ▼
-┌─────────────────────────────────────┐
-│ WithTx                              │
-│  UPDATE purchases SET status=       │
-│         'refunded', refunded_at=now │
-│  UPDATE course_enrollments SET      │
-│         status='cancelled'          │
-└─────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│ Hors transaction (lecture)                              │
+│  FindByID(purchaseID)                                   │
+│  Si ProviderPaymentID != "" ──► provider.Refund(...)    │
+│  Échec Stripe ──► erreur retournée, DB non modifiée     │
+└─────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────┐
+│ WithTx (écriture atomique)                              │
+│  UPDATE purchases SET status='refunded',                │
+│         refunded_at=now                                 │
+│  UPDATE course_enrollments SET status='cancelled'       │
+└─────────────────────────────────────────────────────────┘
 ```
 
-> **Note** : l'implémentation actuelle ne déclenche pas automatiquement `provider.Refund` (remboursement côté Stripe). Le remboursement Stripe peut être initié depuis le dashboard Stripe ou via un futur endpoint admin. La méthode `Refund` existe sur l'interface et peut être câblée sans changer la logique métier.
+> **Idempotence** : si Stripe confirme le remboursement via webhook (`charge.refunded` → `EventRefundSucceeded`), le handler appelle également `Refund`. La logique est identique — la double exécution est sans effet si le statut est déjà `refunded`.
 
 ## Le webhook Stripe en détail
 
@@ -230,7 +237,7 @@ Stripe-Signature: t=1749123456,v1=abc123...
 |-------------------------------------|---------------------------|-------------------------------------------|
 | `checkout.session.completed`        | `payment_succeeded`       | `ConfirmPayment` → enrollment créé        |
 | `checkout.session.expired`          | `payment_failed`          | `CancelPending` → purchase → `failed`     |
-| `charge.refunded`                   | `refund_succeeded`        | *(non câblé, prévu)*                      |
+| `charge.refunded`                   | `refund_succeeded`        | `Refund` → purchase `refunded`, enrollments annulés |
 
 ### Sécurité : validation de la signature
 

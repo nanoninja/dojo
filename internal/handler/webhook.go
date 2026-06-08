@@ -57,6 +57,14 @@ func (h *WebhookHandler) Stripe(w http.ResponseWriter, r *http.Request) error {
 		if err := h.purchase.ConfirmPayment(r.Context(), purchaseID, event.PaymentID); err != nil {
 			return toFault(err)
 		}
+	case payment.EventRefundSucceeded:
+		purchaseID := event.Metadata["purchase_id"]
+		if purchaseID == "" {
+			return fault.BadRequest("missing purchase_id in webhook metadata", nil)
+		}
+		if err := h.purchase.Refund(r.Context(), purchaseID); err != nil {
+			return toFault(err)
+		}
 	}
 	httputil.NoContent(w)
 	return nil

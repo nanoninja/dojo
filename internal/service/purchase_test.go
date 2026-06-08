@@ -109,7 +109,7 @@ func (f *fakeProvider) HandleWebhook(_ []byte, _ string) (payment.Event, error) 
 	return payment.Event{}, nil
 }
 
-func (f *fakeProvider) Refund(_ context.Context, _ string, _ int64) error { return nil }
+func (f *fakeProvider) Refund(_ context.Context, _ string, _ int64) error { return f.err }
 
 func newPurchaseService(
 	purchases *fakePurchaseStore,
@@ -223,15 +223,49 @@ func TestPurchaseService_BuyBundle(t *testing.T) {
 func TestPurchaseService_Refund(t *testing.T) {
 	ctx := context.Background()
 
+	seed := func() (*fakePurchaseStore, string) {
+		ps := newFakePurchaseStore()
+		p := &model.Purchase{
+			UserID:      "user-1",
+			Type:        model.PurchaseTypeCourse,
+			ItemID:      "course-1",
+			Status:      model.PurchaseStatusCompleted,
+			AmountCents: 1999,
+			Currency:    "EUR",
+		}
+		_ = ps.Create(ctx, p)
+		return ps, p.ID
+	}
+
 	t.Run("success", func(t *testing.T) {
+		ps, id := seed()
+		svc := newPurchaseService(ps, newFakeEnrollmentStore(), newFakeBundleCourseStore(), nil)
+		assert.NoError(t, svc.Refund(ctx, id))
+	})
+
+	t.Run("not found", func(t *testing.T) {
 		svc := newPurchaseService(newFakePurchaseStore(), newFakeEnrollmentStore(), newFakeBundleCourseStore(), nil)
-		assert.NoError(t, svc.Refund(ctx, "purchase-1"))
+		err := svc.Refund(ctx, "does-not-exist")
+		assert.ErrorIs(t, err, service.ErrPurchaseNotFound)
+	})
+
+	t.Run("provider failure", func(t *testing.T) {
+		ps, id := seed()
+		ps.purchases[id].ProviderPaymentID = "pi_test"
+		tx := &fakeTxRunner{}
+		provider := &fakeProvider{err: errors.New("stripe unavailable")}
+		svc := service.NewPurchaseService(tx, provider, ps, newFakeEnrollmentStore(), newFakeBundleCourseStore())
+		err := svc.Refund(ctx, id)
+		assert.Error(t, err)
 	})
 
 	t.Run("transaction failure", func(t *testing.T) {
+		ps, id := seed()
 		txErr := errors.New("db unavailable")
-		svc := newPurchaseService(newFakePurchaseStore(), newFakeEnrollmentStore(), newFakeBundleCourseStore(), txErr)
-		err := svc.Refund(ctx, "purchase-1")
+		tx := &fakeTxRunner{err: txErr}
+		provider := &fakeProvider{}
+		svc := service.NewPurchaseService(tx, provider, ps, newFakeEnrollmentStore(), newFakeBundleCourseStore())
+		err := svc.Refund(ctx, id)
 		assert.ErrorIs(t, err, txErr)
 	})
 }

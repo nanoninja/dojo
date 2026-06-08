@@ -43,9 +43,16 @@ func (h *PurchaseHandler) GetByID(w http.ResponseWriter, r *http.Request) error 
 	if !httputil.ValidateUUID(id) {
 		return fault.BadRequest("invalid purchase id", nil)
 	}
+	userID, err := middleware.RequireUserID(r.Context())
+	if err != nil {
+		return err
+	}
 	p, err := h.purchase.GetByID(r.Context(), id)
 	if err != nil {
 		return toFault(err)
+	}
+	if p.UserID != userID {
+		return fault.NotFound("purchase", nil)
 	}
 	return httputil.OK(w, p)
 }

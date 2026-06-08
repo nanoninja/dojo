@@ -119,6 +119,28 @@ func TestPurchaseHandler_GetByID_InvalidUUID(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
+func TestPurchaseHandler_GetByID_MissingUserID(t *testing.T) {
+	s := &mockPurchaseService{purchase: testPurchase()}
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/purchases/"+testPurchaseID, nil)
+	r = withChiParam(r, "id", testPurchaseID)
+
+	serve(newPurchaseHandler(s).GetByID, w, r)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestPurchaseHandler_GetByID_WrongOwner(t *testing.T) {
+	s := &mockPurchaseService{purchase: testPurchase()} // purchase.UserID == testUserID
+	w := httptest.NewRecorder()
+	r := withUserID(t, httptest.NewRequest("GET", "/purchases/"+testPurchaseID, nil), testOtherUserID)
+	r = withChiParam(r, "id", testPurchaseID)
+
+	serve(newPurchaseHandler(s).GetByID, w, r)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
 // ============================================================================
 // List
 // ============================================================================

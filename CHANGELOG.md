@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.0] - 2026-06-08
+
+### Added
+
+- Stripe payment integration — `payment.Provider` interface, `internal/payment/stripe/` client
+- `BuyCourse` / `BuyBundle` — purchase `pending` + Stripe checkout session, enrollment créé uniquement après confirmation webhook
+- `POST /webhooks/stripe` — route publique, validation signature HMAC, gestion `EventPaymentSucceeded` et `EventPaymentFailed`
+- `ConfirmPayment` — webhook `checkout.session.completed` → purchase `completed` + enrollment créé atomiquement via `WithTx`
+- `CancelPending` — webhook `checkout.session.expired` → purchase `failed`
+- `Refund` complet — appel `provider.Refund` (Stripe) avant la transaction DB ; webhook `charge.refunded` (`EventRefundSucceeded`) gère les remboursements initiés depuis le dashboard Stripe
+- `payment.ErrInvalidSignature` — erreur normalisée pour les signatures webhook invalides
+- `ErrPurchaseAlreadyProcessed` mappé → 409 Conflict dans `toFault`
+- Ownership check sur `GET /purchases/{id}` — retourne 404 si l'utilisateur n'est pas le propriétaire
+- Rate limiting par userID sur les mutations `BuyCourse`, `BuyBundle`, `Refund`, `Enroll` (fallback IP si non authentifié)
+- Tests handler `internal/handler/webhook_test.go`
+- Migration `db/migrations/003_payment.sql` — colonnes `provider`, `provider_session_id`, `provider_payment_id` sur `purchases`
+
+---
+
 ## [0.6.0] - 2026-06-03
 
 ### Added

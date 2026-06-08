@@ -187,7 +187,6 @@ func (s *purchaseService) ConfirmPayment(ctx context.Context, purchaseID, provid
 	if p.Status != model.PurchaseStatusPending {
 		return ErrPurchaseAlreadyProcessed
 	}
-
 	return s.db.WithTx(ctx, func(q database.Querier) error {
 		p.Status = model.PurchaseStatusCompleted
 		p.ProviderPaymentID = providerPaymentID
@@ -211,7 +210,6 @@ func (s *purchaseService) CancelPending(ctx context.Context, purchaseID string) 
 	if p.Status != model.PurchaseStatusPending {
 		return nil
 	}
-
 	return s.db.WithTx(ctx, func(q database.Querier) error {
 		p.Status = model.PurchaseStatusFailed
 		return store.NewPurchaseStore(q).Update(ctx, p)
@@ -246,6 +244,18 @@ func (s *purchaseService) createEnrollments(ctx context.Context, es store.Enroll
 }
 
 func (s *purchaseService) Refund(ctx context.Context, purchaseID string) error {
+	p, err := s.purchases.FindByID(ctx, purchaseID)
+	if err != nil {
+		return fmt.Errorf("refund: find purchase: %w", err)
+	}
+	if p == nil {
+		return ErrPurchaseNotFound
+	}
+	if p.ProviderPaymentID != "" {
+		if err := s.provider.Refund(ctx, p.ProviderPaymentID, p.AmountCents); err != nil {
+			return fmt.Errorf("refund: provider: %w", err)
+		}
+	}
 	return s.db.WithTx(ctx, func(q database.Querier) error {
 		ps := store.NewPurchaseStore(q)
 		es := store.NewEnrollmentStore(q)

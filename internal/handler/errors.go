@@ -69,6 +69,8 @@ func toFault(err error) error {
 		return fault.NotFound("subscription", err)
 	case errors.Is(err, service.ErrPurchaseNotFound):
 		return fault.NotFound("purchase", err)
+	case errors.Is(err, service.ErrPurchaseAlreadyProcessed):
+		return fault.Conflict("purchase already processed", err)
 
 	default:
 		return fault.Internal(err)

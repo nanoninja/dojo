@@ -100,6 +100,26 @@ func New(
 		return httprate.Limit(limit, duration, opts...)
 	}
 
+	// newUserRateLimiter limits by authenticated userID when available, falls back to IP.
+	// Used on mutation endpoints to prevent abuse from compromised tokens.
+	newUserRateLimiter := func(limit int, duration time.Duration) func(http.Handler) http.Handler {
+		opts := []httprate.Option{
+			httprate.WithKeyFuncs(func(r *http.Request) (string, error) {
+				if id := mw.UserIDFromContext(r.Context()); id != "" {
+					return "user:" + id, nil
+				}
+				return httprate.KeyByRealIP(r)
+			}),
+		}
+		if redis != nil {
+			store, _ := httprateredis.NewRedisLimitCounter(&httprateredis.Config{
+				Client: redis.Client,
+			})
+			opts = append(opts, httprate.WithLimitCounter(store))
+		}
+		return httprate.Limit(limit, duration, opts...)
+	}
+
 	health := handler.NewHealthHandler(cfg.App.Version, cfg.App.Env, db, redis)
 
 	// All routes below carry strict security headers and body size limit.
@@ -284,7 +304,7 @@ func New(
 				r.Route("/enrollments", func(r chi.Router) {
 					r.Get("/", httputil.Handle(handlers.Enrollment.List, logger))
 					r.Get("/{id}", httputil.Handle(handlers.Enrollment.GetByID, logger))
-					r.Post("/", httputil.Handle(handlers.Enrollment.Enroll, logger))
+					r.With(newUserRateLimiter(10, time.Minute)).Post("/", httputil.Handle(handlers.Enrollment.Enroll, logger))
 					r.Patch("/{id}/status", httputil.Handle(handlers.Enrollment.UpdateStatus, logger))
 					r.Delete("/{id}", httputil.Handle(handlers.Enrollment.Delete, logger))
 				})
@@ -321,9 +341,9 @@ func New(
 				r.Route("/purchases", func(r chi.Router) {
 					r.Get("/", httputil.Handle(handlers.Purchase.List, logger))
 					r.Get("/{id}", httputil.Handle(handlers.Purchase.GetByID, logger))
-					r.Post("/courses", httputil.Handle(handlers.Purchase.BuyCourse, logger))
-					r.Post("/bundles", httputil.Handle(handlers.Purchase.BuyBundle, logger))
-					r.Post("/{id}/refund", httputil.Handle(handlers.Purchase.Refund, logger))
+					r.With(newUserRateLimiter(10, time.Minute)).Post("/courses", httputil.Handle(handlers.Purchase.BuyCourse, logger))
+					r.With(newUserRateLimiter(10, time.Minute)).Post("/bundles", httputil.Handle(handlers.Purchase.BuyBundle, logger))
+					r.With(newUserRateLimiter(5, time.Minute)).Post("/{id}/refund", httputil.Handle(handlers.Purchase.Refund, logger))
 				})
 			})
 		})

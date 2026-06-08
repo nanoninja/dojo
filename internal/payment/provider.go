@@ -3,7 +3,10 @@
 
 package payment
 
-import "context"
+import (
+	"context"
+	"errors"
+)
 
 // Provider is the interface that payment backends must implement.
 type Provider interface {
@@ -74,3 +77,7 @@ type Event struct {
 
 // ProviderStripe is the identifier for the Stripe payment provider.
 const ProviderStripe = "stripe"
+
+// ErrInvalidSignature is returned by HandleWebhook when the provider signature
+// cannot be verified.
+var ErrInvalidSignature = errors.New("payment: invalid webhook signature")
